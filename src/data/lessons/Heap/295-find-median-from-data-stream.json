@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "problem_number": 295,
+    "title": "Find Median from Data Stream",
+    "url": "https://leetcode.com/problems/find-median-from-data-stream/",
+    "difficulty": "Hard",
+    "category": "Heap"
+  },
+  "problem_summary": {
+    "summary": "Design a data structure that accepts integers and returns the median of all values received so far.",
+    "input_output": "Implement MedianFinder(), addNum(int num), and findMedian() returning double. findMedian is called only after at least one value has been added.",
+    "constraints": ["-10^5 <= num <= 10^5", "At most 5 * 10^4 calls to addNum and findMedian", "findMedian is called only when the structure contains at least one value"]
+  },
+  "brute_force": {
+    "explanation": "Keep all values in a sorted ArrayList. Insert each new value at its upper-bound position by binary search, shifting the suffix right; read the middle element or average the two middle elements for a query.",
+    "correctness_idea": "The list remains sorted after each insertion, so its center positions are exactly the middle value(s) of the stream seen so far. Inserting after equal values preserves nondecreasing order.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass MedianFinder {\n    private final List<Integer> values = new ArrayList<>();\n\n    public MedianFinder() {\n    }\n\n    public void addNum(int num) {\n        int low = 0;\n        int high = values.size();\n        while (low < high) {\n            int middle = low + (high - low) / 2;\n            if (values.get(middle) <= num) low = middle + 1;\n            else high = middle;\n        }\n        values.add(low, num);\n    }\n\n    public double findMedian() {\n        int middle = values.size() / 2;\n        if (values.size() % 2 == 1) return values.get(middle);\n        return ((double) values.get(middle - 1) + values.get(middle)) / 2.0;\n    }\n}",
+    "time_complexity": "addNum is O(n) because ArrayList insertion shifts up to n values, despite O(log n) binary search; findMedian is O(1).",
+    "space_complexity": "O(n) for the stored stream values."
+  },
+  "optimized": {
+    "explanation": "Maintain a max-heap for the lower half and a min-heap for the upper half. Keep the lower heap either the same size as the upper heap or one value larger. The median is the lower top when sizes differ, otherwise the average of both tops.",
+    "correctness_idea": "The lower heap contains the smallest half and its top is the largest value in that half; the upper heap contains the largest half and its top is the smallest value there. The size invariant makes these boundary value(s) the middle value(s) of the entire stream.",
+    "language": "java",
+    "code": "import java.util.Collections;\nimport java.util.PriorityQueue;\n\nclass MedianFinder {\n    private final PriorityQueue<Integer> lower = new PriorityQueue<>(Collections.reverseOrder());\n    private final PriorityQueue<Integer> upper = new PriorityQueue<>();\n\n    public MedianFinder() {\n    }\n\n    public void addNum(int num) {\n        lower.offer(num);\n        upper.offer(lower.poll());\n        if (upper.size() > lower.size()) {\n            lower.offer(upper.poll());\n        }\n    }\n\n    public double findMedian() {\n        if (lower.size() > upper.size()) return lower.peek();\n        return ((double) lower.peek() + upper.peek()) / 2.0;\n    }\n}",
+    "time_complexity": "addNum is O(log n) due to heap insertion and rebalancing; findMedian is O(1).",
+    "space_complexity": "O(n) for the values stored across the two heaps."
+  },
+  "dry_run": {
+    "sample_input": {"operations": ["addNum(7)", "addNum(1)", "findMedian()", "addNum(5)", "findMedian()", "addNum(3)", "findMedian()"]},
+    "sample_output": [null, null, 4.0, null, 5.0, null, 4.0],
+    "steps": [
+      {"sequence": 1, "event": "Add 7.", "variables": {"num": 7}, "condition": "Insert into lower, move its maximum to upper, then rebalance if needed.", "action": "Lower contains the only value; upper is empty.", "state_before": {"lowerMaxFirst": [], "upperMinFirst": []}, "state_after": {"lowerMaxFirst": [7], "upperMinFirst": []}},
+      {"sequence": 2, "event": "Add 1.", "variables": {"num": 1}, "condition": "After moving lower's maximum, upper has one value and is not larger than lower after rebalancing.", "action": "Move 7 to upper; lower holds 1 and upper holds 7. Their sizes are equal.", "state_before": {"lowerMaxFirst": [7], "upperMinFirst": []}, "state_after": {"lowerMaxFirst": [1], "upperMinFirst": [7]}},
+      {"sequence": 3, "event": "Query median with two values.", "variables": {"lowerTop": 1, "upperTop": 7, "sizeLower": 1, "sizeUpper": 1}, "condition": "Heap sizes are equal.", "action": "Return (1 + 7) / 2.0 = 4.0.", "state_before": {"lowerMaxFirst": [1], "upperMinFirst": [7]}, "state_after": {"lowerMaxFirst": [1], "upperMinFirst": [7], "median": 4.0}},
+      {"sequence": 4, "event": "Add 5, then query the median.", "variables": {"num": 5, "lowerTop": 5, "upperTop": 7}, "condition": "5 enters lower; its maximum moves to upper, then the upper minimum moves back to lower to restore the size invariant.", "action": "The odd-sized median is lower.peek(), which is 5.0.", "state_before": {"lowerMaxFirst": [1], "upperMinFirst": [7]}, "state_after": {"lowerMaxFirst": [5, 1], "upperMinFirst": [7], "median": 5.0}},
+      {"sequence": 5, "event": "Add 3, then query the median.", "variables": {"num": 3, "lowerTop": 3, "upperTop": 5}, "condition": "After balancing, both heaps contain two values.", "action": "Return the average of boundary values 3 and 5, which is 4.0.", "state_before": {"lowerMaxFirst": [5, 1], "upperMinFirst": [7]}, "state_after": {"lowerMaxFirst": [3, 1], "upperMinFirst": [5, 7], "median": 4.0}}
+    ],
+    "final_result": [null, null, 4.0, null, 5.0, null, 4.0]
+  },
+  "edge_cases": [
+    {"case": "One value has been added", "handling": "The lower heap has one extra value, so its top is returned as the median."},
+    {"case": "Even number of values", "handling": "The average of the lower maximum and upper minimum is returned using double arithmetic."},
+    {"case": "Duplicate values", "handling": "Heaps permit duplicates, and the size/boundary invariants remain valid."},
+    {"case": "Negative and positive values", "handling": "Natural numeric heap order places values correctly across zero."}
+  ]
+}

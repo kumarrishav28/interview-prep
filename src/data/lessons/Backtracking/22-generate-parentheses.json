@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "problem_number": 22,
+    "title": "Generate Parentheses",
+    "url": "https://leetcode.com/problems/generate-parentheses/",
+    "difficulty": "Medium",
+    "category": "Backtracking"
+  },
+  "problem_summary": {
+    "summary": "Generate every well-formed string containing exactly n opening and n closing parentheses.",
+    "input_output": "Input: n pairs. Return all valid parenthesis strings, in any order.",
+    "constraints": ["1 <= n <= 8"]
+  },
+  "brute_force": {
+    "explanation": "Generate every string of length 2n from '(' and ')', then scan each complete string with a balance counter and keep it only if the balance never becomes negative and ends at zero.",
+    "correctness_idea": "Every possible length-2n parenthesis string is enumerated. The balance scan accepts exactly strings with matched pairs and no closing parenthesis before its opener, which characterizes well-formed parentheses.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass Solution {\n    public List<String> generateParenthesis(int n) {\n        List<String> result = new ArrayList<>();\n        generate(new StringBuilder(), 2 * n, result);\n        return result;\n    }\n\n    private void generate(StringBuilder current, int length, List<String> result) {\n        if (current.length() == length) {\n            if (isValid(current)) {\n                result.add(current.toString());\n            }\n            return;\n        }\n        current.append('(');\n        generate(current, length, result);\n        current.deleteCharAt(current.length() - 1);\n        current.append(')');\n        generate(current, length, result);\n        current.deleteCharAt(current.length() - 1);\n    }\n\n    private boolean isValid(StringBuilder candidate) {\n        int balance = 0;\n        for (int index = 0; index < candidate.length(); index++) {\n            balance += candidate.charAt(index) == '(' ? 1 : -1;\n            if (balance < 0) {\n                return false;\n            }\n        }\n        return balance == 0;\n    }\n}",
+    "time_complexity": "O(n * 2^(2n)) — generate 2^(2n) candidates and validate each in O(n).",
+    "space_complexity": "O(n) auxiliary for the candidate builder and recursion stack, excluding the returned strings."
+  },
+  "optimized": {
+    "explanation": "Build only prefixes that can still become valid. Add '(' while fewer than n opens have been used; add ')' only when it will not make the prefix's balance negative.",
+    "correctness_idea": "A prefix of a valid string cannot contain more closes than opens, and no valid result can contain more than n opens. Those two necessary conditions guide every branch; when the builder reaches length 2n, it contains exactly n matched pairs and is valid.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass Solution {\n    public List<String> generateParenthesis(int n) {\n        List<String> result = new ArrayList<>();\n        build(n, 0, 0, new StringBuilder(), result);\n        return result;\n    }\n\n    private void build(int n, int opens, int closes, StringBuilder current, List<String> result) {\n        if (current.length() == 2 * n) {\n            result.add(current.toString());\n            return;\n        }\n        if (opens < n) {\n            current.append('(');\n            build(n, opens + 1, closes, current, result);\n            current.deleteCharAt(current.length() - 1);\n        }\n        if (closes < opens) {\n            current.append(')');\n            build(n, opens, closes + 1, current, result);\n            current.deleteCharAt(current.length() - 1);\n        }\n    }\n}",
+    "time_complexity": "O(n * Cn) — generate Cn valid strings of length 2n; each is materialized in O(n), where Cn is the nth Catalan number.",
+    "space_complexity": "O(n) auxiliary for the builder and recursion stack, excluding O(n * Cn) output."
+  },
+  "dry_run": {
+    "sample_input": {"n": 2},
+    "sample_output": ["(())", "()()"],
+    "steps": [
+      {"sequence": 1, "event": "Begin with no parentheses used.", "variables": {"opens": 0, "closes": 0, "current": ""}, "condition": "opens < n.", "action": "Append '(' and recurse.", "state_before": {"current": "", "result": []}, "state_after": {"current": "(", "opens": 1, "closes": 0}},
+      {"sequence": 2, "event": "Open the second pair.", "variables": {"opens": 1, "closes": 0, "current": "("}, "condition": "opens < 2.", "action": "Append '(' and explore that subtree first; after it backtracks, the closing branch at prefix '(' is explored.", "state_before": {"current": "(", "opens": 1, "closes": 0}, "state_after": {"current": "((", "opens": 2, "closes": 0}},
+      {"sequence": 3, "event": "Close while balance permits.", "variables": {"opens": 2, "closes": 0, "current": "(("}, "condition": "closes < opens.", "action": "Append ')' twice; at '(())' length is 4, record the first result.", "state_before": {"current": "((", "result": []}, "state_after": {"current": "((", "result": ["(())"]}},
+      {"sequence": 4, "event": "Backtrack to '(' and close the first pair.", "variables": {"opens": 1, "closes": 0, "current": "("}, "condition": "closes < opens.", "action": "Append ')', then the only legal move is '(' followed by ')'; record '()()'.", "state_before": {"current": "(", "result": ["(())"]}, "state_after": {"current": "(", "result": ["(())", "()()"]}},
+      {"sequence": 5, "event": "Return from the root after undoing choices.", "variables": {"opens": 0, "closes": 0, "current": ""}, "condition": "Both legal root branches are complete.", "action": "Return the two saved strings.", "state_before": {"current": "", "resultCount": 2}, "state_after": {"current": "", "result": ["(())", "()()"]}}
+    ],
+    "final_result": ["(())", "()()"]
+  },
+  "edge_cases": [
+    {"case": "Only one pair", "handling": "The constraints allow n=1 and the only generated string is '()'."},
+    {"case": "A close would lead the opens", "handling": "The optimized search blocks that branch before constructing an invalid prefix."},
+    {"case": "Maximum n", "handling": "The algorithm visits only valid prefixes, producing the Catalan-sized result for n=8."}
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "problem_number": 201,
+    "title": "Bitwise AND of Numbers Range",
+    "url": "https://leetcode.com/problems/bitwise-and-of-numbers-range/",
+    "difficulty": "Medium",
+    "category": "Bit Manipulation"
+  },
+  "problem_summary": {
+    "summary": "Compute the bitwise AND of every integer in the inclusive range from left to right.",
+    "input_output": "Input: nonnegative integers left and right with left <= right. Output: their inclusive range AND.",
+    "constraints": [
+      "0 <= left <= right <= 2^31 - 1"
+    ]
+  },
+  "brute_force": {
+    "explanation": "Initialize the answer to left and AND each subsequent value through right. This follows the definition directly, but its work can be proportional to a range containing billions of numbers.",
+    "correctness_idea": "The accumulator after processing each value is the AND of all range elements visited so far; after the final value it is the requested inclusive AND.",
+    "language": "java",
+    "code": "class Solution {\n    public int rangeBitwiseAnd(int left, int right) {\n        int result = left;\n        int value = left;\n        while (value < right) {\n            value++;\n            result &= value;\n        }\n        return result;\n    }\n}",
+    "time_complexity": "O(right - left + 1), one AND operation for each integer in the range.",
+    "space_complexity": "O(1) auxiliary space."
+  },
+  "optimized": {
+    "explanation": "Shift both endpoints right until they match, counting the shifts. Bits below their common prefix cannot remain set in the AND across every value in the range. Shift the shared prefix back left by the same count, filling those lower positions with zeroes.",
+    "correctness_idea": "At the first bit position where left and right differ, the inclusive range contains a value with zero at that position, so all lower positions in the final AND are zero. Bits above that differing position form the common prefix and remain one only where both endpoints have one. The shift loop retains exactly that prefix.",
+    "language": "java",
+    "code": "class Solution {\n    public int rangeBitwiseAnd(int left, int right) {\n        int shift = 0;\n        while (left != right) {\n            left >>= 1;\n            right >>= 1;\n            shift++;\n        }\n        return left << shift;\n    }\n}",
+    "time_complexity": "O(log right) in the worst case, bounded by 31 shifts under the constraints.",
+    "space_complexity": "O(1) auxiliary space."
+  },
+  "dry_run": {
+    "sample_input": {"left": 12, "right": 15},
+    "sample_output": 12,
+    "steps": [
+      {"sequence": 1, "event": "Compare and shift the endpoints once.", "variables": {"leftBefore": 12, "rightBefore": 15, "shiftBefore": 0, "binaryEndpoints": ["1100", "1111"]}, "condition": "left != right, so their least-significant bits are excluded from the shared prefix.", "action": "Right-shift both values and increment shift.", "state_before": {"left": 12, "right": 15, "shift": 0}, "state_after": {"left": 6, "right": 7, "shift": 1}},
+      {"sequence": 2, "event": "Compare and shift the endpoints again.", "variables": {"leftBefore": 6, "rightBefore": 7, "shiftBefore": 1, "binaryEndpoints": ["110", "111"]}, "condition": "left != right; one more low-order bit is outside the shared prefix.", "action": "Right-shift both values and increment shift.", "state_before": {"left": 6, "right": 7, "shift": 1}, "state_after": {"left": 3, "right": 3, "shift": 2}},
+      {"sequence": 3, "event": "Restore the common prefix position.", "variables": {"commonPrefix": 3, "shift": 2, "binaryPrefix": "11"}, "condition": "left == right, so the common prefix is 11.", "action": "Compute 3 << 2, setting the two discarded low bits to zero.", "state_before": {"left": 3, "right": 3, "shift": 2}, "state_after": {"result": 12, "binaryResult": "1100"}}
+    ],
+    "final_result": 12
+  },
+  "edge_cases": [
+    {"case": "left equals right", "handling": "No shifts are needed, and the single number is returned unchanged."},
+    {"case": "The range starts at zero", "handling": "A range containing zero has AND zero; the common-prefix procedure also returns zero."},
+    {"case": "The endpoints differ in a high bit", "handling": "At most 31 shifts are needed, regardless of how many values the interval contains."},
+    {"case": "The range contains consecutive values across a power of two", "handling": "Their common prefix ends before the differing bit, so all lower bits are cleared in the result."}
+  ]
+}

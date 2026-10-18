@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "problem_number": 69,
+    "title": "Sqrt(x)",
+    "url": "https://leetcode.com/problems/sqrtx/",
+    "difficulty": "Easy",
+    "category": "Math"
+  },
+  "problem_summary": {
+    "summary": "Return the nonnegative integer square root of x, rounded down, without using a built-in power operation.",
+    "input_output": "Input: a nonnegative 32-bit integer x. Return floor(sqrt(x)).",
+    "constraints": ["0 <= x <= 2^31 - 1", "Do not use a built-in exponent function or operator"]
+  },
+  "brute_force": {
+    "explanation": "Try positive integers in ascending order until the next square would exceed x. Use a long multiplication so the comparison itself cannot overflow.",
+    "correctness_idea": "The square function is increasing for nonnegative integers. The final candidate whose square is at most x is therefore the greatest integer satisfying the required floor-square-root condition.",
+    "language": "java",
+    "code": "class Solution {\n    public int mySqrt(int x) {\n        int root = 0;\n        while ((long) (root + 1) * (root + 1) <= x) {\n            root++;\n        }\n        return root;\n    }\n}",
+    "time_complexity": "O(sqrt(x)) candidate checks.",
+    "space_complexity": "O(1) auxiliary."
+  },
+  "optimized": {
+    "explanation": "Binary-search the integer range for the greatest value whose square is at most x. Compare mid with x / mid instead of multiplying, avoiding overflow.",
+    "correctness_idea": "For positive mid, mid <= x / mid is equivalent to mid squared <= x. This predicate is true up to the floor square root and false afterward, so binary search finds the boundary.",
+    "language": "java",
+    "code": "class Solution {\n    public int mySqrt(int x) {\n        int low = 1;\n        int high = x;\n        int answer = 0;\n        while (low <= high) {\n            int mid = low + (high - low) / 2;\n            if (mid <= x / mid) {\n                answer = mid;\n                low = mid + 1;\n            } else {\n                high = mid - 1;\n            }\n        }\n        return answer;\n    }\n}",
+    "time_complexity": "O(log x) for x > 0; O(1) for x = 0.",
+    "space_complexity": "O(1) auxiliary."
+  },
+  "dry_run": {
+    "sample_input": {"x": 37},
+    "sample_output": 6,
+    "steps": [
+      {"sequence": 1, "event": "Search the full candidate interval.", "variables": {"low": 1, "high": 37, "mid": 19, "answer": 0}, "condition": "19 > 37 / 19 = 1, so 19 squared is too large.", "action": "Discard mid and all larger candidates by setting high to 18.", "state_before": {"low": 1, "high": 37, "answer": 0}, "state_after": {"low": 1, "high": 18, "answer": 0}},
+      {"sequence": 2, "event": "Test the midpoint of [1,18].", "variables": {"low": 1, "high": 18, "mid": 9}, "condition": "9 > 37 / 9 = 4.", "action": "Discard 9 and larger values by setting high to 8.", "state_before": {"low": 1, "high": 18, "answer": 0}, "state_after": {"low": 1, "high": 8, "answer": 0}},
+      {"sequence": 3, "event": "Test the midpoint of [1,8].", "variables": {"low": 1, "high": 8, "mid": 4}, "condition": "4 <= 37 / 4 = 9, so 4 squared fits.", "action": "Record answer 4 and search higher values.", "state_before": {"low": 1, "high": 8, "answer": 0}, "state_after": {"low": 5, "high": 8, "answer": 4}},
+      {"sequence": 4, "event": "Test the midpoint of [5,8].", "variables": {"low": 5, "high": 8, "mid": 6}, "condition": "6 <= 37 / 6 = 6, so 6 squared fits.", "action": "Record answer 6 and search above it.", "state_before": {"low": 5, "high": 8, "answer": 4}, "state_after": {"low": 7, "high": 8, "answer": 6}},
+      {"sequence": 5, "event": "Test the midpoint of [7,8].", "variables": {"low": 7, "high": 8, "mid": 7}, "condition": "7 > 37 / 7 = 5, so 7 squared is too large.", "action": "Set high to 6; the search ends and answer 6 is returned.", "state_before": {"low": 7, "high": 8, "answer": 6}, "state_after": {"low": 7, "high": 6, "answer": 6}}
+    ],
+    "final_result": 6
+  },
+  "edge_cases": [
+    {"case": "x equals 0", "handling": "The binary-search loop is skipped and answer 0 is returned."},
+    {"case": "x equals 1", "handling": "The only positive candidate 1 satisfies the division comparison."},
+    {"case": "x is a perfect square", "handling": "The exact root satisfies the predicate and is recorded as the maximum valid candidate."},
+    {"case": "x is near the 32-bit maximum", "handling": "The optimized comparison uses division, not a potentially overflowing square."}
+  ]
+}

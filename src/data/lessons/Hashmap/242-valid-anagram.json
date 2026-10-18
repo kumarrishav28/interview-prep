@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 242,
+    "title": "Valid Anagram",
+    "url": "https://leetcode.com/problems/valid-anagram/",
+    "difficulty": "Easy",
+    "category": "Hashmap"
+  },
+  "problem_summary": {
+    "summary": "Check whether two strings contain exactly the same characters with the same multiplicities.",
+    "input_output": "Input: lowercase English strings s and t. Return true if t is a rearrangement of s, otherwise false.",
+    "constraints": ["1 <= s.length, t.length <= 5 * 10^4", "Both strings contain lowercase English letters"]
+  },
+  "brute_force": {
+    "explanation": "Convert both strings to character arrays, sort them, and compare the sorted arrays.",
+    "correctness_idea": "Sorting places each character in a canonical position determined by its value. The sorted arrays match exactly iff the original strings had identical character counts.",
+    "language": "java",
+    "code": "import java.util.Arrays;\n\nclass Solution {\n    public boolean isAnagram(String s, String t) {\n        if (s.length() != t.length()) return false;\n        char[] first = s.toCharArray();\n        char[] second = t.toCharArray();\n        Arrays.sort(first);\n        Arrays.sort(second);\n        return Arrays.equals(first, second);\n    }\n}",
+    "time_complexity": "O(n log n), where n is the common string length.",
+    "space_complexity": "O(n) auxiliary for the two character arrays."
+  },
+  "optimized": {
+    "explanation": "Count each letter from s in a 26-entry array and subtract each letter from t. Equal lengths are required, and no counter may become negative.",
+    "correctness_idea": "A final zero count for every letter means the strings contain exactly the same multiplicities. A negative count means t uses a letter more often than s.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean isAnagram(String s, String t) {\n        if (s.length() != t.length()) return false;\n        int[] counts = new int[26];\n        for (int i = 0; i < s.length(); i++) {\n            counts[s.charAt(i) - 'a']++;\n            counts[t.charAt(i) - 'a']--;\n        }\n        for (int count : counts) {\n            if (count != 0) return false;\n        }\n        return true;\n    }\n}",
+    "time_complexity": "O(n), one pass over both strings plus a fixed 26-entry check.",
+    "space_complexity": "O(1) auxiliary: the frequency array has fixed size."
+  },
+  "dry_run": {
+    "sample_input": {"s": "abca", "t": "caba"},
+    "sample_output": true,
+    "steps": [
+      {"sequence": 1, "event": "Process index 0.", "variables": {"i": 0, "sChar": "a", "tChar": "c"}, "condition": "Increment the s letter and decrement the t letter.", "action": "Update the two relevant counts.", "state_before": {"a": 0, "b": 0, "c": 0}, "state_after": {"a": 1, "b": 0, "c": -1}},
+      {"sequence": 2, "event": "Process index 1.", "variables": {"i": 1, "sChar": "b", "tChar": "a"}, "condition": "Apply both frequency changes.", "action": "Update counts for b and a.", "state_before": {"a": 1, "b": 0, "c": -1}, "state_after": {"a": 0, "b": 1, "c": -1}},
+      {"sequence": 3, "event": "Process index 2.", "variables": {"i": 2, "sChar": "c", "tChar": "b"}, "condition": "Apply both frequency changes.", "action": "Update counts for c and b.", "state_before": {"a": 0, "b": 1, "c": -1}, "state_after": {"a": 0, "b": 0, "c": 0}},
+      {"sequence": 4, "event": "Process index 3.", "variables": {"i": 3, "sChar": "a", "tChar": "a"}, "condition": "The increment and decrement cancel.", "action": "Counts remain zero; all 26 counters are zero, so return true.", "state_before": {"a": 0, "b": 0, "c": 0}, "state_after": {"a": 0, "b": 0, "c": 0}}
+    ],
+    "final_result": true
+  },
+  "edge_cases": [
+    {"case": "Different string lengths", "handling": "The method returns false before counting."},
+    {"case": "Repeated letters with unequal frequencies", "handling": "At least one final count is nonzero, so false is returned."},
+    {"case": "Same letters in a different order", "handling": "All counts cancel to zero, so true is returned."}
+  ]
+}

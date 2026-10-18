@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "problem_number": 77,
+    "title": "Combinations",
+    "url": "https://leetcode.com/problems/combinations/",
+    "difficulty": "Medium",
+    "category": "Backtracking"
+  },
+  "problem_summary": {
+    "summary": "Choose k distinct values from 1 through n and return every combination, where order within a combination does not matter.",
+    "input_output": "Inputs: n and k. Return all size-k subsets of the integers in [1, n].",
+    "constraints": ["1 <= n <= 20", "1 <= k <= n"]
+  },
+  "brute_force": {
+    "explanation": "Enumerate every length-k sequence whose entries come from 1 through n, then keep only sequences that are strictly increasing. This is a direct but highly redundant way to represent unordered choices.",
+    "correctness_idea": "Every valid combination has one increasing sequence representation, and that sequence is among all enumerated length-k sequences. Strictly increasing filtering rejects repeats and all reordered duplicates.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass Solution {\n    public List<List<Integer>> combine(int n, int k) {\n        List<List<Integer>> result = new ArrayList<>();\n        enumerate(n, k, new ArrayList<>(), result);\n        return result;\n    }\n\n    private void enumerate(int n, int k, List<Integer> sequence, List<List<Integer>> result) {\n        if (sequence.size() == k) {\n            for (int index = 1; index < k; index++) {\n                if (sequence.get(index - 1) >= sequence.get(index)) {\n                    return;\n                }\n            }\n            result.add(new ArrayList<>(sequence));\n            return;\n        }\n        for (int value = 1; value <= n; value++) {\n            sequence.add(value);\n            enumerate(n, k, sequence, result);\n            sequence.remove(sequence.size() - 1);\n        }\n    }\n}",
+    "time_complexity": "O(k * n^k) — enumerate n^k sequences and check each completed sequence; this ignores the additional cost of storing output copies.",
+    "space_complexity": "O(k) auxiliary for the current sequence and recursion, excluding output."
+  },
+  "optimized": {
+    "explanation": "Build combinations in increasing order. Once a value is chosen, recurse only with larger values; stop starting branches when too few values remain to reach size k.",
+    "correctness_idea": "Increasing choices give each unordered subset exactly one path. The upper bound n - (k - chosen) + 1 ensures every remaining slot can still be filled, so no valid combination is pruned.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass Solution {\n    public List<List<Integer>> combine(int n, int k) {\n        List<List<Integer>> result = new ArrayList<>();\n        build(n, k, 1, new ArrayList<>(), result);\n        return result;\n    }\n\n    private void build(int n, int k, int start, List<Integer> current, List<List<Integer>> result) {\n        if (current.size() == k) {\n            result.add(new ArrayList<>(current));\n            return;\n        }\n        int remaining = k - current.size();\n        int lastStart = n - remaining + 1;\n        for (int value = start; value <= lastStart; value++) {\n            current.add(value);\n            build(n, k, value + 1, current, result);\n            current.remove(current.size() - 1);\n        }\n    }\n}",
+    "time_complexity": "O(k * C(n,k)) — copy each of the C(n,k) result combinations; the search visits only prefixes of valid combinations.",
+    "space_complexity": "O(k) auxiliary for the current path and recursion, excluding O(k * C(n,k)) output."
+  },
+  "dry_run": {
+    "sample_input": {"n": 5, "k": 3},
+    "sample_output": [[1, 2, 3], [1, 2, 4], [1, 2, 5], [1, 3, 4], [1, 3, 5], [1, 4, 5], [2, 3, 4], [2, 3, 5], [2, 4, 5], [3, 4, 5]],
+    "steps": [
+      {"sequence": 1, "event": "Choose 1 as the first value.", "variables": {"start": 1, "current": [], "remaining": 3, "lastStart": 3}, "condition": "1 <= lastStart.", "action": "Append 1 and recurse from 2.", "state_before": {"current": [], "result": []}, "state_after": {"current": [1], "start": 2, "result": []}},
+      {"sequence": 2, "event": "Choose 2, then enumerate the final slot.", "variables": {"start": 2, "current": [1], "remaining": 2, "lastStart": 4}, "condition": "2 through 4 can begin a completable pair.", "action": "For prefix [1,2], try 3, 4, and 5 as final values; record three leaves.", "state_before": {"current": [1], "result": []}, "state_after": {"current": [1], "result": [[1, 2, 3], [1, 2, 4], [1, 2, 5]]}},
+      {"sequence": 3, "event": "Backtrack to prefix [1] and choose 3.", "variables": {"current": [1], "nextChoice": 3}, "condition": "The 2 branch is complete.", "action": "Choose final values 4 and 5; then backtrack.", "state_before": {"current": [1], "result": [[1, 2, 3], [1, 2, 4], [1, 2, 5]]}, "state_after": {"current": [1], "result": [[1, 2, 3], [1, 2, 4], [1, 2, 5], [1, 3, 4], [1, 3, 5]]}},
+      {"sequence": 4, "event": "Finish prefixes beginning with 1.", "variables": {"current": [1], "nextChoice": 4, "lastStart": 4}, "condition": "Only value 5 remains to complete [1,4].", "action": "Record [1,4,5], then return to the root.", "state_before": {"current": [1], "resultCount": 5}, "state_after": {"current": [], "resultCount": 6}},
+      {"sequence": 5, "event": "Enumerate remaining root choices 2 and 3.", "variables": {"start": 2, "lastStart": 3}, "condition": "Root choices greater than 3 cannot fill three slots.", "action": "Record [2,3,4], [2,3,5], [2,4,5], then [3,4,5].", "state_before": {"current": [], "resultCount": 6}, "state_after": {"current": [], "resultCount": 10}}
+    ],
+    "final_result": [[1, 2, 3], [1, 2, 4], [1, 2, 5], [1, 3, 4], [1, 3, 5], [1, 4, 5], [2, 3, 4], [2, 3, 5], [2, 4, 5], [3, 4, 5]]
+  },
+  "edge_cases": [
+    {"case": "k equals n", "handling": "The only path is [1, 2, ..., n]."},
+    {"case": "k equals 1", "handling": "Each value from 1 through n is returned as a one-element combination."},
+    {"case": "Insufficient values remain", "handling": "The bounded loop skips prefixes that cannot be extended to k values."}
+  ]
+}

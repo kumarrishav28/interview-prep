@@ -1,0 +1,87 @@
+{
+  "metadata": {
+    "problem_number": 88,
+    "title": "Merge Sorted Array",
+    "url": "https://leetcode.com/problems/merge-sorted-array/",
+    "difficulty": "Easy",
+    "category": "Array / String"
+  },
+  "problem_summary": {
+    "summary": "Combine two sorted integer arrays into nums1, which has enough trailing capacity for every value.",
+    "input_output": "Inputs: nums1, m, nums2, n. Update nums1 in place; its first m entries and all n entries in nums2 are meaningful.",
+    "constraints": ["0 ≤ m, n ≤ 200", "nums1.length = m + n", "Both inputs are sorted"]
+  },
+  "brute_force": {
+    "explanation": "Copy nums2 into the unused tail of nums1, then sort the populated prefix. This uses the spare capacity but ignores the order that was already present.",
+    "correctness_idea": "After copying, the first m + n positions contain exactly the values from both inputs; sorting that range produces the required non-decreasing order.",
+    "language": "java",
+    "code": "import java.util.Arrays;\n\nclass Solution {\n    public void merge(int[] nums1, int m, int[] nums2, int n) {\n        System.arraycopy(nums2, 0, nums1, m, n);\n        Arrays.sort(nums1, 0, m + n);\n    }\n}",
+    "time_complexity": "O((m + n) log(m + n)) — sorting the combined prefix dominates the copy.",
+    "space_complexity": "O(log(m + n)) auxiliary — Java's primitive-array sort uses stack space for its sorting implementation."
+  },
+  "optimized": {
+    "explanation": "Use three indices at the ends of the meaningful portions. Write the larger value into the last free slot, moving backward until nums2 is exhausted; remaining nums1 values are already in place.",
+    "correctness_idea": "The destination slot is always at or beyond the unread nums1 prefix, so writing the larger tail value cannot destroy an unprocessed value. Repeating this places values in sorted order from right to left.",
+    "language": "java",
+    "code": "class Solution {\n    public void merge(int[] nums1, int m, int[] nums2, int n) {\n        int first = m - 1;\n        int second = n - 1;\n        int write = m + n - 1;\n\n        while (second >= 0) {\n            if (first >= 0 && nums1[first] > nums2[second]) {\n                nums1[write] = nums1[first];\n                first--;\n            } else {\n                nums1[write] = nums2[second];\n                second--;\n            }\n            write--;\n        }\n    }\n}",
+    "time_complexity": "O(m + n) — each input value is considered at most once.",
+    "space_complexity": "O(1) auxiliary — only three integer indices are used."
+  },
+  "dry_run": {
+    "sample_input": {
+      "nums1": [1, 2, 3, 0, 0, 0],
+      "m": 3,
+      "nums2": [2, 5, 6],
+      "n": 3
+    },
+    "sample_output": [1, 2, 2, 3, 5, 6],
+    "steps": [
+      {
+        "sequence": 1,
+        "event": "Compare the last unmerged values: 3 and 6.",
+        "variables": {"first": 2, "second": 2, "write": 5},
+        "condition": "nums1[first] > nums2[second] is false (3 is not greater than 6).",
+        "action": "Write 6 from nums2 at index 5, then move second and write left.",
+        "state_before": {"nums1": [1, 2, 3, 0, 0, 0]},
+        "state_after": {"nums1": [1, 2, 3, 0, 0, 6]},
+        "focus": {"array": "nums1", "indices": [5]}
+      },
+      {
+        "sequence": 2,
+        "event": "Compare 3 and 5.",
+        "variables": {"first": 2, "second": 1, "write": 4},
+        "condition": "nums1[first] > nums2[second] is false (3 is not greater than 5).",
+        "action": "Write 5 from nums2 at index 4, then move second and write left.",
+        "state_before": {"nums1": [1, 2, 3, 0, 0, 6]},
+        "state_after": {"nums1": [1, 2, 3, 0, 5, 6]},
+        "focus": {"array": "nums1", "indices": [4]}
+      },
+      {
+        "sequence": 3,
+        "event": "Compare 3 and 2.",
+        "variables": {"first": 2, "second": 0, "write": 3},
+        "condition": "nums1[first] > nums2[second] is true (3 is greater than 2).",
+        "action": "Write 3 from nums1 at index 3, then move first and write left.",
+        "state_before": {"nums1": [1, 2, 3, 0, 5, 6]},
+        "state_after": {"nums1": [1, 2, 3, 3, 5, 6]},
+        "focus": {"array": "nums1", "indices": [3]}
+      },
+      {
+        "sequence": 4,
+        "event": "Compare 2 and 2.",
+        "variables": {"first": 1, "second": 0, "write": 2},
+        "condition": "nums1[first] > nums2[second] is false because the values are equal.",
+        "action": "Write 2 from nums2 at index 2, then move second and write left.",
+        "state_before": {"nums1": [1, 2, 3, 3, 5, 6]},
+        "state_after": {"nums1": [1, 2, 2, 3, 5, 6]},
+        "focus": {"array": "nums1", "indices": [2]}
+      }
+    ],
+    "final_result": [1, 2, 2, 3, 5, 6]
+  },
+  "edge_cases": [
+    {"case": "nums2 is empty", "handling": "The loop does not run; nums1 is already the result."},
+    {"case": "nums1 has no meaningful values", "handling": "Every nums2 value is copied into nums1 from right to left."},
+    {"case": "Equal values", "handling": "The equality branch takes the nums2 value; sorted order is preserved."}
+  ]
+}

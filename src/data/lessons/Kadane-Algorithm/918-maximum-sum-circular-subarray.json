@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "problem_number": 918,
+    "title": "Maximum Sum Circular Subarray",
+    "url": "https://leetcode.com/problems/maximum-sum-circular-subarray/",
+    "difficulty": "Medium",
+    "category": "Kadane's Algorithm"
+  },
+  "problem_summary": {
+    "summary": "Find the largest sum of a non-empty contiguous subarray in a circular integer array, without using any array position more than once.",
+    "input_output": "Input: a non-empty integer array nums interpreted circularly. Return the maximum sum of a non-empty circular subarray.",
+    "constraints": ["1 <= nums.length <= 3 * 10^4", "-3 * 10^4 <= nums[i] <= 3 * 10^4"]
+  },
+  "brute_force": {
+    "explanation": "Try every start position and every allowed length from 1 through n, adding values by circular index and retaining the largest sum. This directly checks every legal circular subarray and is a clear baseline for the wraparound rule.",
+    "correctness_idea": "A legal circular subarray is fully determined by its start index and length, where the length is at most n. The nested loops enumerate every such choice, including runs that cross the array boundary, and compare each non-empty sum with the best.",
+    "language": "java",
+    "code": "class Solution {\n    public int maxSubarraySumCircular(int[] nums) {\n        int length = nums.length;\n        int best = Integer.MIN_VALUE;\n        for (int start = 0; start < length; start++) {\n            int sum = 0;\n            for (int count = 1; count <= length; count++) {\n                int index = (start + count - 1) % length;\n                sum += nums[index];\n                best = Math.max(best, sum);\n            }\n        }\n        return best;\n    }\n}",
+    "time_complexity": "O(n^2) — each of n starts is extended for up to n elements.",
+    "space_complexity": "O(1) auxiliary — only loop indices, a running sum, and the best sum are stored."
+  },
+  "optimized": {
+    "explanation": "In one pass, run Kadane's recurrence for both the maximum and minimum ordinary subarray sums while also accumulating the total array sum. The best circular answer is either the ordinary maximum, or the total minus the minimum subarray (the wrapped complement). If the ordinary maximum is negative, return it directly because taking the complement would select an empty subarray.",
+    "correctness_idea": "A circular maximum either does not wrap, in which case ordinary Kadane's maximum applies, or wraps across the boundary. A wrapping subarray omits one contiguous middle segment, so its sum is total minus that omitted segment; choosing the minimum-sum segment maximizes the complement. If every element is negative, every non-empty choice is negative and the complement formula would permit an invalid empty choice, so the maximum ordinary subarray is the correct answer.",
+    "language": "java",
+    "code": "class Solution {\n    public int maxSubarraySumCircular(int[] nums) {\n        int total = nums[0];\n        int maximumEnding = nums[0];\n        int maximumSubarray = nums[0];\n        int minimumEnding = nums[0];\n        int minimumSubarray = nums[0];\n\n        for (int index = 1; index < nums.length; index++) {\n            int value = nums[index];\n            total += value;\n            maximumEnding = Math.max(value, maximumEnding + value);\n            maximumSubarray = Math.max(maximumSubarray, maximumEnding);\n            minimumEnding = Math.min(value, minimumEnding + value);\n            minimumSubarray = Math.min(minimumSubarray, minimumEnding);\n        }\n\n        if (maximumSubarray < 0) {\n            return maximumSubarray;\n        }\n        return Math.max(maximumSubarray, total - minimumSubarray);\n    }\n}",
+    "time_complexity": "O(n) — all running sums are updated during one scan.",
+    "space_complexity": "O(1) auxiliary — only the total, current-ending sums, and best sums are stored."
+  },
+  "dry_run": {
+    "sample_input": {"nums": [5, -3, 5, -2, 4]},
+    "sample_output": 12,
+    "steps": [
+      {"sequence": 1, "event": "Initialize all running sums from nums[0] = 5.", "variables": {"index": 0, "value": 5, "total": 5, "maximumEnding": 5, "maximumSubarray": 5, "minimumEnding": 5, "minimumSubarray": 5}, "condition": "The first element is the only subarray ending at index 0.", "action": "Initialize total, maximum, and minimum state to 5.", "state_before": {"total": null, "maximumEnding": null, "maximumSubarray": null, "minimumEnding": null, "minimumSubarray": null}, "state_after": {"total": 5, "maximumEnding": 5, "maximumSubarray": 5, "minimumEnding": 5, "minimumSubarray": 5}, "focus": {"array": "nums", "indices": [0]}},
+      {"sequence": 2, "event": "Process index 1, value -3.", "variables": {"index": 1, "value": -3, "total": 2, "maximumEnding": 2, "maximumSubarray": 5, "minimumEnding": -3, "minimumSubarray": -3}, "condition": "Max ending is max(-3, 5 - 3) = 2; min ending is min(-3, 5 - 3) = -3.", "action": "Update both ending sums and record the minimum subarray -3.", "state_before": {"total": 5, "maximumEnding": 5, "maximumSubarray": 5, "minimumEnding": 5, "minimumSubarray": 5}, "state_after": {"total": 2, "maximumEnding": 2, "maximumSubarray": 5, "minimumEnding": -3, "minimumSubarray": -3}, "focus": {"array": "nums", "indices": [0, 1]}},
+      {"sequence": 3, "event": "Process index 2, value 5.", "variables": {"index": 2, "value": 5, "total": 7, "maximumEnding": 7, "maximumSubarray": 7, "minimumEnding": 2, "minimumSubarray": -3}, "condition": "Max ending is max(5, 2 + 5) = 7; min ending is min(5, -3 + 5) = 2.", "action": "Update maximumSubarray to 7; minimumSubarray remains -3.", "state_before": {"total": 2, "maximumEnding": 2, "maximumSubarray": 5, "minimumEnding": -3, "minimumSubarray": -3}, "state_after": {"total": 7, "maximumEnding": 7, "maximumSubarray": 7, "minimumEnding": 2, "minimumSubarray": -3}, "focus": {"array": "nums", "indices": [1, 2]}},
+      {"sequence": 4, "event": "Process index 3, value -2.", "variables": {"index": 3, "value": -2, "total": 5, "maximumEnding": 5, "maximumSubarray": 7, "minimumEnding": -2, "minimumSubarray": -3}, "condition": "Max ending is max(-2, 7 - 2) = 5; min ending is min(-2, 2 - 2) = -2.", "action": "Keep maximumSubarray at 7 and minimumSubarray at -3.", "state_before": {"total": 7, "maximumEnding": 7, "maximumSubarray": 7, "minimumEnding": 2, "minimumSubarray": -3}, "state_after": {"total": 5, "maximumEnding": 5, "maximumSubarray": 7, "minimumEnding": -2, "minimumSubarray": -3}, "focus": {"array": "nums", "indices": [2, 3]}},
+      {"sequence": 5, "event": "Process index 4, value 4, then choose the circular case.", "variables": {"index": 4, "value": 4, "total": 9, "maximumEnding": 9, "maximumSubarray": 9, "minimumEnding": 2, "minimumSubarray": -3, "wrappedSum": 12}, "condition": "Max ending is max(4, 5 + 4) = 9; min ending is min(4, -2 + 4) = 2, while the minimum subarray remains -3.", "action": "Compare ordinary maximum 9 with total - minimumSubarray = 9 - (-3) = 12; return 12.", "state_before": {"total": 5, "maximumEnding": 5, "maximumSubarray": 7, "minimumEnding": -2, "minimumSubarray": -3}, "state_after": {"total": 9, "maximumEnding": 9, "maximumSubarray": 9, "minimumEnding": 2, "minimumSubarray": -3, "wrappedSum": 12, "result": 12}, "focus": {"array": "nums", "indices": [3, 4]}}
+    ],
+    "final_result": 12
+  },
+  "edge_cases": [
+    {"case": "All values are negative", "handling": "The optimized method returns the maximum ordinary subarray directly, avoiding an empty complement."},
+    {"case": "A one-element array", "handling": "The initialized maximum and minimum are the sole element; the result is that element."},
+    {"case": "The best subarray wraps around the boundary", "handling": "The total minus the minimum middle segment yields the wrapped candidate, which is compared with the ordinary maximum."},
+    {"case": "The entire array is the maximum subarray", "handling": "The ordinary maximum remains a candidate, while the complement must not be chosen if it represents an empty subarray."}
+  ]
+}

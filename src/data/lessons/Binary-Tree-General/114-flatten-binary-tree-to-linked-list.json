@@ -1,0 +1,35 @@
+{
+  "metadata": {"problem_number": 114, "title": "Flatten Binary Tree to Linked List", "url": "https://leetcode.com/problems/flatten-binary-tree-to-linked-list/", "difficulty": "Medium", "category": "Binary Tree General"},
+  "problem_summary": {"summary": "Rewire the tree in place into a right-only chain in preorder, leaving every left pointer null.", "input_output": "Input: root of a binary tree. Modify it in place; the method returns nothing.", "constraints": ["0 <= number of nodes <= 2000", "-100 <= Node.val <= 100", "Output order is preorder"]},
+  "brute_force": {
+    "explanation": "Collect node references in preorder, then connect each node's right pointer to the next reference and clear all left pointers.",
+    "correctness_idea": "The collected sequence is exactly preorder. Linking consecutive entries produces the required chain without changing values or allocating replacement tree nodes.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.ArrayList;\nimport java.util.Deque;\nimport java.util.List;\n\nclass Solution {\n    public void flatten(TreeNode root) {\n        if (root == null) {\n            return;\n        }\n        List<TreeNode> preorder = new ArrayList<>();\n        Deque<TreeNode> stack = new ArrayDeque<>();\n        stack.push(root);\n        while (!stack.isEmpty()) {\n            TreeNode node = stack.pop();\n            preorder.add(node);\n            if (node.right != null) {\n                stack.push(node.right);\n            }\n            if (node.left != null) {\n                stack.push(node.left);\n            }\n        }\n        for (int index = 0; index < preorder.size(); index++) {\n            TreeNode node = preorder.get(index);\n            node.left = null;\n            node.right = index + 1 < preorder.size() ? preorder.get(index + 1) : null;\n        }\n    }\n}",
+    "time_complexity": "O(n) — one preorder traversal and one rewiring pass.",
+    "space_complexity": "O(n) auxiliary for the node list and traversal stack."
+  },
+  "optimized": {
+    "explanation": "At each node with a left child, find the rightmost node of that left subtree, attach the original right subtree there, move the left subtree to the right, and clear the left link. Continue along the resulting right chain.",
+    "correctness_idea": "The left subtree's preorder must immediately follow the current node, while the old right subtree must follow all of that left subtree. The predecessor link places those pieces in exactly that order.",
+    "language": "java",
+    "code": "class Solution {\n    public void flatten(TreeNode root) {\n        TreeNode current = root;\n        while (current != null) {\n            if (current.left != null) {\n                TreeNode predecessor = current.left;\n                while (predecessor.right != null) {\n                    predecessor = predecessor.right;\n                }\n                predecessor.right = current.right;\n                current.right = current.left;\n                current.left = null;\n            }\n            current = current.right;\n        }\n    }\n}",
+    "time_complexity": "O(n) amortized — predecessor walks traverse links that are not revisited after rewiring.",
+    "space_complexity": "O(1) auxiliary — only node pointers are used."
+  },
+  "dry_run": {
+    "sample_input": {"root_level_order": [1, 2, 5, 3, 4, null, 6]},
+    "sample_output": [1, 2, 3, 4, 5, 6],
+    "steps": [
+      {"sequence": 1, "event": "Process node 1.", "variables": {"current": 1, "left": 2, "right": 5}, "condition": "A left subtree exists; its rightmost node is 4.", "action": "Attach 5 after 4, move subtree 2 to the right, and clear 1.left.", "state_before": {"links": {"1": [2, 5], "4": [null, null]}}, "state_after": {"links": {"1": [null, 2], "4": [null, 5]}}},
+      {"sequence": 2, "event": "Process node 2 along the right chain.", "variables": {"current": 2, "left": 3, "right": 4}, "condition": "The rightmost node of left subtree 3 is 3.", "action": "Attach 4 after 3, move 3 to the right, and clear 2.left.", "state_before": {"links": {"2": [3, 4], "3": [null, null]}}, "state_after": {"links": {"2": [null, 3], "3": [null, 4]}}},
+      {"sequence": 3, "event": "Continue through nodes 3, 4, 5, and 6.", "variables": {"current": 3}, "condition": "No further left subtree requires splicing.", "action": "Advance through right links until null.", "state_before": {"rightChain": [1, 2, 3, 4, 5, 6]}, "state_after": {"leftLinks": [null, null, null, null, null, null]}}
+    ],
+    "final_result": [1, 2, 3, 4, 5, 6]
+  },
+  "edge_cases": [
+    {"case": "Empty tree", "handling": "The loop exits immediately."},
+    {"case": "Already a right chain", "handling": "No rewiring is needed; each left pointer remains null."},
+    {"case": "Left-only branches", "handling": "Each left branch is moved to the right in preorder position."}
+  ]
+}

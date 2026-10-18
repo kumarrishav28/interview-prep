@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "problem_number": 64,
+    "title": "Minimum Path Sum",
+    "url": "https://leetcode.com/problems/minimum-path-sum/",
+    "difficulty": "Medium",
+    "category": "Multidimensional DP"
+  },
+  "problem_summary": {
+    "summary": "Move from the upper-left to the lower-right of a non-negative grid using only right and down moves, minimizing the sum of visited cells.",
+    "input_output": "Input: an m by n integer grid. Return the smallest sum along a valid path, including both endpoints.",
+    "constraints": ["1 <= m, n <= 200", "0 <= grid[i][j] <= 200"]
+  },
+  "brute_force": {
+    "explanation": "Recursively try moving right and down from each cell, returning the cell value plus the cheaper valid continuation. At the last row or column there is only one possible direction.",
+    "correctness_idea": "Every legal path from a cell starts with one of its allowed moves. Taking the minimum of the recursively computed costs therefore yields the best path from that cell.",
+    "language": "java",
+    "code": "class Solution {\n    public int minPathSum(int[][] grid) {\n        return costFrom(grid, 0, 0);\n    }\n\n    private int costFrom(int[][] grid, int row, int column) {\n        int rows = grid.length;\n        int columns = grid[0].length;\n        if (row == rows - 1 && column == columns - 1) return grid[row][column];\n        if (row == rows - 1) return grid[row][column] + costFrom(grid, row, column + 1);\n        if (column == columns - 1) return grid[row][column] + costFrom(grid, row + 1, column);\n        return grid[row][column] + Math.min(\n                costFrom(grid, row + 1, column), costFrom(grid, row, column + 1));\n    }\n}",
+    "time_complexity": "O(2^(m+n)) as a simple upper bound on the branching recursion, where m and n are grid dimensions.",
+    "space_complexity": "O(m+n) auxiliary recursion stack space."
+  },
+  "optimized": {
+    "explanation": "Process the grid in row-major order using one array. Before updating column j, its value is the best cost from the cell above; after updating column j-1, that entry is the best cost from the left. Combine the smaller available predecessor with the current cell.",
+    "correctness_idea": "Any path entering a cell must come from above or from the left. The rolling array retains exactly those predecessor optima, so each update computes the same minimum as a full two-dimensional table.",
+    "language": "java",
+    "code": "class Solution {\n    public int minPathSum(int[][] grid) {\n        int rows = grid.length;\n        int columns = grid[0].length;\n        int[] best = new int[columns];\n        for (int row = 0; row < rows; row++) {\n            for (int column = 0; column < columns; column++) {\n                if (row == 0 && column == 0) {\n                    best[column] = grid[row][column];\n                } else if (row == 0) {\n                    best[column] = best[column - 1] + grid[row][column];\n                } else if (column == 0) {\n                    best[column] += grid[row][column];\n                } else {\n                    best[column] = Math.min(best[column], best[column - 1]) + grid[row][column];\n                }\n            }\n        }\n        return best[columns - 1];\n    }\n}",
+    "time_complexity": "O(mn), visiting each cell once.",
+    "space_complexity": "O(n) auxiliary space for one grid row of costs."
+  },
+  "dry_run": {
+    "sample_input": {"grid": [[1, 3, 1], [1, 5, 1], [4, 2, 1]]},
+    "sample_output": 7,
+    "steps": [
+      {"sequence": 1, "event": "Process the first row.", "variables": {"row": 0, "best": [1, 4, 5]}, "condition": "The start is initialized; remaining first-row cells can only come from the left.", "action": "Build cumulative first-row costs.", "state_before": {"best": [0, 0, 0]}, "state_after": {"best": [1, 4, 5]}},
+      {"sequence": 2, "event": "Process row 1, column 0.", "variables": {"row": 1, "column": 0, "cell": 1}, "condition": "Only the cell above is reachable.", "action": "Add the cell to the above cost: 1+1.", "state_before": {"best": [1, 4, 5]}, "state_after": {"best": [2, 4, 5]}},
+      {"sequence": 3, "event": "Process row 1, columns 1 and 2.", "variables": {"row": 1, "costs": [5, 1]}, "condition": "For each cell, compare the above value with the updated left value.", "action": "Set costs to min(4,2)+5=7, then min(5,7)+1=6.", "state_before": {"best": [2, 4, 5]}, "state_after": {"best": [2, 7, 6]}},
+      {"sequence": 4, "event": "Process the last row.", "variables": {"row": 2, "cells": [4, 2, 1]}, "condition": "Apply the same predecessor recurrence across the row.", "action": "Update best to [6,8,7].", "state_before": {"best": [2, 7, 6]}, "state_after": {"best": [6, 8, 7]}},
+      {"sequence": 5, "event": "Return the destination cost.", "variables": {"result": 7}, "condition": "The last array entry is the cost at the lower-right cell.", "action": "Return best[2].", "state_before": {"best": [6, 8, 7]}, "state_after": {"result": 7}}
+    ],
+    "final_result": 7
+  },
+  "edge_cases": [
+    {"case": "One cell", "handling": "The initialized start is also the destination and is returned."},
+    {"case": "Single row or column", "handling": "Each cell has just one valid predecessor, handled by the boundary branches."},
+    {"case": "Zero-valued cells", "handling": "The minimum recurrence remains valid because costs are accumulated without assumptions of positivity beyond the given non-negative values."}
+  ]
+}

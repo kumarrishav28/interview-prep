@@ -1,0 +1,51 @@
+{
+  "metadata": {
+    "problem_number": 190,
+    "title": "Reverse Bits",
+    "url": "https://leetcode.com/problems/reverse-bits/",
+    "difficulty": "Easy",
+    "category": "Bit Manipulation"
+  },
+  "problem_summary": {
+    "summary": "Reverse the order of all 32 bits in the given nonnegative integer and return the resulting 32-bit value.",
+    "input_output": "Input: an integer n interpreted as a 32-bit value. Output: the integer represented by its bit-reversed 32-bit pattern.",
+    "constraints": [
+      "0 <= n <= 2^31 - 2",
+      "n is even",
+      "The operation reverses exactly 32 bits, including leading zeroes in the 32-bit representation"
+    ]
+  },
+  "brute_force": {
+    "explanation": "Render n as exactly 32 binary characters, read those characters in reverse order, and parse the resulting unsigned base-2 value. This makes the bit positions explicit but allocates temporary strings.",
+    "correctness_idea": "The character at position i in the reversed string is the original bit at position 31 - i, which is precisely a 32-bit reversal.",
+    "language": "java",
+    "code": "class Solution {\n    public int reverseBits(int n) {\n        String bits = String.format(\"%32s\", Integer.toBinaryString(n)).replace(' ', '0');\n        String reversed = new StringBuilder(bits).reverse().toString();\n        return Integer.parseUnsignedInt(reversed, 2);\n    }\n}",
+    "time_complexity": "O(32) time for fixed-width conversion and reversal, which is O(1) for a 32-bit integer.",
+    "space_complexity": "O(32) temporary characters, which is O(1) for a fixed-width integer."
+  },
+  "optimized": {
+    "explanation": "Repeat exactly 32 times: shift the result left to make room, append n's least significant bit, then unsigned-shift n right to expose its next bit. The unsigned shift preserves the intended fixed-width sequence if the sign bit is ever involved.",
+    "correctness_idea": "After i iterations, the result contains the original i least-significant bits in reversed order as its i least-significant bits. After 32 iterations, all original positions have been moved to their mirrored positions.",
+    "language": "java",
+    "code": "class Solution {\n    public int reverseBits(int n) {\n        int reversed = 0;\n        for (int bitIndex = 0; bitIndex < 32; bitIndex++) {\n            reversed = (reversed << 1) | (n & 1);\n            n >>>= 1;\n        }\n        return reversed;\n    }\n}",
+    "time_complexity": "O(32) = O(1), since exactly 32 bit positions are processed.",
+    "space_complexity": "O(1) auxiliary space."
+  },
+  "dry_run": {
+    "sample_input": {"n": 10, "binary_32_bit": "00000000000000000000000000001010"},
+    "sample_output": 1342177280,
+    "steps": [
+      {"sequence": 1, "event": "Process bit position 0.", "variables": {"bitIndex": 0, "nBefore": 10, "extractedBit": 0, "reversedBefore": 0}, "condition": "The loop processes every bitIndex from 0 through 31.", "action": "Append the low bit to reversed, then unsigned-shift n right.", "state_before": {"n": 10, "reversed": 0}, "state_after": {"n": 5, "reversed": 0}},
+      {"sequence": 2, "event": "Process bit position 1.", "variables": {"bitIndex": 1, "nBefore": 5, "extractedBit": 1, "reversedBefore": 0}, "condition": "n & 1 is 1.", "action": "Set reversed to (0 << 1) | 1, then unsigned-shift n right.", "state_before": {"n": 5, "reversed": 0}, "state_after": {"n": 2, "reversed": 1}},
+      {"sequence": 3, "event": "Process bit position 2.", "variables": {"bitIndex": 2, "nBefore": 2, "extractedBit": 0, "reversedBefore": 1}, "condition": "n & 1 is 0.", "action": "Shift reversed left and unsigned-shift n right.", "state_before": {"n": 2, "reversed": 1}, "state_after": {"n": 1, "reversed": 2}},
+      {"sequence": 4, "event": "Process bit position 3.", "variables": {"bitIndex": 3, "nBefore": 1, "extractedBit": 1, "reversedBefore": 2}, "condition": "n & 1 is 1.", "action": "Append 1 to reversed; the remaining 28 input bits are now zero.", "state_before": {"n": 1, "reversed": 2}, "state_after": {"n": 0, "reversed": 5}},
+      {"sequence": 5, "event": "Process bit positions 4 through 31.", "variables": {"iterations": 28, "extractedBits": "0000000000000000000000000000", "nBefore": 0, "reversedBefore": 5}, "condition": "Each remaining loop iteration extracts 0; 28 iterations remain.", "action": "Each iteration shifts reversed left once. Thus reversed becomes 5 * 2^28, with n remaining zero.", "state_before": {"n": 0, "reversed": 5, "bitIndex": 4}, "state_after": {"n": 0, "reversed": 1342177280, "bitIndex": 32}}
+    ],
+    "final_result": 1342177280
+  },
+  "edge_cases": [
+    {"case": "n is 0", "handling": "All 32 extracted bits are zero, so the result remains zero."},
+    {"case": "n is the largest allowed even value", "handling": "The fixed 32 iterations preserve leading zeroes and process every position."},
+    {"case": "The reversed pattern has its top bit set", "handling": "Java int stores the same 32-bit pattern; for the stated even-input constraint the original least-significant bit is zero, so the result's top bit is zero."}
+  ]
+}

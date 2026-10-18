@@ -1,0 +1,39 @@
+{
+  "metadata": {"problem_number": 82, "title": "Remove Duplicates from Sorted List II", "url": "https://leetcode.com/problems/remove-duplicates-from-sorted-list-ii/", "difficulty": "Medium", "category": "Linked List"},
+  "problem_summary": {
+    "summary": "From a sorted singly linked list, remove every value that occurs more than once and retain only values appearing exactly once.",
+    "input_output": "Input: possibly-null ListNode head. Return the filtered ListNode head. The judge supplies ListNode { int val; ListNode next; }.",
+    "constraints": ["0 <= number of nodes <= 300", "-100 <= Node.val <= 100", "The list is sorted in ascending order"]
+  },
+  "brute_force": {
+    "explanation": "Count each value with a HashMap, then relink only nodes whose value has frequency one.",
+    "correctness_idea": "The frequency table identifies exactly the values that occur once. Keeping precisely their original nodes produces the required result while preserving sorted order.",
+    "language": "java",
+    "code": "import java.util.HashMap;\nimport java.util.Map;\n\nclass Solution {\n    public ListNode deleteDuplicates(ListNode head) {\n        Map<Integer, Integer> counts = new HashMap<>();\n        for (ListNode current = head; current != null; current = current.next) {\n            counts.put(current.val, counts.getOrDefault(current.val, 0) + 1);\n        }\n        ListNode dummy = new ListNode(0);\n        ListNode tail = dummy;\n        for (ListNode current = head; current != null; ) {\n            ListNode next = current.next;\n            if (counts.get(current.val) == 1) {\n                tail.next = current;\n                tail = current;\n            }\n            current = next;\n        }\n        tail.next = null;\n        return dummy.next;\n    }\n}",
+    "time_complexity": "O(n) expected across counting and filtering.",
+    "space_complexity": "O(u) auxiliary for u distinct values in the map."
+  },
+  "optimized": {
+    "explanation": "Use a dummy predecessor and scan equal-value runs. If a run has multiple nodes, skip the entire run; otherwise advance the predecessor to keep its single node.",
+    "correctness_idea": "Sorted order makes every duplicate value a contiguous run. Detecting whether the next value differs identifies run length one; skipping longer runs removes all occurrences as required.",
+    "language": "java",
+    "code": "class Solution {\n    public ListNode deleteDuplicates(ListNode head) {\n        ListNode dummy = new ListNode(0, head);\n        ListNode previous = dummy;\n        while (previous.next != null) {\n            if (previous.next.next != null && previous.next.val == previous.next.next.val) {\n                int duplicateValue = previous.next.val;\n                while (previous.next != null && previous.next.val == duplicateValue) {\n                    previous.next = previous.next.next;\n                }\n            } else {\n                previous = previous.next;\n            }\n        }\n        return dummy.next;\n    }\n}",
+    "time_complexity": "O(n) — each node is examined and skipped at most once.",
+    "space_complexity": "O(1) auxiliary."
+  },
+  "dry_run": {
+    "sample_input": {"head": [1, 2, 2, 4, 5, 5, 7]},
+    "sample_output": [1, 4, 7],
+    "steps": [
+      {"sequence": 1, "event": "Inspect singleton run 1.", "variables": {"previousValue": 0, "runValue": 1}, "condition": "The next node is absent or has a different value.", "action": "Keep 1 and move previous to it.", "state_before": {"resultPrefix": [], "unprocessed": [1, 2, 2, 4, 5, 5, 7]}, "state_after": {"resultPrefix": [1], "unprocessed": [2, 2, 4, 5, 5, 7]}},
+      {"sequence": 2, "event": "Skip duplicate run 2.", "variables": {"duplicateValue": 2}, "condition": "The next two nodes share value 2.", "action": "Advance previous.next past both 2 nodes.", "state_before": {"resultPrefix": [1], "unprocessed": [2, 2, 4, 5, 5, 7]}, "state_after": {"resultPrefix": [1], "unprocessed": [4, 5, 5, 7]}},
+      {"sequence": 3, "event": "Keep 4, skip run 5, then keep 7.", "variables": {"duplicateValue": 5, "keptValues": [4, 7]}, "condition": "4 and 7 each form singleton runs; 5 occurs twice.", "action": "Retain singleton links and bypass the duplicate run.", "state_before": {"resultPrefix": [1], "unprocessed": [4, 5, 5, 7]}, "state_after": {"resultPrefix": [1, 4, 7], "unprocessed": []}}
+    ],
+    "final_result": [1, 4, 7]
+  },
+  "edge_cases": [
+    {"case": "All values are duplicated", "handling": "Every run is skipped and the returned head is null."},
+    {"case": "A duplicate run starts at the head", "handling": "The dummy predecessor allows the head run to be removed."},
+    {"case": "All values are unique", "handling": "Every node is retained in its existing order."}
+  ]
+}

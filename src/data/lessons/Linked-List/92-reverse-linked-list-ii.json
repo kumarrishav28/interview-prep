@@ -1,0 +1,39 @@
+{
+  "metadata": {"problem_number": 92, "title": "Reverse Linked List II", "url": "https://leetcode.com/problems/reverse-linked-list-ii/", "difficulty": "Medium", "category": "Linked List"},
+  "problem_summary": {
+    "summary": "Reverse the nodes at 1-indexed positions left through right, leaving the rest of the singly linked list in place.",
+    "input_output": "Inputs: non-null ListNode head and positions left/right. Return the resulting ListNode head. The judge supplies ListNode { int val; ListNode next; }.",
+    "constraints": ["1 <= number of nodes <= 500", "-500 <= Node.val <= 500", "1 <= left <= right <= number of nodes"]
+  },
+  "brute_force": {
+    "explanation": "Store references to all nodes in an array, reverse the selected array segment, then reconnect their next links in array order.",
+    "correctness_idea": "The selected references are reordered into exactly the reverse positional order; links outside the segment retain their original sequence when the entire reference array is reconnected.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass Solution {\n    public ListNode reverseBetween(ListNode head, int left, int right) {\n        List<ListNode> nodes = new ArrayList<>();\n        for (ListNode current = head; current != null; current = current.next) nodes.add(current);\n        int first = left - 1;\n        int last = right - 1;\n        while (first < last) {\n            ListNode temporary = nodes.get(first);\n            nodes.set(first++, nodes.get(last));\n            nodes.set(last--, temporary);\n        }\n        for (int index = 0; index + 1 < nodes.size(); index++) nodes.get(index).next = nodes.get(index + 1);\n        nodes.get(nodes.size() - 1).next = null;\n        return nodes.get(0);\n    }\n}",
+    "time_complexity": "O(n) — collect, reverse the selected reference range, and reconnect the list.",
+    "space_complexity": "O(n) auxiliary for the node-reference array."
+  },
+  "optimized": {
+    "explanation": "Use a dummy node before head, walk to the node before left, then repeatedly move the node after the segment head to the front of the segment.",
+    "correctness_idea": "Each head insertion places the next unreversed node at the segment's front. After right-left such moves, the segment is reversed and both boundary links still connect to the unchanged prefix and suffix.",
+    "language": "java",
+    "code": "class Solution {\n    public ListNode reverseBetween(ListNode head, int left, int right) {\n        ListNode dummy = new ListNode(0, head);\n        ListNode before = dummy;\n        for (int position = 1; position < left; position++) before = before.next;\n        ListNode segmentTail = before.next;\n        for (int count = 0; count < right - left; count++) {\n            ListNode moving = segmentTail.next;\n            segmentTail.next = moving.next;\n            moving.next = before.next;\n            before.next = moving;\n        }\n        return dummy.next;\n    }\n}",
+    "time_complexity": "O(n) — locating the segment and performing its reversals takes linear time.",
+    "space_complexity": "O(1) auxiliary."
+  },
+  "dry_run": {
+    "sample_input": {"head": [2, 6, 9, 4, 7], "left": 2, "right": 4},
+    "sample_output": [2, 4, 9, 6, 7],
+    "steps": [
+      {"sequence": 1, "event": "Locate segment boundary and first node.", "variables": {"before": 2, "segmentTail": 6}, "condition": "left is 2, so before is at position 1.", "action": "Keep node 6 as the fixed tail while remaining nodes are moved in front.", "state_before": {"list": [2, 6, 9, 4, 7]}, "state_after": {"segment": [6, 9, 4], "before": 2}},
+      {"sequence": 2, "event": "Move node 9 to the segment front.", "variables": {"moving": 9, "segmentTail": 6}, "condition": "One of right-left = 2 front insertions is complete.", "action": "Detach 9 after 6 and place it after node 2.", "state_before": {"list": [2, 6, 9, 4, 7]}, "state_after": {"list": [2, 9, 6, 4, 7]}},
+      {"sequence": 3, "event": "Move node 4 to the segment front.", "variables": {"moving": 4, "segmentTail": 6}, "condition": "Two insertions are complete.", "action": "Detach 4 and place it after node 2.", "state_before": {"list": [2, 9, 6, 4, 7]}, "state_after": {"list": [2, 4, 9, 6, 7]}}
+    ],
+    "final_result": [2, 4, 9, 6, 7]
+  },
+  "edge_cases": [
+    {"case": "left == right", "handling": "The insertion loop runs zero times and returns the original ordering."},
+    {"case": "Reversal begins at the head", "handling": "The dummy node provides the predecessor needed to update the returned head."},
+    {"case": "Reversal reaches the tail", "handling": "The segment tail retains its link to null after the final move."}
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 17,
+    "title": "Letter Combinations of a Phone Number",
+    "url": "https://leetcode.com/problems/letter-combinations-of-a-phone-number/",
+    "difficulty": "Medium",
+    "category": "Backtracking"
+  },
+  "problem_summary": {
+    "summary": "Map each digit from 2 through 9 to its phone-keypad letters and return every string formed by choosing one letter per digit.",
+    "input_output": "Input: a digit string. Return all corresponding letter strings; the result may be in any order.",
+    "constraints": ["1 <= digits.length <= 4", "Each digit is in the range '2' through '9'"]
+  },
+  "brute_force": {
+    "explanation": "Expand a list of partial strings one digit at a time. For each partial string, copy it once per letter on the next key and append that letter. This straightforward breadth-by-position approach materializes intermediate strings at every depth.",
+    "correctness_idea": "After processing a prefix of digits, the list contains exactly the strings formed by all choices for that prefix. Expanding by every letter on the next key extends each partial choice exactly once.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass Solution {\n    public List<String> letterCombinations(String digits) {\n        List<String> combinations = new ArrayList<>();\n        if (digits.isEmpty()) {\n            return combinations;\n        }\n        String[] letters = {\"\", \"\", \"abc\", \"def\", \"ghi\", \"jkl\", \"mno\", \"pqrs\", \"tuv\", \"wxyz\"};\n        combinations.add(\"\");\n        for (int index = 0; index < digits.length(); index++) {\n            List<String> next = new ArrayList<>();\n            String choices = letters[digits.charAt(index) - '0'];\n            for (String prefix : combinations) {\n                for (int choice = 0; choice < choices.length(); choice++) {\n                    next.add(prefix + choices.charAt(choice));\n                }\n            }\n            combinations = next;\n        }\n        return combinations;\n    }\n}",
+    "time_complexity": "O(L * P) — P is the number of returned strings and L is the number of digits; intermediate string construction copies prefixes.",
+    "space_complexity": "O(P * L) for the returned strings, plus O(P * L) peak intermediate strings."
+  },
+  "optimized": {
+    "explanation": "Use depth-first backtracking with one mutable StringBuilder. At each position, try each mapped letter, recurse to the next digit, then remove the letter before trying the next choice.",
+    "correctness_idea": "At recursion depth i, the builder contains one choice for each of the first i digits. Trying every letter for digit i explores every possible extension, and restoring the builder keeps sibling branches independent.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass Solution {\n    private static final String[] LETTERS = {\"\", \"\", \"abc\", \"def\", \"ghi\", \"jkl\", \"mno\", \"pqrs\", \"tuv\", \"wxyz\"};\n\n    public List<String> letterCombinations(String digits) {\n        List<String> result = new ArrayList<>();\n        if (!digits.isEmpty()) {\n            build(digits, 0, new StringBuilder(), result);\n        }\n        return result;\n    }\n\n    private void build(String digits, int index, StringBuilder current, List<String> result) {\n        if (index == digits.length()) {\n            result.add(current.toString());\n            return;\n        }\n        String choices = LETTERS[digits.charAt(index) - '0'];\n        for (int choice = 0; choice < choices.length(); choice++) {\n            current.append(choices.charAt(choice));\n            build(digits, index + 1, current, result);\n            current.deleteCharAt(current.length() - 1);\n        }\n    }\n}",
+    "time_complexity": "O(L * P) — all P output strings have length L and must be materialized.",
+    "space_complexity": "O(L) auxiliary for the builder and recursion stack, excluding O(P * L) output."
+  },
+  "dry_run": {
+    "sample_input": {"digits": "27"},
+    "sample_output": ["ap", "aq", "ar", "as", "bp", "bq", "br", "bs", "cp", "cq", "cr", "cs"],
+    "steps": [
+      {"sequence": 1, "event": "Choose the first letter for digit 2.", "variables": {"index": 0, "digit": "2", "letter": "a", "current": ""}, "condition": "index is before the final digit.", "action": "Append a and recurse to index 1.", "state_before": {"current": "", "result": []}, "state_after": {"current": "a", "index": 1, "result": []}},
+      {"sequence": 2, "event": "Try each letter for digit 7 under prefix a.", "variables": {"index": 1, "choices": "pqrs", "current": "a"}, "condition": "Each of p, q, r, s is a valid choice.", "action": "Append each choice at the leaf, record it, and backtrack.", "state_before": {"current": "a", "result": []}, "state_after": {"current": "a", "result": ["ap", "aq", "ar", "as"]}},
+      {"sequence": 3, "event": "Backtrack and choose b for digit 2.", "variables": {"index": 0, "letter": "b", "current": ""}, "condition": "The a branch has been fully explored.", "action": "Append b and explore digit 7 choices.", "state_before": {"current": "", "result": ["ap", "aq", "ar", "as"]}, "state_after": {"current": "b", "index": 1, "result": ["ap", "aq", "ar", "as", "bp", "bq", "br", "bs"]}},
+      {"sequence": 4, "event": "Explore c, then finish the root choices.", "variables": {"index": 0, "letter": "c", "choicesFor7": "pqrs"}, "condition": "No more letters remain after c.", "action": "Record cp, cq, cr, cs and return the 12 strings.", "state_before": {"result": ["ap", "aq", "ar", "as", "bp", "bq", "br", "bs"]}, "state_after": {"result": ["ap", "aq", "ar", "as", "bp", "bq", "br", "bs", "cp", "cq", "cr", "cs"]}}
+    ],
+    "final_result": ["ap", "aq", "ar", "as", "bp", "bq", "br", "bs", "cp", "cq", "cr", "cs"]
+  },
+  "edge_cases": [
+    {"case": "Empty digit string", "handling": "Returns an empty list rather than a list containing an empty string."},
+    {"case": "A single digit", "handling": "Returns each letter on that key as a one-character string."},
+    {"case": "Digits 7 or 9", "handling": "Their four-letter mappings are included, so output size reflects those larger branches."}
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "metadata": {"problem_number": 909, "title": "Snakes and Ladders", "url": "https://leetcode.com/problems/snakes-and-ladders/", "difficulty": "Medium", "category": "Graph BFS"},
+  "problem_summary": {"summary": "Find the fewest six-sided die rolls needed to reach the final square on a boustrophedon-labeled board with at most one snake or ladder taken per roll.", "input_output": "Input: an n by n board where -1 means no jump and any other value is the jump destination. Return minimum rolls from square 1 to n squared, or -1 if unreachable.", "constraints": ["2 <= n <= 20", "board is n by n", "board[i][j] is -1 or in [1, n^2]", "Squares 1 and n^2 are not jump starts", "A jump destination is not followed by another jump on the same roll"]},
+  "brute_force": {
+    "explanation": "Convert every square into a graph vertex and materialize all at-most-six outgoing edges after applying that landing square's one permitted snake or ladder. Run BFS from square 1 over this explicit graph.",
+    "correctness_idea": "Each graph edge represents exactly one legal die roll and its resulting final square after at most one jump. BFS explores states in nondecreasing roll count, so its first visit to the last square is a minimum-roll route.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.ArrayList;\nimport java.util.Arrays;\nimport java.util.List;\nimport java.util.Queue;\n\nclass Solution {\n    public int snakesAndLadders(int[][] board) {\n        int size = board.length;\n        int last = size * size;\n        List<List<Integer>> graph = new ArrayList<>();\n        for (int square = 0; square <= last; square++) graph.add(new ArrayList<>());\n        for (int square = 1; square < last; square++) {\n            for (int landing = square + 1; landing <= Math.min(square + 6, last); landing++) {\n                int[] cell = cellFor(landing, size);\n                int destination = board[cell[0]][cell[1]] == -1 ? landing : board[cell[0]][cell[1]];\n                graph.get(square).add(destination);\n            }\n        }\n        int[] distance = new int[last + 1];\n        Arrays.fill(distance, -1);\n        Queue<Integer> queue = new ArrayDeque<>();\n        distance[1] = 0; queue.offer(1);\n        while (!queue.isEmpty()) {\n            int square = queue.poll();\n            if (square == last) return distance[square];\n            for (int next : graph.get(square)) if (distance[next] == -1) { distance[next] = distance[square] + 1; queue.offer(next); }\n        }\n        return -1;\n    }\n    private int[] cellFor(int square, int size) {\n        int offset = square - 1;\n        int rowFromBottom = offset / size;\n        int colOffset = offset % size;\n        int col = rowFromBottom % 2 == 0 ? colOffset : size - 1 - colOffset;\n        return new int[] {size - 1 - rowFromBottom, col};\n    }\n}",
+    "time_complexity": "O(S), where S = n^2 squares; each square has at most six stored outgoing edges and BFS processes each once.",
+    "space_complexity": "O(S) auxiliary for the explicit adjacency list, distances, and queue."
+  },
+  "optimized": {
+    "explanation": "Run BFS directly over square numbers without storing adjacency lists. For each square, generate its at-most-six die landings, map each landing to its board cell, apply one jump if present, and enqueue the resulting square once.",
+    "correctness_idea": "The generated neighbors are exactly the legal next states after one roll. Marking on enqueue prevents duplicate work, and BFS's level order makes the first distance assigned to the goal minimal.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.Arrays;\nimport java.util.Queue;\n\nclass Solution {\n    public int snakesAndLadders(int[][] board) {\n        int size = board.length;\n        int last = size * size;\n        int[] distance = new int[last + 1];\n        Arrays.fill(distance, -1);\n        Queue<Integer> queue = new ArrayDeque<>();\n        distance[1] = 0; queue.offer(1);\n        while (!queue.isEmpty()) {\n            int square = queue.poll();\n            if (square == last) return distance[square];\n            for (int landing = square + 1; landing <= Math.min(square + 6, last); landing++) {\n                int offset = landing - 1;\n                int rowFromBottom = offset / size;\n                int colOffset = offset % size;\n                int col = rowFromBottom % 2 == 0 ? colOffset : size - 1 - colOffset;\n                int row = size - 1 - rowFromBottom;\n                int next = board[row][col] == -1 ? landing : board[row][col];\n                if (distance[next] == -1) { distance[next] = distance[square] + 1; queue.offer(next); }\n            }\n        }\n        return -1;\n    }\n}",
+    "time_complexity": "O(S), where S = n^2; at most six candidate landings are considered per visited square.",
+    "space_complexity": "O(S) auxiliary for distances and the BFS queue; no transition graph is stored."
+  },
+  "dry_run": {
+    "sample_input": {"board": [[-1, -1, -1], [-1, 6, -1], [-1, -1, -1]]},
+    "sample_output": 2,
+    "steps": [
+      {"sequence": 1, "event": "Start BFS at square 1.", "variables": {"square": 1, "distance": 0, "queue": [1]}, "condition": "From square 1, rolls can land on 2 through 7.", "action": "Square 5 maps to middle row, column 1, which contains ladder destination 6; the legal transitions enqueue 2, 3, 4, 6, and 7.", "state_before": {"seen": [1], "queue": [1]}, "state_after": {"distanceOf6": 1, "queue": [2, 3, 4, 6, 7]}},
+      {"sequence": 2, "event": "Process square 6.", "variables": {"square": 6, "distance": 1, "goal": 9}, "condition": "A roll can land directly on 9.", "action": "Assign distance 2 to square 9 and enqueue it.", "state_before": {"distanceOf9": -1, "queueContains": [6]}, "state_after": {"distanceOf9": 2, "queueContains": [9]}},
+      {"sequence": 3, "event": "Reach the final square.", "variables": {"square": 9, "distance": 2}, "condition": "The dequeued square is n squared.", "action": "Return 2 rolls.", "state_before": {"queue": [9]}, "state_after": {"result": 2}}
+    ],
+    "final_result": 2
+  },
+  "edge_cases": [
+    {"case": "A jump lands on another jump start", "handling": "Only the first landing square's jump is applied for that roll."},
+    {"case": "A jump returns to a previously seen square", "handling": "Distance visitation prevents a redundant enqueue; BFS still considers all other routes."},
+    {"case": "The final square is reached with a partial die roll", "handling": "The last candidate is capped at n squared and is a valid move."},
+    {"case": "Goal cannot be reached", "handling": "The finite BFS queue empties and the method returns -1."}
+  ]
+}

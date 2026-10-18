@@ -1,0 +1,37 @@
+{
+  "metadata": {"problem_number": 211, "title": "Design Add and Search Words Data Structure", "url": "https://leetcode.com/problems/design-add-and-search-words-data-structure/", "difficulty": "Medium", "category": "Trie"},
+  "problem_summary": {"summary": "Support adding lowercase words and searching patterns where each dot matches exactly one lowercase letter.", "input_output": "Implement WordDictionary(), addWord(word), and search(word). Add has no return value; search reports whether any stored word matches the whole pattern.", "constraints": ["1 <= word.length <= 25", "Added words use lowercase English letters", "Search patterns use lowercase English letters and '.'", "At most two dots occur in any search pattern", "At most 10,000 addWord and search calls"]},
+  "brute_force": {
+    "explanation": "Store words in a list. For a search, test only equal-length words, comparing each position unless the pattern character is a dot. Return as soon as one full match is found.",
+    "correctness_idea": "A pattern matches a word exactly when their lengths agree and every non-dot position contains the same character. Checking every stored word covers all possible matches.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass WordDictionary {\n    private final List<String> words = new ArrayList<>();\n    public WordDictionary() {}\n    public void addWord(String word) { words.add(word); }\n    public boolean search(String pattern) {\n        for (String word : words) {\n            if (word.length() != pattern.length()) continue;\n            int index = 0;\n            while (index < word.length() && (pattern.charAt(index) == '.' || pattern.charAt(index) == word.charAt(index))) index++;\n            if (index == word.length()) return true;\n        }\n        return false;\n    }\n}",
+    "time_complexity": "O(L) per add; O(WL) worst case per search across W stored words of maximum length L.",
+    "space_complexity": "O(WL) for stored words."
+  },
+  "optimized": {
+    "explanation": "Store words in a 26-way trie. Search follows one child for a letter; at a dot, recursively try each existing child. A match succeeds only when the pattern ends at a terminal node.",
+    "correctness_idea": "Each trie edge represents one exact next letter. Trying every child at a dot explores all and only the allowed letter choices, and the terminal check enforces a complete stored word of the same length.",
+    "language": "java",
+    "code": "class WordDictionary {\n    private static class TrieNode {\n        TrieNode[] children = new TrieNode[26];\n        boolean isWord;\n    }\n    private final TrieNode root = new TrieNode();\n    public WordDictionary() {}\n    public void addWord(String word) {\n        TrieNode node = root;\n        for (int index = 0; index < word.length(); index++) {\n            int letter = word.charAt(index) - 'a';\n            if (node.children[letter] == null) node.children[letter] = new TrieNode();\n            node = node.children[letter];\n        }\n        node.isWord = true;\n    }\n    public boolean search(String pattern) { return matches(pattern, 0, root); }\n    private boolean matches(String pattern, int index, TrieNode node) {\n        if (index == pattern.length()) return node.isWord;\n        char value = pattern.charAt(index);\n        if (value != '.') {\n            TrieNode next = node.children[value - 'a'];\n            return next != null && matches(pattern, index + 1, next);\n        }\n        for (TrieNode next : node.children) if (next != null && matches(pattern, index + 1, next)) return true;\n        return false;\n    }\n}",
+    "time_complexity": "O(L) per add; O(26^D * L) worst case per search, where D is the number of dots (at most 2) and L is pattern length. Exact-letter branches add no branching.",
+    "space_complexity": "O(T) for trie nodes, where T is the total number of distinct prefix nodes; search recursion uses O(L) stack space."
+  },
+  "dry_run": {
+    "sample_input": {"operations": [["addWord", "bad"], ["addWord", "dad"], ["addWord", "mad"], ["search", "pad"], ["search", "bad"], ["search", ".ad"], ["search", "b.."]]},
+    "sample_output": [null, null, null, false, true, true, true],
+    "steps": [
+      {"sequence": 1, "event": "Insert bad, dad, and mad.", "variables": {"words": ["bad", "dad", "mad"]}, "condition": "Each word shares suffix path a -> d but has a different first edge.", "action": "Mark b-a-d, d-a-d, and m-a-d terminal.", "state_before": {"terminalWords": []}, "state_after": {"terminalWords": ["bad", "dad", "mad"]}},
+      {"sequence": 2, "event": "Search pad.", "variables": {"pattern": "pad", "firstLetter": "p"}, "condition": "The root has no p child.", "action": "Return false without exploring deeper nodes.", "state_before": {"rootChildren": ["b", "d", "m"]}, "state_after": {"result": false}},
+      {"sequence": 3, "event": "Search .ad.", "variables": {"patternIndex": 0, "branches": ["b", "d", "m"]}, "condition": "The dot tries each root child; each then follows a -> d to a terminal.", "action": "Return true on the first matching branch.", "state_before": {"terminalWords": ["bad", "dad", "mad"]}, "state_after": {"result": true}},
+      {"sequence": 4, "event": "Search b..", "variables": {"pattern": "b.."}, "condition": "The literal b selects one branch; the two dots traverse its a then d path.", "action": "The path ends at terminal bad, so return true.", "state_before": {"terminalWords": ["bad", "dad", "mad"]}, "state_after": {"result": true}}
+    ],
+    "final_result": [null, null, null, false, true, true, true]
+  },
+  "edge_cases": [
+    {"case": "Search has no dots", "handling": "The trie follows one exact path and checks its terminal marker."},
+    {"case": "Dot follows a missing branch", "handling": "That branch returns false while other existing children are still tested."},
+    {"case": "Pattern length differs from a stored word", "handling": "The traversal ends at a nonterminal node or missing path, so no match is reported."},
+    {"case": "Pattern ends at a nonterminal prefix", "handling": "The final check returns false; a longer stored word is not an exact match."}
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 205,
+    "title": "Isomorphic Strings",
+    "url": "https://leetcode.com/problems/isomorphic-strings/",
+    "difficulty": "Easy",
+    "category": "Hashmap"
+  },
+  "problem_summary": {
+    "summary": "Check whether two equal-length strings have a consistent one-to-one character mapping in the same position order.",
+    "input_output": "Input: equal-length strings s and t of ASCII characters. Return whether each character in s maps to exactly one character in t and no two source characters map to the same target character.",
+    "constraints": ["1 <= s.length <= 5 * 10^4", "t.length == s.length", "s and t contain valid ASCII characters"]
+  },
+  "brute_force": {
+    "explanation": "Check every pair of positions. The pair must contain the same character in s exactly when it contains the same character in t.",
+    "correctness_idea": "A valid bijection preserves both equalities and inequalities between every pair of positions. Checking all pairs therefore rejects exactly the strings whose repetition patterns differ.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean isIsomorphic(String s, String t) {\n        for (int i = 0; i < s.length(); i++) {\n            for (int j = i + 1; j < s.length(); j++) {\n                boolean sameSource = s.charAt(i) == s.charAt(j);\n                boolean sameTarget = t.charAt(i) == t.charAt(j);\n                if (sameSource != sameTarget) return false;\n            }\n        }\n        return true;\n    }\n}",
+    "time_complexity": "O(n^2), checking every pair of positions.",
+    "space_complexity": "O(1) auxiliary, using only scalar values."
+  },
+  "optimized": {
+    "explanation": "Track the most recent position of each ASCII character in both strings. At every index, the two characters must have matching previous-occurrence positions; then record the current position.",
+    "correctness_idea": "Matching previous-occurrence positions means the two characters either both appeared before at the same last position or both are new. This enforces consistent forward and reverse mappings.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean isIsomorphic(String s, String t) {\n        int[] lastS = new int[128];\n        int[] lastT = new int[128];\n        for (int i = 0; i < s.length(); i++) {\n            int source = s.charAt(i);\n            int target = t.charAt(i);\n            if (lastS[source] != lastT[target]) return false;\n            lastS[source] = i + 1;\n            lastT[target] = i + 1;\n        }\n        return true;\n    }\n}",
+    "time_complexity": "O(n), one pass through the strings.",
+    "space_complexity": "O(1) auxiliary: two fixed-size arrays for the 128 ASCII values."
+  },
+  "dry_run": {
+    "sample_input": {"s": "kook", "t": "deed"},
+    "sample_output": true,
+    "steps": [
+      {"sequence": 1, "event": "Compare position 0: k and d.", "variables": {"i": 0, "source": "k", "target": "d", "lastS[k]": 0, "lastT[d]": 0}, "condition": "The previous-position markers match.", "action": "Record position marker 1 for both characters.", "state_before": {"lastS[k]": 0, "lastT[d]": 0}, "state_after": {"lastS[k]": 1, "lastT[d]": 1}},
+      {"sequence": 2, "event": "Compare position 1: o and e.", "variables": {"i": 1, "source": "o", "target": "e", "lastS[o]": 0, "lastT[e]": 0}, "condition": "The previous-position markers match.", "action": "Record position marker 2 for both characters.", "state_before": {"lastS[o]": 0, "lastT[e]": 0}, "state_after": {"lastS[o]": 2, "lastT[e]": 2}},
+      {"sequence": 3, "event": "Compare position 2: o and e.", "variables": {"i": 2, "source": "o", "target": "e", "lastS[o]": 2, "lastT[e]": 2}, "condition": "Both characters last appeared at marker 2.", "action": "Record marker 3 for both.", "state_before": {"lastS[o]": 2, "lastT[e]": 2}, "state_after": {"lastS[o]": 3, "lastT[e]": 3}},
+      {"sequence": 4, "event": "Compare position 3: k and d.", "variables": {"i": 3, "source": "k", "target": "d", "lastS[k]": 1, "lastT[d]": 1}, "condition": "Both characters last appeared at marker 1.", "action": "Record marker 4; scan completes and returns true.", "state_before": {"lastS[k]": 1, "lastT[d]": 1}, "state_after": {"lastS[k]": 4, "lastT[d]": 4}}
+    ],
+    "final_result": true
+  },
+  "edge_cases": [
+    {"case": "A repeated source character maps inconsistently", "handling": "Its previous marker differs from the target's marker, so false is returned."},
+    {"case": "Two source characters would share one target", "handling": "The target's previous marker differs from the new source character's marker, so false is returned."},
+    {"case": "Every character is distinct at each position", "handling": "All prior markers are zero and the strings are accepted."}
+  ]
+}

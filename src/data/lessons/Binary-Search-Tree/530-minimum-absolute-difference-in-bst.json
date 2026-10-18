@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "problem_number": 530,
+    "title": "Minimum Absolute Difference in BST",
+    "url": "https://leetcode.com/problems/minimum-absolute-difference-in-bst/",
+    "difficulty": "Easy",
+    "category": "Binary Search Tree"
+  },
+  "problem_summary": {
+    "summary": "Return the smallest absolute difference between the values of two distinct nodes in a BST.",
+    "input_output": "Input: the root of a BST containing at least two nodes. Return the minimum difference as an integer.",
+    "constraints": ["2 <= number of nodes <= 10^4", "0 <= Node.val <= 10^5"]
+  },
+  "brute_force": {
+    "explanation": "Collect every value using a queue, sort the values, and compare each neighboring pair in sorted order.",
+    "correctness_idea": "In sorted order, the closest pair of distinct values must be adjacent: any value between a candidate pair can only make one of its adjacent gaps no larger. Comparing every adjacent gap therefore finds the global minimum.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.ArrayList;\nimport java.util.Collections;\nimport java.util.List;\nimport java.util.Queue;\n\nclass Solution {\n    public int getMinimumDifference(TreeNode root) {\n        List<Integer> values = new ArrayList<>();\n        Queue<TreeNode> queue = new ArrayDeque<>();\n        queue.offer(root);\n        while (!queue.isEmpty()) {\n            TreeNode node = queue.poll();\n            values.add(node.val);\n            if (node.left != null) queue.offer(node.left);\n            if (node.right != null) queue.offer(node.right);\n        }\n        Collections.sort(values);\n        int minimum = Integer.MAX_VALUE;\n        for (int index = 1; index < values.size(); index++) {\n            minimum = Math.min(minimum, values.get(index) - values.get(index - 1));\n        }\n        return minimum;\n    }\n}",
+    "time_complexity": "O(n log n) — collecting is O(n), and sorting n values dominates.",
+    "space_complexity": "O(n) auxiliary for the queue and collected values."
+  },
+  "optimized": {
+    "explanation": "Traverse the BST in sorted inorder order with an explicit stack. Compare each visited value only with its inorder predecessor.",
+    "correctness_idea": "Inorder traversal of a BST yields strictly increasing values. The minimum difference must occur between adjacent values in this sorted sequence, so updating the minimum for each predecessor-current pair examines every necessary pair.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.Deque;\n\nclass Solution {\n    public int getMinimumDifference(TreeNode root) {\n        Deque<TreeNode> stack = new ArrayDeque<>();\n        TreeNode current = root;\n        Integer previous = null;\n        int minimum = Integer.MAX_VALUE;\n        while (current != null || !stack.isEmpty()) {\n            while (current != null) {\n                stack.push(current);\n                current = current.left;\n            }\n            current = stack.pop();\n            if (previous != null) minimum = Math.min(minimum, current.val - previous);\n            previous = current.val;\n            current = current.right;\n        }\n        return minimum;\n    }\n}",
+    "time_complexity": "O(n) — each node is visited once and each inorder predecessor comparison is constant time.",
+    "space_complexity": "O(h) auxiliary for the traversal stack, where h is tree height."
+  },
+  "dry_run": {
+    "sample_input": {"root": [8, 4, 12, 2, 6]},
+    "sample_output": 2,
+    "steps": [
+      {"sequence": 1, "event": "Descend left from 8 through 4 to node 2.", "variables": {"current": 2, "stackTopFirst": [2, 4, 8], "previous": null, "minimum": "unset"}, "condition": "Inorder traversal pushes each ancestor before exploring its left child.", "action": "Continue by popping the smallest node from the stack.", "state_before": {"current": 8, "stackTopFirst": []}, "state_after": {"current": 2, "stackTopFirst": [2, 4, 8], "previous": null, "minimum": "unset"}},
+      {"sequence": 2, "event": "Visit the first inorder value, 2.", "variables": {"value": 2, "previous": null, "stackTopFirst": [4, 8], "minimum": "unset"}, "condition": "There is no predecessor to compare with the first value.", "action": "Set previous to 2 and continue from its empty left subtree.", "state_before": {"stackTopFirst": [2, 4, 8], "previous": null, "minimum": "unset"}, "state_after": {"stackTopFirst": [4, 8], "previous": 2, "minimum": "unset"}},
+      {"sequence": 3, "event": "Visit remaining inorder values 4, 6, 8, and 12.", "variables": {"comparedPairs": [[2, 4], [4, 6], [6, 8], [8, 12]], "differences": [2, 2, 2, 4], "minimum": 2, "stackTopFirst": []}, "condition": "Each value is compared with its immediately preceding inorder value.", "action": "Keep minimum 2 and return it after traversal finishes.", "state_before": {"stackTopFirst": [4, 8], "previous": 2, "minimum": "unset"}, "state_after": {"stackTopFirst": [], "previous": 12, "minimum": 2, "result": 2}}
+    ],
+    "final_result": 2
+  },
+  "edge_cases": [
+    {"case": "The closest values are deep in separate subtrees", "handling": "Sorting or inorder traversal compares value neighbors regardless of their tree positions."},
+    {"case": "Two node values differ by 1", "handling": "The running minimum reaches 1, the smallest possible difference for distinct integer values."},
+    {"case": "Skewed BST", "handling": "The optimized traversal uses an explicit stack instead of recursive calls."}
+  ]
+}

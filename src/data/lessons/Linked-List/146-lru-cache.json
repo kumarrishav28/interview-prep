@@ -1,0 +1,40 @@
+{
+  "metadata": {"problem_number": 146, "title": "LRU Cache", "url": "https://leetcode.com/problems/lru-cache/", "difficulty": "Medium", "category": "Linked List"},
+  "problem_summary": {
+    "summary": "Implement a fixed-capacity least-recently-used cache whose get and put operations refresh recency and whose insertion evicts the least recently used key when full.",
+    "input_output": "Implement LRUCache(int capacity), int get(int key), and void put(int key, int value). No external node type is used; the implementation defines private doubly linked nodes. Capacity is positive.",
+    "constraints": ["1 <= capacity <= 3000", "0 <= key <= 10^4", "0 <= value <= 10^5", "At most 2 * 10^5 get/put calls"]
+  },
+  "brute_force": {
+    "explanation": "Keep entries in a doubly linked list ordered from most to least recent. Use a linear search for keys; after a hit or update, move that entry to the front, and evict the tail when capacity is exceeded.",
+    "correctness_idea": "The list order explicitly tracks recency, so moving every used entry to the front and removing the tail implements LRU exactly. Linear search makes this a clear baseline but not the required average O(1) design.",
+    "language": "java",
+    "code": "class LRUCache {\n    private static class Entry {\n        int key;\n        int value;\n        Entry previous;\n        Entry next;\n        Entry(int key, int value) { this.key = key; this.value = value; }\n    }\n\n    private final int capacity;\n    private int size;\n    private final Entry front = new Entry(0, 0);\n    private final Entry back = new Entry(0, 0);\n\n    public LRUCache(int capacity) {\n        this.capacity = capacity;\n        front.next = back;\n        back.previous = front;\n    }\n\n    public int get(int key) {\n        Entry entry = find(key);\n        if (entry == null) return -1;\n        moveToFront(entry);\n        return entry.value;\n    }\n\n    public void put(int key, int value) {\n        Entry entry = find(key);\n        if (entry != null) { entry.value = value; moveToFront(entry); return; }\n        entry = new Entry(key, value);\n        attachAfterFront(entry);\n        size++;\n        if (size > capacity) { remove(back.previous); size--; }\n    }\n\n    private Entry find(int key) {\n        for (Entry entry = front.next; entry != back; entry = entry.next) {\n            if (entry.key == key) return entry;\n        }\n        return null;\n    }\n\n    private void moveToFront(Entry entry) {\n        remove(entry);\n        attachAfterFront(entry);\n    }\n\n    private void remove(Entry entry) {\n        entry.previous.next = entry.next;\n        entry.next.previous = entry.previous;\n    }\n\n    private void attachAfterFront(Entry entry) {\n        entry.next = front.next;\n        entry.previous = front;\n        front.next.previous = entry;\n        front.next = entry;\n    }\n}",
+    "time_complexity": "O(capacity) per get or put due to linear key search.",
+    "space_complexity": "O(capacity) for cached entries."
+  },
+  "optimized": {
+    "explanation": "Combine a HashMap from keys to entries with a doubly linked recency list. The front is most recent; the back is least recent. Hash lookup and constant-time list relinking support O(1) average operations.",
+    "correctness_idea": "The map identifies an entry directly, while the linked list maintains exact recency order. Every successful get or put moves its entry to the front; inserting beyond capacity removes the back neighbor, which is the least recently used entry.",
+    "language": "java",
+    "code": "import java.util.HashMap;\nimport java.util.Map;\n\nclass LRUCache {\n    private static class Entry {\n        int key;\n        int value;\n        Entry previous;\n        Entry next;\n        Entry(int key, int value) { this.key = key; this.value = value; }\n    }\n\n    private final int capacity;\n    private final Map<Integer, Entry> entries = new HashMap<>();\n    private final Entry front = new Entry(0, 0);\n    private final Entry back = new Entry(0, 0);\n\n    public LRUCache(int capacity) {\n        this.capacity = capacity;\n        front.next = back;\n        back.previous = front;\n    }\n\n    public int get(int key) {\n        Entry entry = entries.get(key);\n        if (entry == null) return -1;\n        moveToFront(entry);\n        return entry.value;\n    }\n\n    public void put(int key, int value) {\n        Entry entry = entries.get(key);\n        if (entry != null) {\n            entry.value = value;\n            moveToFront(entry);\n            return;\n        }\n        entry = new Entry(key, value);\n        entries.put(key, entry);\n        attachAfterFront(entry);\n        if (entries.size() > capacity) {\n            Entry leastRecent = back.previous;\n            remove(leastRecent);\n            entries.remove(leastRecent.key);\n        }\n    }\n\n    private void moveToFront(Entry entry) {\n        remove(entry);\n        attachAfterFront(entry);\n    }\n\n    private void remove(Entry entry) {\n        entry.previous.next = entry.next;\n        entry.next.previous = entry.previous;\n    }\n\n    private void attachAfterFront(Entry entry) {\n        entry.next = front.next;\n        entry.previous = front;\n        front.next.previous = entry;\n        front.next = entry;\n    }\n}",
+    "time_complexity": "O(1) average per get and put, assuming expected O(1) HashMap operations.",
+    "space_complexity": "O(capacity) for the map and recency list."
+  },
+  "dry_run": {
+    "sample_input": {"capacity": 2, "operations": [["put", 1, 10], ["put", 2, 20], ["get", 1], ["put", 3, 30], ["get", 2], ["get", 3]]},
+    "sample_output": [null, null, 10, null, -1, 30],
+    "steps": [
+      {"sequence": 1, "event": "Insert keys 1 and 2.", "variables": {"capacity": 2}, "condition": "Both keys are new and there is available capacity.", "action": "Add each at the most-recent front.", "state_before": {"recencyMostToLeast": [], "mapKeys": []}, "state_after": {"recencyMostToLeast": [2, 1], "mapKeys": [1, 2]}},
+      {"sequence": 2, "event": "Read key 1.", "variables": {"key": 1, "value": 10}, "condition": "Key 1 is present.", "action": "Return 10 and move key 1 to the front.", "state_before": {"recencyMostToLeast": [2, 1]}, "state_after": {"recencyMostToLeast": [1, 2]}},
+      {"sequence": 3, "event": "Insert key 3 and evict least recent key.", "variables": {"newKey": 3, "evictedKey": 2}, "condition": "The size would exceed capacity 2.", "action": "Add 3 at front, then remove back entry 2 from list and map.", "state_before": {"recencyMostToLeast": [1, 2]}, "state_after": {"recencyMostToLeast": [3, 1], "mapKeys": [1, 3]}},
+      {"sequence": 4, "event": "Read evicted key 2, then key 3.", "variables": {"firstResult": -1, "secondResult": 30}, "condition": "2 is absent and 3 remains present.", "action": "Return -1 for 2; return 30 and refresh key 3.", "state_before": {"recencyMostToLeast": [3, 1]}, "state_after": {"recencyMostToLeast": [3, 1]}}
+    ],
+    "final_result": [null, null, 10, null, -1, 30]
+  },
+  "edge_cases": [
+    {"case": "Get a missing key", "handling": "Returns -1 and leaves recency order unchanged."},
+    {"case": "Put an existing key", "handling": "Updates its value and marks it most recently used without changing the number of entries."},
+    {"case": "Capacity is one", "handling": "Each new distinct insertion evicts the sole older entry."}
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 392,
+    "title": "Is Subsequence",
+    "url": "https://leetcode.com/problems/is-subsequence/",
+    "difficulty": "Easy",
+    "category": "Two Pointers"
+  },
+  "problem_summary": {
+    "summary": "Determine whether s can be formed by deleting zero or more characters from t without changing the order of the remaining characters.",
+    "input_output": "Input: lowercase strings s and t. Return whether s is a subsequence of t.",
+    "constraints": ["0 <= s.length <= 100", "0 <= t.length <= 10^4", "s and t consist only of lowercase English letters"]
+  },
+  "brute_force": {
+    "explanation": "Compute the longest common subsequence length of s and t with a dynamic-programming table. s is a subsequence exactly when this length equals s.length().",
+    "correctness_idea": "For each pair of prefixes, the table stores their longest common subsequence length. Matching final characters extend the diagonal optimum; otherwise the best solution excludes one of the two final characters. A full-length match uses every character of s in order.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean isSubsequence(String s, String t) {\n        int[][] length = new int[s.length() + 1][t.length() + 1];\n        for (int i = 1; i <= s.length(); i++) {\n            for (int j = 1; j <= t.length(); j++) {\n                if (s.charAt(i - 1) == t.charAt(j - 1)) {\n                    length[i][j] = length[i - 1][j - 1] + 1;\n                } else {\n                    length[i][j] = Math.max(length[i - 1][j], length[i][j - 1]);\n                }\n            }\n        }\n        return length[s.length()][t.length()] == s.length();\n    }\n}",
+    "time_complexity": "O(mn) — each pair of prefix positions is evaluated once, where m = s.length and n = t.length.",
+    "space_complexity": "O(mn) auxiliary — the LCS table stores one value per prefix pair."
+  },
+  "optimized": {
+    "explanation": "Scan t once while a pointer tracks the next character still needed from s. Advance that pointer only on a match.",
+    "correctness_idea": "The pointer advances only after matching the next required character at a later position in t. Thus every advanced character has a valid ordered witness; reaching the end of s proves all its characters were matched in order.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean isSubsequence(String s, String t) {\n        int matched = 0;\n        for (int index = 0; index < t.length() && matched < s.length(); index++) {\n            if (s.charAt(matched) == t.charAt(index)) {\n                matched++;\n            }\n        }\n        return matched == s.length();\n    }\n}",
+    "time_complexity": "O(m + n) worst case — the scan advances through t once and checks s only at matches.",
+    "space_complexity": "O(1) auxiliary — only two indices are maintained."
+  },
+  "dry_run": {
+    "sample_input": {"s": "bcd", "t": "abcde"},
+    "sample_output": true,
+    "steps": [
+      {"sequence": 1, "event": "Inspect t[0] = a.", "variables": {"index": 0, "matched": 0, "needed": "b"}, "condition": "a does not equal s[0].", "action": "Keep the matched pointer unchanged.", "state_before": {"matched": 0}, "state_after": {"matched": 0}, "focus": {"string": "abcde", "indices": [0]}},
+      {"sequence": 2, "event": "Inspect t[1] = b.", "variables": {"index": 1, "matched": 0, "needed": "b"}, "condition": "The characters match.", "action": "Advance matched to 1; the next required character is c.", "state_before": {"matched": 0}, "state_after": {"matched": 1}, "focus": {"string": "abcde", "indices": [1]}},
+      {"sequence": 3, "event": "Inspect t[2] = c.", "variables": {"index": 2, "matched": 1, "needed": "c"}, "condition": "The characters match.", "action": "Advance matched to 2; the next required character is d.", "state_before": {"matched": 1}, "state_after": {"matched": 2}, "focus": {"string": "abcde", "indices": [2]}},
+      {"sequence": 4, "event": "Inspect t[3] = d.", "variables": {"index": 3, "matched": 2, "needed": "d"}, "condition": "The characters match and all three characters of s are now matched.", "action": "Stop and return true.", "state_before": {"matched": 2}, "state_after": {"matched": 3}, "focus": {"string": "abcde", "indices": [3]}}
+    ],
+    "final_result": true
+  },
+  "edge_cases": [
+    {"case": "Empty s", "handling": "The matched count starts at s.length, so the result is true."},
+    {"case": "Repeated required characters", "handling": "Each match advances to the next later position in t, preserving order and distinct positions."},
+    {"case": "A required character is missing or out of order", "handling": "The matched count remains below s.length and the method returns false."}
+  ]
+}

@@ -1,0 +1,224 @@
+{
+  "metadata": {
+    "problem_number": 68,
+    "title": "Text Justification",
+    "url": "https://leetcode.com/problems/text-justification/",
+    "difficulty": "Hard",
+    "category": "Array / String"
+  },
+  "problem_summary": {
+    "summary": "Greedily pack as many words as fit on each line, distribute spaces evenly on non-final multiword lines, and left-justify the final or single-word line.",
+    "input_output": "Input: a nonempty array of words and maxWidth. Return lines of exactly maxWidth characters using the required spacing rules.",
+    "constraints": [
+      "1 <= words.length <= 300",
+      "1 <= words[i].length <= 20",
+      "1 <= maxWidth <= 100",
+      "Every word length is at most maxWidth.",
+      "Words contain English letters and symbols."
+    ]
+  },
+  "brute_force": {
+    "explanation": "Greedily select each line's words, calculate the required gap sizes, and build the line with repeated immutable string concatenation. It follows the formatting rules directly and is easy to inspect, but each concatenation may copy the partial line again.",
+    "correctness_idea": "The greedy fit test includes the minimum one space between each adjacent pair, so it selects the largest legal word range. The renderer assigns the total spaces according to the full-justification or left-justification rules and pads to exactly maxWidth.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass Solution {\n    public List<String> fullJustify(String[] words, int maxWidth) {\n        List<String> result = new ArrayList<>();\n        int start = 0;\n\n        while (start < words.length) {\n            int end = start;\n            int letters = 0;\n            while (end < words.length\n                    && letters + words[end].length() + (end - start) <= maxWidth) {\n                letters += words[end].length();\n                end++;\n            }\n\n            int wordCount = end - start;\n            int gaps = wordCount - 1;\n            int spaces = maxWidth - letters;\n            String line = \"\";\n            for (int index = start; index < end; index++) {\n                line = line + words[index];\n                if (index < end - 1) {\n                    int gapSpaces;\n                    if (gaps == 0 || end == words.length) {\n                        gapSpaces = 1;\n                    } else {\n                        gapSpaces = spaces / gaps;\n                        if (index - start < spaces % gaps) {\n                            gapSpaces++;\n                        }\n                    }\n                    for (int count = 0; count < gapSpaces; count++) {\n                        line = line + \" \";\n                    }\n                }\n            }\n            while (line.length() < maxWidth) {\n                line = line + \" \";\n            }\n            result.add(line);\n            start = end;\n        }\n        return result;\n    }\n}",
+    "time_complexity": "O(L * W^2 + n), where L is the number of output lines, W = maxWidth, and n = words.length. Repeated concatenation can recopy a line of up to W characters for each appended character.",
+    "space_complexity": "O(W) temporary line storage at a time, excluding the returned lines; immutable concatenation may create temporary copies."
+  },
+  "optimized": {
+    "explanation": "Use the same greedy word grouping, then write each line once with a StringBuilder. For a full line, divide all spaces across its gaps and give the leftmost remainder gaps one extra space. For the final line or a one-word line, separate words with one space and pad on the right.",
+    "correctness_idea": "The greedy condition ensures no next word can fit while preserving at least one space between words. Dividing the remaining width across gaps satisfies exact width and even distribution with any remainder on the left; the special case implements left justification as required.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass Solution {\n    public List<String> fullJustify(String[] words, int maxWidth) {\n        List<String> result = new ArrayList<>();\n        int start = 0;\n\n        while (start < words.length) {\n            int end = start;\n            int letters = 0;\n            while (end < words.length\n                    && letters + words[end].length() + (end - start) <= maxWidth) {\n                letters += words[end].length();\n                end++;\n            }\n\n            int wordCount = end - start;\n            int gaps = wordCount - 1;\n            int spaces = maxWidth - letters;\n            StringBuilder line = new StringBuilder(maxWidth);\n\n            if (gaps == 0 || end == words.length) {\n                for (int index = start; index < end; index++) {\n                    if (index > start) {\n                        line.append(' ');\n                    }\n                    line.append(words[index]);\n                }\n                while (line.length() < maxWidth) {\n                    line.append(' ');\n                }\n            } else {\n                int spacesPerGap = spaces / gaps;\n                int extraSpaces = spaces % gaps;\n                for (int index = start; index < end; index++) {\n                    line.append(words[index]);\n                    if (index < end - 1) {\n                        int gapWidth = spacesPerGap\n                                + (index - start < extraSpaces ? 1 : 0);\n                        for (int count = 0; count < gapWidth; count++) {\n                            line.append(' ');\n                        }\n                    }\n                }\n            }\n\n            result.add(line.toString());\n            start = end;\n        }\n        return result;\n    }\n}",
+    "time_complexity": "O(n + L * W), where n is the number of words, L is the number of output lines, and W = maxWidth. Each word is grouped once and each output character is written once.",
+    "space_complexity": "O(W) auxiliary for the current line builder, excluding O(L * W) returned output."
+  },
+  "dry_run": {
+    "sample_input": {
+      "words": ["red", "fox", "jumps", "over", "log"],
+      "maxWidth": 16
+    },
+    "sample_output": [
+      "red   fox  jumps",
+      "over log        "
+    ],
+    "steps": [
+      {
+        "sequence": 1,
+        "event": "Start greedy grouping at word index 0.",
+        "variables": {
+          "start": 0,
+          "end": 0,
+          "letters": 0,
+          "candidate": "red"
+        },
+        "condition": "0 + 3 + 0 <= 15.",
+        "action": "Include red; advance end and add its length.",
+        "state_before": {
+          "end": 0,
+          "letters": 0
+        },
+        "state_after": {
+          "end": 1,
+          "letters": 3,
+          "selected": ["red"]
+        }
+      },
+      {
+        "sequence": 2,
+        "event": "Test fox for the current line.",
+        "variables": {
+          "start": 0,
+          "end": 1,
+          "letters": 3,
+          "candidate": "fox"
+        },
+        "condition": "3 + 3 + 1 <= 15.",
+        "action": "Include fox; its required separator is accounted for by end - start.",
+        "state_before": {
+          "end": 1,
+          "letters": 3,
+          "selected": ["red"]
+        },
+        "state_after": {
+          "end": 2,
+          "letters": 6,
+          "selected": ["red", "fox"]
+        }
+      },
+      {
+        "sequence": 3,
+        "event": "Test jumps for the current line.",
+        "variables": {
+          "start": 0,
+          "end": 2,
+          "letters": 6,
+          "candidate": "jumps"
+        },
+        "condition": "6 + 5 + 2 <= 15.",
+        "action": "Include jumps.",
+        "state_before": {
+          "end": 2,
+          "letters": 6,
+          "selected": ["red", "fox"]
+        },
+        "state_after": {
+          "end": 3,
+          "letters": 11,
+          "selected": ["red", "fox", "jumps"]
+        }
+      },
+      {
+        "sequence": 4,
+        "event": "Test over; it does not fit on the current line.",
+        "variables": {
+          "start": 0,
+          "end": 3,
+          "letters": 11,
+          "candidate": "over"
+        },
+        "condition": "11 + 4 + 3 > 16.",
+        "action": "Stop grouping; the line contains red, fox, and jumps.",
+        "state_before": {
+          "end": 3,
+          "letters": 11,
+          "selected": ["red", "fox", "jumps"]
+        },
+        "state_after": {
+          "end": 3,
+          "spaces": 5,
+          "gaps": 2,
+          "spacesPerGap": 2,
+          "extraSpaces": 1
+        }
+      },
+      {
+        "sequence": 5,
+        "event": "Render the non-final first line.",
+        "variables": {
+          "words": ["red", "fox", "jumps"],
+          "spaces": 4,
+          "gaps": 2,
+          "spacesPerGap": 2,
+          "extraSpaces": 0
+        },
+        "condition": "There are multiple gaps and more words remain, so use full justification.",
+        "action": "Write two spaces in each gap.",
+        "state_before": {
+          "line": "",
+          "width": 0
+        },
+        "state_after": {
+          "line": "red  fox  jumps",
+          "width": 16
+        }
+      },
+      {
+        "sequence": 6,
+        "event": "Group the remaining words beginning at index 3.",
+        "variables": {
+          "start": 3,
+          "end": 3,
+          "letters": 0,
+          "candidate": "over"
+        },
+        "condition": "0 + 4 + 0 <= 16; then 4 + 3 + 1 <= 16 for log.",
+        "action": "Include over and log; the next line is the final line.",
+        "state_before": {
+          "selected": [],
+          "end": 3,
+          "letters": 0
+        },
+        "state_after": {
+          "selected": ["over", "log"],
+          "end": 5,
+          "letters": 7,
+          "gaps": 1,
+          "endOfInput": true
+        }
+      },
+      {
+        "sequence": 7,
+        "event": "Render the final line.",
+        "variables": {
+          "words": ["over", "log"],
+          "letters": 7,
+          "maxWidth": 15,
+          "rightPadding": 8
+        },
+        "condition": "The final line uses one space between words and pads on the right.",
+        "action": "Write over, one separator, log, then eight trailing spaces.",
+        "state_before": {
+          "line": "over log",
+          "width": 8
+        },
+        "state_after": {
+          "line": "over log       ",
+          "width": 16
+        }
+      }
+    ],
+    "final_result": [
+      "red   fox  jumps",
+      "over log        "
+    ]
+  },
+  "edge_cases": [
+    {
+      "case": "A word exactly fills the line",
+      "handling": "It forms a line of width maxWidth with no added padding needed."
+    },
+    {
+      "case": "A line contains one word",
+      "handling": "The word is followed only by right-side spaces until the line reaches maxWidth."
+    },
+    {
+      "case": "Final line contains multiple words",
+      "handling": "Words receive one space between them, then remaining width is padded on the right."
+    },
+    {
+      "case": "Full justification leaves a remainder",
+      "handling": "The optimized method distributes quotient spaces to all gaps and one additional space to each of the leftmost remainder gaps."
+    }
+  ]
+}

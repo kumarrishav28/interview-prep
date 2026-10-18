@@ -1,0 +1,39 @@
+{
+  "metadata": {"problem_number": 21, "title": "Merge Two Sorted Lists", "url": "https://leetcode.com/problems/merge-two-sorted-lists/", "difficulty": "Easy", "category": "Linked List"},
+  "problem_summary": {
+    "summary": "Merge two non-decreasing singly linked lists into one non-decreasing list by linking nodes from the inputs.",
+    "input_output": "Inputs: possibly-null ListNode heads list1 and list2. Return the merged ListNode head. The judge supplies ListNode { int val; ListNode next; }.",
+    "constraints": ["0 <= combined number of nodes <= 50", "-100 <= Node.val <= 100", "Both lists are sorted in non-decreasing order"]
+  },
+  "brute_force": {
+    "explanation": "Collect the values from both lists, sort them, and construct a fresh linked list. This avoids pointer interleaving and is a convenient baseline when node reuse is not required.",
+    "correctness_idea": "The collected multiset contains exactly every input value. Sorting produces non-decreasing order, and constructing one node per sorted value preserves all occurrences.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.Collections;\nimport java.util.List;\n\nclass Solution {\n    public ListNode mergeTwoLists(ListNode list1, ListNode list2) {\n        List<Integer> values = new ArrayList<>();\n        while (list1 != null) { values.add(list1.val); list1 = list1.next; }\n        while (list2 != null) { values.add(list2.val); list2 = list2.next; }\n        Collections.sort(values);\n        ListNode dummy = new ListNode(0);\n        ListNode tail = dummy;\n        for (int value : values) {\n            tail.next = new ListNode(value);\n            tail = tail.next;\n        }\n        return dummy.next;\n    }\n}",
+    "time_complexity": "O((m + n) log(m + n)) due to sorting all collected values.",
+    "space_complexity": "O(m + n) auxiliary for the value collection, in addition to the newly allocated output nodes."
+  },
+  "optimized": {
+    "explanation": "Use a dummy head and repeatedly attach the smaller current node, advancing only the list from which it came. Attach the remaining suffix when one list ends.",
+    "correctness_idea": "The smallest unmerged value must be the smaller of the two list heads because both suffixes remain sorted. Selecting that node at each step preserves order and includes every input node once.",
+    "language": "java",
+    "code": "class Solution {\n    public ListNode mergeTwoLists(ListNode list1, ListNode list2) {\n        ListNode dummy = new ListNode(0);\n        ListNode tail = dummy;\n        while (list1 != null && list2 != null) {\n            if (list1.val <= list2.val) {\n                tail.next = list1;\n                list1 = list1.next;\n            } else {\n                tail.next = list2;\n                list2 = list2.next;\n            }\n            tail = tail.next;\n        }\n        tail.next = list1 != null ? list1 : list2;\n        return dummy.next;\n    }\n}",
+    "time_complexity": "O(m + n) — each node is examined and linked once.",
+    "space_complexity": "O(1) auxiliary; existing nodes are reused."
+  },
+  "dry_run": {
+    "sample_input": {"list1": [1, 4], "list2": [2, 3]},
+    "sample_output": [1, 2, 3, 4],
+    "steps": [
+      {"sequence": 1, "event": "Compare list heads 1 and 2.", "variables": {"list1Value": 1, "list2Value": 2}, "condition": "1 <= 2.", "action": "Link node 1 and advance list1.", "state_before": {"merged": [], "list1": [1, 4], "list2": [2, 3]}, "state_after": {"merged": [1], "list1": [4], "list2": [2, 3]}},
+      {"sequence": 2, "event": "Compare list heads 4 and 2.", "variables": {"list1Value": 4, "list2Value": 2}, "condition": "4 > 2.", "action": "Link node 2 and advance list2.", "state_before": {"merged": [1], "list1": [4], "list2": [2, 3]}, "state_after": {"merged": [1, 2], "list1": [4], "list2": [3]}},
+      {"sequence": 3, "event": "Compare list heads 4 and 3, then attach the final suffix.", "variables": {"list1Value": 4, "list2Value": 3}, "condition": "3 is smaller; afterward list2 is null.", "action": "Link 3, then link the remaining list1 node 4.", "state_before": {"merged": [1, 2], "list1": [4], "list2": [3]}, "state_after": {"merged": [1, 2, 3, 4], "list1": [], "list2": []}}
+    ],
+    "final_result": [1, 2, 3, 4]
+  },
+  "edge_cases": [
+    {"case": "Both lists are empty", "handling": "The dummy's next remains null and null is returned."},
+    {"case": "Exactly one list is empty", "handling": "The non-empty suffix is attached directly."},
+    {"case": "Equal values", "handling": "The <= branch takes from list1 first; both occurrences remain in the result."}
+  ]
+}

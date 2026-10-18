@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 42,
+    "title": "Trapping Rain Water",
+    "url": "https://leetcode.com/problems/trapping-rain-water/",
+    "difficulty": "Hard",
+    "category": "Array / String"
+  },
+  "problem_summary": {
+    "summary": "Given unit-width elevation bars, compute the total amount of water retained after rain.",
+    "input_output": "Input: a nonnegative height array. Return the total trapped water units.",
+    "constraints": ["1 <= height.length <= 2 * 10^4", "0 <= height[i] <= 10^5"]
+  },
+  "brute_force": {
+    "explanation": "For each bar, find the maximum height on its left and right. Water above the bar is the smaller boundary height minus the bar's height, if positive.",
+    "correctness_idea": "Water at a position cannot rise above either the tallest bar to its left or the tallest bar to its right. The lower of those boundaries therefore determines its water depth.",
+    "language": "java",
+    "code": "class Solution {\n    public int trap(int[] height) {\n        int water = 0;\n        for (int index = 0; index < height.length; index++) {\n            int leftMax = height[index];\n            int rightMax = height[index];\n            for (int left = 0; left <= index; left++) {\n                leftMax = Math.max(leftMax, height[left]);\n            }\n            for (int right = index; right < height.length; right++) {\n                rightMax = Math.max(rightMax, height[right]);\n            }\n            water += Math.min(leftMax, rightMax) - height[index];\n        }\n        return water;\n    }\n}",
+    "time_complexity": "O(n^2) — each position scans the array on both sides.",
+    "space_complexity": "O(1) auxiliary space."
+  },
+  "optimized": {
+    "explanation": "Use pointers at both ends and maintain the greatest wall seen from each side. Process the side with the lower current boundary: its best possible water level is already fixed by that boundary, while the opposite side is at least as high. Add the difference from the current bar and move that pointer inward.",
+    "correctness_idea": "When leftMax <= rightMax, the right side has a boundary at least leftMax high, so the left position's limiting boundary is leftMax; the symmetric argument holds on the right. Every position is processed once with its exact limiting level.",
+    "language": "java",
+    "code": "class Solution {\n    public int trap(int[] height) {\n        int left = 0;\n        int right = height.length - 1;\n        int leftMax = 0;\n        int rightMax = 0;\n        int water = 0;\n        while (left < right) {\n            if (height[left] <= height[right]) {\n                leftMax = Math.max(leftMax, height[left]);\n                water += leftMax - height[left];\n                left++;\n            } else {\n                rightMax = Math.max(rightMax, height[right]);\n                water += rightMax - height[right];\n                right--;\n            }\n        }\n        return water;\n    }\n}",
+    "time_complexity": "O(n) — each pointer advances inward at most n times.",
+    "space_complexity": "O(1) auxiliary space."
+  },
+  "dry_run": {
+    "sample_input": {"height": [3, 0, 2, 0, 4]},
+    "sample_output": 7,
+    "steps": [
+      {"sequence": 1, "event": "Process left index 0.", "variables": {"left": 0, "right": 4, "leftMax": 3, "rightMax": 0, "water": 0}, "condition": "height[left] = 3 <= height[right] = 4.", "action": "Update leftMax to 3, add 0 water, move left to 1.", "state_before": {"left": 0, "right": 4, "leftMax": 0, "rightMax": 0, "water": 0}, "state_after": {"left": 1, "right": 4, "leftMax": 3, "rightMax": 0, "water": 0}},
+      {"sequence": 2, "event": "Process left index 1.", "variables": {"left": 1, "right": 4, "leftMax": 3, "rightMax": 0, "water": 3}, "condition": "height[left] = 0 <= height[right] = 4.", "action": "Keep leftMax 3, add 3 - 0 = 3, move left to 2.", "state_before": {"left": 1, "right": 4, "leftMax": 3, "rightMax": 0, "water": 0}, "state_after": {"left": 2, "right": 4, "leftMax": 3, "rightMax": 0, "water": 3}},
+      {"sequence": 3, "event": "Process left index 2.", "variables": {"left": 2, "right": 4, "leftMax": 3, "rightMax": 0, "water": 4}, "condition": "height[left] = 2 <= height[right] = 4.", "action": "Keep leftMax 3, add 3 - 2 = 1, move left to 3.", "state_before": {"left": 2, "right": 4, "leftMax": 3, "rightMax": 0, "water": 3}, "state_after": {"left": 3, "right": 4, "leftMax": 3, "rightMax": 0, "water": 4}},
+      {"sequence": 4, "event": "Process left index 3.", "variables": {"left": 3, "right": 4, "leftMax": 3, "rightMax": 0, "water": 7}, "condition": "height[left] = 0 <= height[right] = 4.", "action": "Keep leftMax 3, add 3 water, move left to 4 and stop.", "state_before": {"left": 3, "right": 4, "leftMax": 3, "rightMax": 0, "water": 4}, "state_after": {"left": 4, "right": 4, "leftMax": 3, "rightMax": 0, "water": 7}}
+    ],
+    "final_result": 7
+  },
+  "edge_cases": [
+    {"case": "One bar or a monotonic elevation", "handling": "There are no enclosed dips, so the accumulated water is zero."},
+    {"case": "A dip bounded by equal-height walls", "handling": "The maintained boundary maximum gives the correct depth at each interior position."},
+    {"case": "Tall walls with several interior bars", "handling": "Water is accumulated per processed position, using the lower limiting boundary."}
+  ]
+}

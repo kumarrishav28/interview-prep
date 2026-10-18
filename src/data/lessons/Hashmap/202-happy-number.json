@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 202,
+    "title": "Happy Number",
+    "url": "https://leetcode.com/problems/happy-number/",
+    "difficulty": "Easy",
+    "category": "Hashmap"
+  },
+  "problem_summary": {
+    "summary": "Repeatedly replace a positive integer with the sum of the squares of its digits; decide whether the sequence reaches 1 or enters a different cycle.",
+    "input_output": "Input: positive integer n. Return true if the digit-square process reaches 1, otherwise false.",
+    "constraints": ["1 <= n <= 2^31 - 1"]
+  },
+  "brute_force": {
+    "explanation": "Store each value produced in a set. If the current value is 1, succeed; if it has already appeared, a cycle exists. Otherwise compute its digit-square sum and continue.",
+    "correctness_idea": "Once a value repeats, the deterministic transformation repeats the same future values forever. Reaching 1 is exactly the success condition; thus the set distinguishes success from a non-1 cycle.",
+    "language": "java",
+    "code": "import java.util.HashSet;\nimport java.util.Set;\n\nclass Solution {\n    public boolean isHappy(int n) {\n        Set<Integer> seen = new HashSet<>();\n        while (n != 1 && seen.add(n)) {\n            n = digitSquareSum(n);\n        }\n        return n == 1;\n    }\n\n    private int digitSquareSum(int value) {\n        int sum = 0;\n        while (value > 0) {\n            int digit = value % 10;\n            sum += digit * digit;\n            value /= 10;\n        }\n        return sum;\n    }\n}",
+    "time_complexity": "O(r * d) expected, where r is the number of distinct values visited before 1 or a repeat and d is the maximum number of digits processed per step.",
+    "space_complexity": "O(r) auxiliary for the set of visited values."
+  },
+  "optimized": {
+    "explanation": "Use Floyd's cycle detection: advance a slow value by one digit-square transformation and a fast value by two. If they meet, the cycle contains 1 exactly when the meeting value is 1.",
+    "correctness_idea": "The transformation is deterministic and its values are bounded after applying the digit operation, so its sequence eventually reaches 1 or repeats. Floyd's algorithm detects that cycle without storing all visited values.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean isHappy(int n) {\n        int slow = n;\n        int fast = n;\n        do {\n            slow = digitSquareSum(slow);\n            fast = digitSquareSum(digitSquareSum(fast));\n        } while (slow != fast);\n        return slow == 1;\n    }\n\n    private int digitSquareSum(int value) {\n        int sum = 0;\n        while (value > 0) {\n            int digit = value % 10;\n            sum += digit * digit;\n            value /= 10;\n        }\n        return sum;\n    }\n}",
+    "time_complexity": "O(r * d), where r is the number of transformation steps until the pointers meet and d is the digits processed per step.",
+    "space_complexity": "O(1) auxiliary, using only the two pointers and scalar temporaries."
+  },
+  "dry_run": {
+    "sample_input": {"n": 19},
+    "sample_output": true,
+    "steps": [
+      {"sequence": 1, "event": "Advance both pointers once through the do-while loop.", "variables": {"slow": 82, "fast": 68}, "condition": "slow and fast are not equal.", "action": "Continue; 19 maps to 82 and the fast path maps 19 to 82 to 68.", "state_before": {"slow": 19, "fast": 19}, "state_after": {"slow": 82, "fast": 68}},
+      {"sequence": 2, "event": "Advance pointers again.", "variables": {"slow": 68, "fast": 1}, "condition": "slow and fast are not equal.", "action": "Continue; slow maps 82 to 68, while fast maps 68 to 100 to 1.", "state_before": {"slow": 82, "fast": 68}, "state_after": {"slow": 68, "fast": 1}},
+      {"sequence": 3, "event": "Advance pointers a third time.", "variables": {"slow": 100, "fast": 1}, "condition": "slow and fast are not equal.", "action": "Continue; slow maps 68 to 100, while fast remains at 1.", "state_before": {"slow": 68, "fast": 1}, "state_after": {"slow": 100, "fast": 1}},
+      {"sequence": 4, "event": "Advance pointers a fourth time.", "variables": {"slow": 1, "fast": 1}, "condition": "The pointers meet at 1.", "action": "Exit the loop and return true.", "state_before": {"slow": 100, "fast": 1}, "state_after": {"slow": 1, "fast": 1}}
+    ],
+    "final_result": true
+  },
+  "edge_cases": [
+    {"case": "n is 1", "handling": "The first do-while updates leave both pointers at 1, then true is returned."},
+    {"case": "The process enters a non-1 cycle", "handling": "The pointers meet at a cycle value other than 1, so false is returned."},
+    {"case": "A large positive integer", "handling": "Digit extraction uses integer remainder and division; each digit-square sum remains small."}
+  ]
+}

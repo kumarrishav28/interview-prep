@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "problem_number": 45,
+    "title": "Jump Game II",
+    "url": "https://leetcode.com/problems/jump-game-ii/",
+    "difficulty": "Medium",
+    "category": "Array / String"
+  },
+  "problem_summary": {
+    "summary": "Find the fewest forward jumps needed to reach the final index; each value limits the jump length and the input guarantees reachability.",
+    "input_output": "Input: non-empty nums of maximum jump lengths. Return the minimum number of jumps from index 0 to the last index.",
+    "constraints": ["1 <= nums.length <= 10^4", "0 <= nums[i] <= 1000", "The final index is reachable"]
+  },
+  "brute_force": {
+    "explanation": "Dynamic programming stores the minimum jumps needed to reach each index. Relax every index within the jump range of each reachable position.",
+    "correctness_idea": "Every path to an index must enter from a prior reachable index that can jump there; taking the minimum over all such predecessors yields the shortest path count.",
+    "language": "java",
+    "code": "class Solution {\n    public int jump(int[] nums) {\n        int length = nums.length;\n        int[] jumps = new int[length];\n        int unreachable = length + 1;\n        java.util.Arrays.fill(jumps, unreachable);\n        jumps[0] = 0;\n        for (int index = 0; index < length; index++) {\n            int end = (int) Math.min(length - 1L, (long) index + nums[index]);\n            for (int next = index + 1; next <= end; next++) {\n                jumps[next] = Math.min(jumps[next], jumps[index] + 1);\n            }\n        }\n        return jumps[length - 1];\n    }\n}",
+    "time_complexity": "O(n^2) worst case — each position may relax a long range.",
+    "space_complexity": "O(n) — the minimum-jump count is stored for each index."
+  },
+  "optimized": {
+    "explanation": "Treat all positions reachable with the current number of jumps as one layer. While scanning that layer, record the farthest next boundary; when the current boundary is reached, commit one jump and begin the next layer.",
+    "correctness_idea": "At each boundary, the accumulated farthest value is the largest reach obtainable using one additional jump from any position in the current layer. Advancing the layer boundary therefore uses the fewest jumps possible to cover successive ranges.",
+    "language": "java",
+    "code": "class Solution {\n    public int jump(int[] nums) {\n        int jumps = 0;\n        int currentEnd = 0;\n        int farthest = 0;\n        for (int index = 0; index < nums.length - 1; index++) {\n            farthest = Math.max(farthest, index + nums[index]);\n            if (index == currentEnd) {\n                jumps++;\n                currentEnd = farthest;\n                if (currentEnd >= nums.length - 1) break;\n            }\n        }\n        return jumps;\n    }\n}",
+    "time_complexity": "O(n) — each index before the last is scanned once.",
+    "space_complexity": "O(1) auxiliary — three scalar values track the current layer and next reach."
+  },
+  "dry_run": {
+    "sample_input": {"nums": [2, 3, 1, 1, 2, 1]},
+    "sample_output": 3,
+    "steps": [
+      {"sequence": 1, "event": "Scan index 0 in the current layer [0, 0].", "variables": {"index": 0, "currentEnd": 0, "farthest": 2, "jumps": 1}, "condition": "0 + nums[0] = 2; index equals currentEnd.", "action": "Commit jump 1 and set the next layer boundary to 2.", "state_before": {"currentEnd": 0, "farthest": 0, "jumps": 0}, "state_after": {"currentEnd": 2, "farthest": 2, "jumps": 1}, "focus": {"array": "nums", "indices": [0, 2]}},
+      {"sequence": 2, "event": "Scan index 1 in the current layer [1, 2].", "variables": {"index": 1, "currentEnd": 2, "farthest": 4, "jumps": 1}, "condition": "1 + nums[1] = 4 extends the next boundary; index is not currentEnd.", "action": "Update farthest to 4 and continue within this layer.", "state_before": {"currentEnd": 2, "farthest": 2, "jumps": 1}, "state_after": {"currentEnd": 2, "farthest": 4, "jumps": 1}, "focus": {"array": "nums", "indices": [1, 4]}},
+      {"sequence": 3, "event": "Scan index 2, the end of the current layer.", "variables": {"index": 2, "currentEnd": 4, "farthest": 4, "jumps": 2}, "condition": "2 + nums[2] = 3; index equals currentEnd.", "action": "Commit jump 2 and advance the boundary to the accumulated farthest index 4.", "state_before": {"currentEnd": 2, "farthest": 4, "jumps": 1}, "state_after": {"currentEnd": 4, "farthest": 4, "jumps": 2}, "focus": {"array": "nums", "indices": [2, 4]}},
+      {"sequence": 4, "event": "Scan index 3 in the current layer [3, 4].", "variables": {"index": 3, "currentEnd": 4, "farthest": 4, "jumps": 2}, "condition": "3 + nums[3] = 4; index is before currentEnd.", "action": "Keep farthest at 4 and continue.", "state_before": {"currentEnd": 4, "farthest": 4, "jumps": 2}, "state_after": {"currentEnd": 4, "farthest": 4, "jumps": 2}, "focus": {"array": "nums", "indices": [3, 4]}},
+      {"sequence": 5, "event": "Scan index 4, the end of the current layer.", "variables": {"index": 4, "currentEnd": 6, "farthest": 6, "jumps": 3}, "condition": "4 + nums[4] = 6 reaches the final index; index equals currentEnd.", "action": "Commit jump 3, extend the boundary to 6, and finish.", "state_before": {"currentEnd": 4, "farthest": 4, "jumps": 2}, "state_after": {"currentEnd": 6, "farthest": 6, "jumps": 3}, "focus": {"array": "nums", "indices": [4, 5]}}
+    ],
+    "final_result": 3
+  },
+  "edge_cases": [
+    {"case": "One-element array", "handling": "The loop is skipped and zero jumps are returned."},
+    {"case": "A jump lands directly at the end", "handling": "The next boundary reaches the last index and the scan stops."},
+    {"case": "Several choices exist within a layer", "handling": "The farthest reachable next boundary represents the best one-jump extension."}
+  ]
+}

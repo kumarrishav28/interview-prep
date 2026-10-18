@@ -1,0 +1,35 @@
+{
+  "metadata": {"problem_number": 106, "title": "Construct Binary Tree from Inorder and Postorder Traversal", "url": "https://leetcode.com/problems/construct-binary-tree-from-inorder-and-postorder-traversal/", "difficulty": "Medium", "category": "Binary Tree General"},
+  "problem_summary": {"summary": "Reconstruct the unique tree represented by matching inorder and postorder traversals.", "input_output": "Input: inorder and postorder arrays of the same tree. Return its root.", "constraints": ["1 <= traversal length <= 3000", "Values are unique and in [-3000, 3000]", "Both arrays are valid traversals of the same tree"]},
+  "brute_force": {
+    "explanation": "Take the last postorder value as each subtree root, linearly locate it in the current inorder interval, then recursively build the two resulting intervals.",
+    "correctness_idea": "Postorder ends with the subtree root, and its inorder position divides that subtree into exactly its left and right parts.",
+    "language": "java",
+    "code": "class Solution {\n    public TreeNode buildTree(int[] inorder, int[] postorder) {\n        return build(inorder, 0, inorder.length, postorder, 0, postorder.length);\n    }\n\n    private TreeNode build(int[] inorder, int inStart, int inEnd, int[] postorder, int postStart, int postEnd) {\n        if (inStart >= inEnd) {\n            return null;\n        }\n        int rootValue = postorder[postEnd - 1];\n        int split = inStart;\n        while (inorder[split] != rootValue) {\n            split++;\n        }\n        int leftSize = split - inStart;\n        TreeNode root = new TreeNode(rootValue);\n        root.left = build(inorder, inStart, split, postorder, postStart, postStart + leftSize);\n        root.right = build(inorder, split + 1, inEnd, postorder, postStart + leftSize, postEnd - 1);\n        return root;\n    }\n}",
+    "time_complexity": "O(n^2) worst case due to repeated linear searches in inorder.",
+    "space_complexity": "O(h) auxiliary recursion stack, excluding the returned tree."
+  },
+  "optimized": {
+    "explanation": "Map each inorder value to its index, then use postorder interval boundaries to construct subtrees without scanning for splits.",
+    "correctness_idea": "For each interval, the final postorder element is its root. The mapped inorder index gives the left-subtree size, which partitions the remaining postorder segment correctly.",
+    "language": "java",
+    "code": "import java.util.HashMap;\nimport java.util.Map;\n\nclass Solution {\n    private Map<Integer, Integer> inorderIndex;\n\n    public TreeNode buildTree(int[] inorder, int[] postorder) {\n        inorderIndex = new HashMap<>();\n        for (int index = 0; index < inorder.length; index++) {\n            inorderIndex.put(inorder[index], index);\n        }\n        return build(inorder, 0, inorder.length, postorder, 0, postorder.length);\n    }\n\n    private TreeNode build(int[] inorder, int inStart, int inEnd, int[] postorder, int postStart, int postEnd) {\n        if (inStart >= inEnd) {\n            return null;\n        }\n        int rootValue = postorder[postEnd - 1];\n        int split = inorderIndex.get(rootValue);\n        int leftSize = split - inStart;\n        TreeNode root = new TreeNode(rootValue);\n        root.left = build(inorder, inStart, split, postorder, postStart, postStart + leftSize);\n        root.right = build(inorder, split + 1, inEnd, postorder, postStart + leftSize, postEnd - 1);\n        return root;\n    }\n}",
+    "time_complexity": "O(n) expected — indexing, construction, and each map lookup take expected linear total time.",
+    "space_complexity": "O(n) for the index map and output tree, plus O(h) recursion stack."
+  },
+  "dry_run": {
+    "sample_input": {"inorder": [2, 5, 7, 9], "postorder": [2, 7, 5, 9]},
+    "sample_output": [9, 5, null, 2, 7],
+    "steps": [
+      {"sequence": 1, "event": "Select the final postorder value as root.", "variables": {"postEnd": 4, "rootValue": 9, "split": 3}, "condition": "Inorder index 3 leaves three values to the left and none to the right.", "action": "Create root 9 and build its left interval.", "state_before": {"root": null}, "state_after": {"root": 9, "pendingLeftInorder": [2, 5, 7]}},
+      {"sequence": 2, "event": "Build the subtree rooted at 5.", "variables": {"postorderRange": [0, 3], "rootValue": 5, "split": 1, "leftSize": 1}, "condition": "Inorder values [2] and [7] are the left and right intervals.", "action": "Attach subtree roots 2 and 7 under 5.", "state_before": {"childrenOf9": [null, null]}, "state_after": {"childrenOf9": [5, null], "childrenOf5": [2, 7]}},
+      {"sequence": 3, "event": "Build leaves 2 and 7.", "variables": {"postorderRoots": [2, 7]}, "condition": "Each selected interval contains one item.", "action": "Create both leaf nodes and return the completed tree.", "state_before": {"childrenOf5": [null, null]}, "state_after": {"levelOrder": [9, 5, null, 2, 7]}}
+    ],
+    "final_result": [9, 5, null, 2, 7]
+  },
+  "edge_cases": [
+    {"case": "Single value", "handling": "The value becomes the sole leaf."},
+    {"case": "Only one child", "handling": "The inorder split produces an empty interval on the missing side."},
+    {"case": "Skewed tree", "handling": "Construction remains correct, with recursion depth proportional to node count."}
+  ]
+}

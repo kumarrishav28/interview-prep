@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "problem_number": 49,
+    "title": "Group Anagrams",
+    "url": "https://leetcode.com/problems/group-anagrams/",
+    "difficulty": "Medium",
+    "category": "Hashmap"
+  },
+  "problem_summary": {
+    "summary": "Partition the input strings into groups whose members have the same letter counts.",
+    "input_output": "Input: an array of lowercase English strings. Return a list of anagram groups in any order; strings inside a group come from the input.",
+    "constraints": ["1 <= strs.length <= 10^4", "0 <= strs[i].length <= 100", "strs[i] consists of lowercase English letters"]
+  },
+  "brute_force": {
+    "explanation": "Create groups incrementally. For each string, sort its letters and compare that signature against the sorted signature of each existing group's first string; join the matching group or start a new one.",
+    "correctness_idea": "Two strings are anagrams exactly when their sorted character sequences match. Comparing against one representative from each established group therefore places each string in exactly its anagram group.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.Arrays;\nimport java.util.List;\n\nclass Solution {\n    public List<List<String>> groupAnagrams(String[] strs) {\n        List<List<String>> groups = new ArrayList<>();\n        List<String> signatures = new ArrayList<>();\n        for (String value : strs) {\n            char[] letters = value.toCharArray();\n            Arrays.sort(letters);\n            String signature = new String(letters);\n            int group = 0;\n            while (group < signatures.size() && !signatures.get(group).equals(signature)) {\n                group++;\n            }\n            if (group == signatures.size()) {\n                signatures.add(signature);\n                groups.add(new ArrayList<>());\n            }\n            groups.get(group).add(value);\n        }\n        return groups;\n    }\n}",
+    "time_complexity": "O(N^2 * (K + 1) + N * K log(K + 1)) worst case, where N is the number of strings and K is their maximum length; this also covers empty strings.",
+    "space_complexity": "O(N * (K + 1)) including returned groups and stored signatures; sorting uses O(K) temporary space per string."
+  },
+  "optimized": {
+    "explanation": "Sort each string's characters to form a canonical key, and use a hash map from that key to its output group.",
+    "correctness_idea": "Every anagram has the same sorted key, and non-anagrams have different keys. The map therefore collects precisely the strings with equal character multisets.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.Arrays;\nimport java.util.LinkedHashMap;\nimport java.util.List;\nimport java.util.Map;\n\nclass Solution {\n    public List<List<String>> groupAnagrams(String[] strs) {\n        Map<String, List<String>> groups = new LinkedHashMap<>();\n        for (String value : strs) {\n            char[] letters = value.toCharArray();\n            Arrays.sort(letters);\n            String signature = new String(letters);\n            groups.computeIfAbsent(signature, key -> new ArrayList<>()).add(value);\n        }\n        return new ArrayList<>(groups.values());\n    }\n}",
+    "time_complexity": "O(N * (K log(K + 1) + K + 1)) expected, including sorting and hashing signatures, where N is the string count and K is the maximum string length.",
+    "space_complexity": "O(N * (K + 1)) for the output groups and distinct signature keys; the map stores references to the output groups."
+  },
+  "dry_run": {
+    "sample_input": {"strs": ["arc", "car", "elbow", "below"]},
+    "sample_output": [["arc", "car"], ["elbow", "below"]],
+    "steps": [
+      {"sequence": 1, "event": "Process arc.", "variables": {"value": "arc", "signature": "acr"}, "condition": "No group has key acr.", "action": "Create group acr and add arc.", "state_before": {"groups": {}}, "state_after": {"groups": {"acr": ["arc"]}}},
+      {"sequence": 2, "event": "Process car.", "variables": {"value": "car", "signature": "acr"}, "condition": "Key acr already exists.", "action": "Append car to the existing group.", "state_before": {"groups": {"acr": ["arc"]}}, "state_after": {"groups": {"acr": ["arc", "car"]}}},
+      {"sequence": 3, "event": "Process elbow.", "variables": {"value": "elbow", "signature": "below"}, "condition": "No group has key below.", "action": "Create group below and add elbow.", "state_before": {"groups": {"acr": ["arc", "car"]}}, "state_after": {"groups": {"acr": ["arc", "car"], "below": ["elbow"]}}},
+      {"sequence": 4, "event": "Process below.", "variables": {"value": "below", "signature": "below"}, "condition": "Key below already exists.", "action": "Append below; return the map's groups.", "state_before": {"groups": {"acr": ["arc", "car"], "below": ["elbow"]}}, "state_after": {"groups": {"acr": ["arc", "car"], "below": ["elbow", "below"]}}
+      }
+    ],
+    "final_result": [["arc", "car"], ["elbow", "below"]]
+  },
+  "edge_cases": [
+    {"case": "An empty string", "handling": "Its sorted signature is the empty string, so it groups with other empty strings."},
+    {"case": "Every string forms a distinct group", "handling": "A new map entry is created for each distinct signature."},
+    {"case": "Repeated anagrams", "handling": "All strings with the same signature append to the same group."}
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "metadata": {"problem_number": 210, "title": "Course Schedule II", "url": "https://leetcode.com/problems/course-schedule-ii/", "difficulty": "Medium", "category": "Graph General"},
+  "problem_summary": {"summary": "Return any ordering that completes every course after its prerequisites, or an empty array if dependencies contain a cycle.", "input_output": "Input: numCourses and pairs [course, prerequisite]. Return a valid topological order of all course indices, or an empty array when impossible.", "constraints": ["1 <= numCourses <= 2000", "0 <= prerequisites.length <= numCourses * (numCourses - 1)", "Each pair has two distinct course indices in [0, numCourses)", "Prerequisite pairs are distinct"]},
+  "brute_force": {
+    "explanation": "Run DFS with unvisited, active, and finished states. Add each course to a list after all courses that depend on it have been explored, then reverse the postorder to obtain prerequisite-first order.",
+    "correctness_idea": "A back-edge to an active course proves a directed cycle, so no order exists. Otherwise, DFS postorder places each dependent before its prerequisites; reversing it places every prerequisite before the course that needs it.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.Collections;\nimport java.util.List;\n\nclass Solution {\n    public int[] findOrder(int numCourses, int[][] prerequisites) {\n        List<List<Integer>> graph = new ArrayList<>();\n        for (int course = 0; course < numCourses; course++) graph.add(new ArrayList<>());\n        for (int[] pair : prerequisites) graph.get(pair[1]).add(pair[0]);\n        int[] state = new int[numCourses];\n        List<Integer> postorder = new ArrayList<>();\n        for (int course = 0; course < numCourses; course++) {\n            if (state[course] == 0 && !visit(course, graph, state, postorder)) return new int[0];\n        }\n        Collections.reverse(postorder);\n        int[] order = new int[numCourses];\n        for (int index = 0; index < numCourses; index++) order[index] = postorder.get(index);\n        return order;\n    }\n    private boolean visit(int course, List<List<Integer>> graph, int[] state, List<Integer> postorder) {\n        if (state[course] == 1) return false;\n        if (state[course] == 2) return true;\n        state[course] = 1;\n        for (int next : graph.get(course)) if (!visit(next, graph, state, postorder)) return false;\n        state[course] = 2;\n        postorder.add(course);\n        return true;\n    }\n}",
+    "time_complexity": "O(V + E), where V is numCourses and E is the number of prerequisites.",
+    "space_complexity": "O(V + E) for the graph, states, and output, plus O(V) worst-case recursion stack."
+  },
+  "optimized": {
+    "explanation": "Use Kahn's algorithm. Enqueue courses with no prerequisites, append each removed course to the result, and decrement the indegree of dependent courses. Return the result only if it contains every course.",
+    "correctness_idea": "Every course appended has all prerequisites already appended. If the algorithm appends all courses, that order is valid. If a cycle remains, its courses never reach indegree zero, so fewer than numCourses are appended and an empty array is returned.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.ArrayList;\nimport java.util.List;\nimport java.util.Queue;\n\nclass Solution {\n    public int[] findOrder(int numCourses, int[][] prerequisites) {\n        List<List<Integer>> graph = new ArrayList<>();\n        int[] indegree = new int[numCourses];\n        for (int course = 0; course < numCourses; course++) graph.add(new ArrayList<>());\n        for (int[] pair : prerequisites) { graph.get(pair[1]).add(pair[0]); indegree[pair[0]]++; }\n        Queue<Integer> ready = new ArrayDeque<>();\n        for (int course = 0; course < numCourses; course++) if (indegree[course] == 0) ready.offer(course);\n        int[] order = new int[numCourses];\n        int size = 0;\n        while (!ready.isEmpty()) {\n            int course = ready.poll();\n            order[size++] = course;\n            for (int next : graph.get(course)) if (--indegree[next] == 0) ready.offer(next);\n        }\n        return size == numCourses ? order : new int[0];\n    }\n}",
+    "time_complexity": "O(V + E), processing each vertex and edge once.",
+    "space_complexity": "O(V + E) for the adjacency lists, indegrees, queue, and returned order."
+  },
+  "dry_run": {
+    "sample_input": {"numCourses": 4, "prerequisites": [[1, 0], [2, 0], [3, 1], [3, 2]]},
+    "sample_output": [0, 1, 2, 3],
+    "steps": [
+      {"sequence": 1, "event": "Compute indegrees and seed ready courses.", "variables": {"indegree": [0, 1, 1, 2]}, "condition": "Course 0 has no prerequisites.", "action": "Initialize queue with 0.", "state_before": {"ready": [], "order": []}, "state_after": {"ready": [0], "order": []}},
+      {"sequence": 2, "event": "Remove course 0.", "variables": {"released": [1, 2], "indegree": [0, 0, 0, 2]}, "condition": "Both courses 1 and 2 lose their final prerequisite.", "action": "Append 0 and enqueue 1 and 2.", "state_before": {"ready": [0], "order": []}, "state_after": {"ready": [1, 2], "order": [0]}},
+      {"sequence": 3, "event": "Remove courses 1 and 2.", "variables": {"indegreeOf3": 0, "order": [0, 1, 2]}, "condition": "Each removal reduces course 3's indegree; after both it becomes zero.", "action": "Append both and enqueue course 3.", "state_before": {"ready": [1, 2], "order": [0]}, "state_after": {"ready": [3], "order": [0, 1, 2]}},
+      {"sequence": 4, "event": "Remove course 3.", "variables": {"size": 4, "numCourses": 4}, "condition": "All courses have been ordered.", "action": "Return the complete order.", "state_before": {"ready": [3], "order": [0, 1, 2]}, "state_after": {"ready": [], "order": [0, 1, 2, 3]}}
+    ],
+    "final_result": [0, 1, 2, 3]
+  },
+  "edge_cases": [
+    {"case": "No prerequisites", "handling": "All course indices are initially ready and form a valid order."},
+    {"case": "A cycle exists", "handling": "The DFS baseline detects an active-state revisit; Kahn's result is shorter than numCourses, so it returns empty."},
+    {"case": "Multiple valid orders", "handling": "Queue ordering may choose any valid ordering, as allowed by the problem."},
+    {"case": "A course depends on two prerequisites", "handling": "It is enqueued only after both incoming edges have been removed."}
+  ]
+}

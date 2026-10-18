@@ -1,0 +1,35 @@
+{
+  "metadata": {"problem_number": 100, "title": "Same Tree", "url": "https://leetcode.com/problems/same-tree/", "difficulty": "Easy", "category": "Binary Tree General"},
+  "problem_summary": {"summary": "Determine whether two trees have identical structure and equal values at corresponding nodes.", "input_output": "Input: roots p and q. Return whether the trees are identical.", "constraints": ["0 <= nodes in either tree <= 100", "-10^4 <= Node.val <= 10^4"]},
+  "brute_force": {
+    "explanation": "Serialize each tree in preorder, writing an explicit null marker for every missing child, then compare the token lists.",
+    "correctness_idea": "A preorder sequence including null positions uniquely records both shape and node values; equal sequences therefore represent identical trees.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass Solution {\n    public boolean isSameTree(TreeNode p, TreeNode q) {\n        List<String> first = new ArrayList<>();\n        List<String> second = new ArrayList<>();\n        serialize(p, first);\n        serialize(q, second);\n        return first.equals(second);\n    }\n\n    private void serialize(TreeNode node, List<String> tokens) {\n        if (node == null) {\n            tokens.add(\"#\");\n            return;\n        }\n        tokens.add(Integer.toString(node.val));\n        serialize(node.left, tokens);\n        serialize(node.right, tokens);\n    }\n}",
+    "time_complexity": "O(n + m), where n and m are the node counts of p and q.",
+    "space_complexity": "O(n + m) auxiliary for serialized tokens, plus recursion stacks."
+  },
+  "optimized": {
+    "explanation": "Compare corresponding nodes directly and stop as soon as null structure or values differ.",
+    "correctness_idea": "The trees are identical exactly when each paired position is either null in both trees or contains equal values whose left and right pairs are also identical.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean isSameTree(TreeNode p, TreeNode q) {\n        if (p == null || q == null) {\n            return p == q;\n        }\n        return p.val == q.val\n            && isSameTree(p.left, q.left)\n            && isSameTree(p.right, q.right);\n    }\n}",
+    "time_complexity": "O(min(n, m)) when a mismatch is found early, O(n + m) when both trees match.",
+    "space_complexity": "O(h) auxiliary recursion stack, where h is the greater active tree height."
+  },
+  "dry_run": {
+    "sample_input": {"p_level_order": [4, 2, 7], "q_level_order": [4, 2, 8]},
+    "sample_output": false,
+    "steps": [
+      {"sequence": 1, "event": "Compare the roots.", "variables": {"p": 4, "q": 4}, "condition": "Both are non-null and values match.", "action": "Continue with the left children.", "state_before": {"pair": [4, 4]}, "state_after": {"pending": [[2, 2], [7, 8]]}},
+      {"sequence": 2, "event": "Compare the left children.", "variables": {"p": 2, "q": 2}, "condition": "Values match and both nodes are non-null.", "action": "Their child pairs are both null; continue to the right children of the roots.", "state_before": {"pending": [[2, 2], [7, 8]]}, "state_after": {"pending": [[7, 8]]}},
+      {"sequence": 3, "event": "Compare the right children.", "variables": {"p": 7, "q": 8}, "condition": "Both exist but their values differ.", "action": "Return false immediately.", "state_before": {"pending": [[7, 8]]}, "state_after": {"result": false}}
+    ],
+    "final_result": false
+  },
+  "edge_cases": [
+    {"case": "Both trees are empty", "handling": "The paired null roots compare equal, so the result is true."},
+    {"case": "Only one tree is empty", "handling": "A null/non-null pair returns false."},
+    {"case": "Same values but different shape", "handling": "Corresponding child null checks detect the structural mismatch."}
+  ]
+}

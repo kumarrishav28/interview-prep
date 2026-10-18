@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 79,
+    "title": "Word Search",
+    "url": "https://leetcode.com/problems/word-search/",
+    "difficulty": "Medium",
+    "category": "Backtracking"
+  },
+  "problem_summary": {
+    "summary": "Determine whether a word can be traced through horizontally or vertically adjacent board cells without reusing a cell.",
+    "input_output": "Inputs: a character grid and a word. Return true if a valid path spells the word, otherwise false.",
+    "constraints": ["1 <= board.length, board[i].length <= 6", "1 <= word.length <= 15", "Board and word contain English letters in either case"]
+  },
+  "brute_force": {
+    "explanation": "Start from every cell and enumerate every self-avoiding path of word.length cells using orthogonal moves. Only after a full path is built, compare its characters with the word. This delays mismatch detection until a complete path has been explored.",
+    "correctness_idea": "Any valid spelling is a self-avoiding orthogonal path of exactly the word's length starting at some cell. Enumerating all such paths must include it, and the final character-by-character comparison accepts exactly the paths spelling the word.",
+    "language": "java",
+    "code": "class Solution {\n    private static final int[][] DIRECTIONS = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};\n\n    public boolean exist(char[][] board, String word) {\n        boolean[][] visited = new boolean[board.length][board[0].length];\n        StringBuilder path = new StringBuilder();\n        for (int row = 0; row < board.length; row++) {\n            for (int column = 0; column < board[0].length; column++) {\n                if (enumerate(board, word.length(), row, column, visited, path, word)) {\n                    return true;\n                }\n            }\n        }\n        return false;\n    }\n\n    private boolean enumerate(char[][] board, int length, int row, int column, boolean[][] visited, StringBuilder path, String word) {\n        if (row < 0 || row >= board.length || column < 0 || column >= board[0].length || visited[row][column]) {\n            return false;\n        }\n        visited[row][column] = true;\n        path.append(board[row][column]);\n        if (path.length() == length && path.toString().equals(word)) {\n            path.deleteCharAt(path.length() - 1);\n            visited[row][column] = false;\n            return true;\n        }\n        if (path.length() < length) {\n            for (int[] direction : DIRECTIONS) {\n                if (enumerate(board, length, row + direction[0], column + direction[1], visited, path, word)) {\n                    path.deleteCharAt(path.length() - 1);\n                    visited[row][column] = false;\n                    return true;\n                }\n            }\n        }\n        path.deleteCharAt(path.length() - 1);\n        visited[row][column] = false;\n        return false;\n    }\n}",
+    "time_complexity": "O(m * n * 4 * 3^max(0,L-2) * L) upper bound — from each of m*n starts, paths have at most four first moves and three thereafter (no immediate revisit); final string comparison costs O(L).",
+    "space_complexity": "O(m * n + L) auxiliary for visited cells, the path builder, and recursion stack."
+  },
+  "optimized": {
+    "explanation": "Check the expected character as soon as each cell is entered. Mark a matching cell visited, recursively search its four neighbors for the next character, and unmark it on return. A mismatch immediately abandons that path.",
+    "correctness_idea": "A path can match the word only if its cell at index i equals word[i]. Checking that condition before exploring deeper cannot discard any valid path, and visited marking enforces the no-reuse rule while backtracking makes the cell available to other paths.",
+    "language": "java",
+    "code": "class Solution {\n    private static final int[][] DIRECTIONS = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};\n\n    public boolean exist(char[][] board, String word) {\n        boolean[][] visited = new boolean[board.length][board[0].length];\n        for (int row = 0; row < board.length; row++) {\n            for (int column = 0; column < board[0].length; column++) {\n                if (search(board, word, 0, row, column, visited)) {\n                    return true;\n                }\n            }\n        }\n        return false;\n    }\n\n    private boolean search(char[][] board, String word, int index, int row, int column, boolean[][] visited) {\n        if (row < 0 || row >= board.length || column < 0 || column >= board[0].length || visited[row][column]) {\n            return false;\n        }\n        if (board[row][column] != word.charAt(index)) {\n            return false;\n        }\n        if (index == word.length() - 1) {\n            return true;\n        }\n        visited[row][column] = true;\n        for (int[] direction : DIRECTIONS) {\n            if (search(board, word, index + 1, row + direction[0], column + direction[1], visited)) {\n                visited[row][column] = false;\n                return true;\n            }\n        }\n        visited[row][column] = false;\n        return false;\n    }\n}",
+    "time_complexity": "O(m * n * 4 * 3^max(0,L-2)) upper bound — at most m*n starting cells and a self-avoiding search branching by at most four initially and three afterward; mismatches prune earlier.",
+    "space_complexity": "O(m * n + L) auxiliary for visited cells and recursion stack; the stack depth is at most L."
+  },
+  "dry_run": {
+    "sample_input": {"board": [["C", "A", "T"], ["R", "R", "E"]], "word": "CARE"},
+    "sample_output": true,
+    "steps": [
+      {"sequence": 1, "event": "Try starting cell (0,0), containing C.", "variables": {"row": 0, "column": 0, "index": 0, "expected": "C"}, "condition": "board[row][column] equals word[index].", "action": "Mark (0,0) visited and search neighbors for A.", "state_before": {"visited": [], "matchedPrefix": ""}, "state_after": {"visited": [[0, 0]], "matchedPrefix": "C"}},
+      {"sequence": 2, "event": "Move right to (0,1), containing A.", "variables": {"row": 0, "column": 1, "index": 1, "expected": "A"}, "condition": "The cell is unvisited and matches.", "action": "Mark it and search neighbors for R.", "state_before": {"visited": [[0, 0]], "matchedPrefix": "C"}, "state_after": {"visited": [[0, 0], [0, 1]], "matchedPrefix": "CA"}},
+      {"sequence": 3, "event": "Move down to (1,1), containing R.", "variables": {"row": 1, "column": 1, "index": 2, "expected": "R"}, "condition": "R matches word[2] and this cell is unvisited.", "action": "Mark it and search neighbors for E.", "state_before": {"visited": [[0, 0], [0, 1]], "matchedPrefix": "CA"}, "state_after": {"visited": [[0, 0], [0, 1], [1, 1]], "matchedPrefix": "CAR"}},
+      {"sequence": 4, "event": "Move right to (1,2), containing E.", "variables": {"row": 1, "column": 2, "index": 3, "expected": "E"}, "condition": "The cell matches the final character.", "action": "Return true through the recursive calls; the caller returns true.", "state_before": {"visited": [[0, 0], [0, 1], [1, 1]], "matchedPrefix": "CAR"}, "state_after": {"matchedPrefix": "CARE", "found": true}}
+    ],
+    "final_result": true
+  },
+  "edge_cases": [
+    {"case": "Word longer than the number of cells", "handling": "No simple path can contain enough distinct cells, so search eventually returns false."},
+    {"case": "Adjacent letters match but would reuse a cell", "handling": "Visited cells are rejected, preventing a path from moving back onto its prior position."},
+    {"case": "Several possible starting cells", "handling": "Every board coordinate is tried until a complete path is found or all starts fail."}
+  ]
+}

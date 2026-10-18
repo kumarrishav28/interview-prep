@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "problem_number": 108,
+    "title": "Convert Sorted Array to Binary Search Tree",
+    "url": "https://leetcode.com/problems/convert-sorted-array-to-binary-search-tree/",
+    "difficulty": "Easy",
+    "category": "Divide & Conquer"
+  },
+  "problem_summary": {
+    "summary": "Build a height-balanced binary search tree containing the values of a strictly increasing array.",
+    "input_output": "Input: int[] nums in strictly increasing order. Return the root of a height-balanced BST; TreeNode is provided by the judge.",
+    "constraints": ["1 <= nums.length <= 10^4", "-10^4 <= nums[i] <= 10^4", "nums is strictly increasing"]
+  },
+  "brute_force": {
+    "explanation": "Recursively choose each range's midpoint, but copy the left and right subarrays before building the child trees. The midpoint keeps the result balanced; repeated copying is the avoidable cost in this direct baseline.",
+    "correctness_idea": "The midpoint separates smaller values into the left range and larger values into the right range. Recursing on both ranges therefore preserves the BST ordering, and repeatedly choosing midpoints keeps subtree sizes within one node of each other.",
+    "language": "java",
+    "code": "import java.util.Arrays;\n\nclass Solution {\n    public TreeNode sortedArrayToBST(int[] nums) {\n        if (nums.length == 0) {\n            return null;\n        }\n        int middle = nums.length / 2;\n        TreeNode root = new TreeNode(nums[middle]);\n        root.left = sortedArrayToBST(Arrays.copyOfRange(nums, 0, middle));\n        root.right = sortedArrayToBST(Arrays.copyOfRange(nums, middle + 1, nums.length));\n        return root;\n    }\n}",
+    "time_complexity": "O(n log n) total copying across recursion levels; each level copies O(n) values and there are O(log n) levels.",
+    "space_complexity": "O(n) peak auxiliary space for live copied subarrays along a recursion path, plus O(log n) recursion frames; the returned n-node tree is output space."
+  },
+  "optimized": {
+    "explanation": "Recursively choose the middle index of an inclusive range and pass index bounds instead of creating subarrays. Each array element becomes exactly one tree node.",
+    "correctness_idea": "For every range, its midpoint is no smaller than any value in the left range and no greater than any value in the right range. The two ranges contain nearly equal counts, so the recursive tree is a BST and height-balanced.",
+    "language": "java",
+    "code": "class Solution {\n    public TreeNode sortedArrayToBST(int[] nums) {\n        return build(nums, 0, nums.length - 1);\n    }\n\n    private TreeNode build(int[] nums, int left, int right) {\n        if (left > right) {\n            return null;\n        }\n        int middle = left + (right - left) / 2;\n        TreeNode root = new TreeNode(nums[middle]);\n        root.left = build(nums, left, middle - 1);\n        root.right = build(nums, middle + 1, right);\n        return root;\n    }\n}",
+    "time_complexity": "O(n) — each value is read once and creates one node.",
+    "space_complexity": "O(log n) auxiliary recursion stack for a balanced tree, excluding the O(n) returned tree."
+  },
+  "dry_run": {
+    "sample_input": {"nums": [-4, -1, 2, 7, 11]},
+    "sample_output": [2, -4, 7, null, -1, null, 11],
+    "steps": [
+      {"sequence": 1, "event": "Build the full range.", "variables": {"left": 0, "right": 4, "middle": 2}, "condition": "left <= right.", "action": "Create root 2; recurse on [0,1] and [3,4].", "state_before": {"partial_tree": null, "range": [0, 4]}, "state_after": {"partial_tree": {"root": 2, "left": "pending", "right": "pending"}, "ranges": [[0, 1], [3, 4]]}},
+      {"sequence": 2, "event": "Build the left range [0,1].", "variables": {"left": 0, "right": 1, "middle": 0}, "condition": "left <= right.", "action": "Create node -4; its right range [1,1] creates node -1.", "state_before": {"left_child": "pending", "range": [0, 1]}, "state_after": {"left_child": {"root": -4, "left": null, "right": -1}}},
+      {"sequence": 3, "event": "Build the right range [3,4].", "variables": {"left": 3, "right": 4, "middle": 3}, "condition": "left <= right.", "action": "Create node 7; its right range [4,4] creates node 11.", "state_before": {"right_child": "pending", "range": [3, 4]}, "state_after": {"right_child": {"root": 7, "left": null, "right": 11}}}
+    ],
+    "final_result": [2, -4, 7, null, -1, null, 11]
+  },
+  "edge_cases": [
+    {"case": "One element", "handling": "The sole value becomes the root and both child ranges are empty."},
+    {"case": "Even number of values", "handling": "The lower middle index is chosen; this still gives subtree sizes differing by at most one."},
+    {"case": "Empty array", "handling": "The optimized helper returns null for the empty range; the official constraints require at least one element."}
+  ]
+}

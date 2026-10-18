@@ -1,0 +1,39 @@
+{
+  "metadata": {"problem_number": 2, "title": "Add Two Numbers", "url": "https://leetcode.com/problems/add-two-numbers/", "difficulty": "Medium", "category": "Linked List"},
+  "problem_summary": {
+    "summary": "Add two non-negative integers whose digits are stored least-significant first in singly linked lists, and return the sum in the same representation.",
+    "input_output": "Inputs: non-null ListNode heads l1 and l2. Return a ListNode head. The judge provides ListNode { int val; ListNode next; }.",
+    "constraints": ["1 <= nodes in each list <= 100", "0 <= Node.val <= 9", "Neither represented number has leading zeroes except the number zero"]
+  },
+  "brute_force": {
+    "explanation": "Convert each reversed-digit list into a BigInteger by collecting its digits in forward order, add the numbers, then reverse the sum's decimal digits into new nodes. This direct numeric baseline is simple but stores strings and performs big-integer work.",
+    "correctness_idea": "Reversing each input's digit order reconstructs the represented integer. BigInteger addition gives the exact sum, and emitting its decimal digits from right to left restores the required list encoding.",
+    "language": "java",
+    "code": "import java.math.BigInteger;\n\nclass Solution {\n    public ListNode addTwoNumbers(ListNode l1, ListNode l2) {\n        BigInteger first = readNumber(l1);\n        BigInteger second = readNumber(l2);\n        String digits = first.add(second).toString();\n        ListNode dummy = new ListNode(0);\n        ListNode tail = dummy;\n        for (int index = digits.length() - 1; index >= 0; index--) {\n            tail.next = new ListNode(digits.charAt(index) - '0');\n            tail = tail.next;\n        }\n        return dummy.next;\n    }\n\n    private BigInteger readNumber(ListNode head) {\n        StringBuilder digits = new StringBuilder();\n        while (head != null) {\n            digits.append((char) ('0' + head.val));\n            head = head.next;\n        }\n        return new BigInteger(digits.reverse().toString());\n    }\n}",
+    "time_complexity": "O(n + m) digit processing plus the cost of BigInteger addition; n and m are the input lengths.",
+    "space_complexity": "O(n + m + r) auxiliary for the decimal strings and BigInteger representations, where r is the result length; output nodes are separate."
+  },
+  "optimized": {
+    "explanation": "Add corresponding digits from the two lists with a carry. Treat a missing digit as zero and append a final carry if needed.",
+    "correctness_idea": "At each position, the output digit is the sum modulo ten and the carry is the integer quotient by ten. This is exactly column addition from least significant digit to most significant digit.",
+    "language": "java",
+    "code": "class Solution {\n    public ListNode addTwoNumbers(ListNode l1, ListNode l2) {\n        ListNode dummy = new ListNode(0);\n        ListNode tail = dummy;\n        int carry = 0;\n        while (l1 != null || l2 != null || carry != 0) {\n            int sum = carry;\n            if (l1 != null) { sum += l1.val; l1 = l1.next; }\n            if (l2 != null) { sum += l2.val; l2 = l2.next; }\n            tail.next = new ListNode(sum % 10);\n            tail = tail.next;\n            carry = sum / 10;\n        }\n        return dummy.next;\n    }\n}",
+    "time_complexity": "O(max(n, m)) — every input node is visited once and at most one carry node is added.",
+    "space_complexity": "O(1) auxiliary, excluding the O(max(n, m)) result list."
+  },
+  "dry_run": {
+    "sample_input": {"l1": [8, 3], "l2": [7, 6]},
+    "sample_output": [5, 0, 1],
+    "steps": [
+      {"sequence": 1, "event": "Add units digits.", "variables": {"digit1": 8, "digit2": 7, "carryIn": 0, "sum": 15}, "condition": "Both lists have a current node.", "action": "Append 15 % 10 and set carry to 15 / 10.", "state_before": {"result": [], "carry": 0}, "state_after": {"result": [5], "carry": 1}},
+      {"sequence": 2, "event": "Add tens digits and carry.", "variables": {"digit1": 3, "digit2": 6, "carryIn": 1, "sum": 10}, "condition": "Both lists still have nodes.", "action": "Append 0 and retain carry 1.", "state_before": {"result": [5], "carry": 1}, "state_after": {"result": [5, 0], "carry": 1}},
+      {"sequence": 3, "event": "Emit the remaining carry.", "variables": {"digit1": 0, "digit2": 0, "carryIn": 1, "sum": 1}, "condition": "Input lists are exhausted but carry is nonzero.", "action": "Append 1; carry becomes zero.", "state_before": {"result": [5, 0], "carry": 1}, "state_after": {"result": [5, 0, 1], "carry": 0}}
+    ],
+    "final_result": [5, 0, 1]
+  },
+  "edge_cases": [
+    {"case": "Unequal list lengths", "handling": "The exhausted list contributes zero for remaining columns."},
+    {"case": "A carry remains after both lists end", "handling": "The loop condition emits one more result node for the carry."},
+    {"case": "Both inputs represent zero", "handling": "A zero digit is summed and a single zero node is returned."}
+  ]
+}

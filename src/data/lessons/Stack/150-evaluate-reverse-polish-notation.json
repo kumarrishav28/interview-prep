@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 150,
+    "title": "Evaluate Reverse Polish Notation",
+    "url": "https://leetcode.com/problems/evaluate-reverse-polish-notation/",
+    "difficulty": "Medium",
+    "category": "Stack"
+  },
+  "problem_summary": {
+    "summary": "Evaluate a valid arithmetic expression written in postfix notation using integer arithmetic.",
+    "input_output": "Input: tokens containing integer operands and +, -, *, or /. Return the integer expression value.",
+    "constraints": ["1 <= tokens.length <= 10^4", "Operands are integers in [-200, 200]", "The expression is valid and has no division by zero", "All intermediate values fit in signed 32-bit integers", "Division truncates toward zero"]
+  },
+  "brute_force": {
+    "explanation": "Use a dynamic list as a value stack. Push numeric tokens; when an operator arrives, remove the last two values in right-then-left order, evaluate, and push the result.",
+    "correctness_idea": "In postfix notation, an operator applies to the two most recent unevaluated expressions. The second popped value is its left operand and the first is its right operand, so reducing each token leaves the value of the processed prefix on the list.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass Solution {\n    public int evalRPN(String[] tokens) {\n        List<Integer> values = new ArrayList<>();\n        for (String token : tokens) {\n            if (isOperator(token)) {\n                int right = values.remove(values.size() - 1);\n                int left = values.remove(values.size() - 1);\n                values.add(apply(token, left, right));\n            } else {\n                values.add(Integer.parseInt(token));\n            }\n        }\n        return values.get(values.size() - 1);\n    }\n\n    private boolean isOperator(String token) {\n        return token.length() == 1 && \"+-*/\".contains(token);\n    }\n\n    private int apply(String operator, int left, int right) {\n        switch (operator) {\n            case \"+\": return left + right;\n            case \"-\": return left - right;\n            case \"*\": return left * right;\n            default: return left / right;\n        }\n    }\n}",
+    "time_complexity": "O(n) for n tokens; each token is processed once and list-end operations are amortized O(1).",
+    "space_complexity": "O(n) for intermediate values."
+  },
+  "optimized": {
+    "explanation": "Use a primitive int array as the operand stack to avoid boxing and dynamic-list overhead. Apply each operator to the top two values in operand order.",
+    "correctness_idea": "The stack invariant is the same postfix reduction invariant: it stores completed operand subexpressions in order. Replacing the top two with their operation result preserves the value of the processed expression prefix.",
+    "language": "java",
+    "code": "class Solution {\n    public int evalRPN(String[] tokens) {\n        int[] values = new int[tokens.length];\n        int size = 0;\n        for (String token : tokens) {\n            if (token.length() == 1 && \"+-*/\".contains(token)) {\n                int right = values[--size];\n                int left = values[--size];\n                switch (token) {\n                    case \"+\": values[size++] = left + right; break;\n                    case \"-\": values[size++] = left - right; break;\n                    case \"*\": values[size++] = left * right; break;\n                    default: values[size++] = left / right;\n                }\n            } else {\n                values[size++] = Integer.parseInt(token);\n            }\n        }\n        return values[0];\n    }\n}",
+    "time_complexity": "O(n) for n tokens, with one pass.",
+    "space_complexity": "O(n) for the primitive operand stack."
+  },
+  "dry_run": {
+    "sample_input": {"tokens": ["8", "3", "-", "2", "/"]},
+    "sample_output": 2,
+    "steps": [
+      {"sequence": 1, "event": "Read 8 and 3", "variables": {"token": ["8", "3"]}, "condition": "Both tokens are integers.", "action": "Push their numeric values.", "state_before": {"stack": []}, "state_after": {"stack": [8, 3]}},
+      {"sequence": 2, "event": "Read -", "variables": {"right": 3, "left": 8}, "condition": "Operator requires two operands.", "action": "Compute 8 - 3 and push 5.", "state_before": {"stack": [8, 3]}, "state_after": {"stack": [5]}},
+      {"sequence": 3, "event": "Read 2", "variables": {"token": "2"}, "condition": "Integer operand.", "action": "Push 2.", "state_before": {"stack": [5]}, "state_after": {"stack": [5, 2]}},
+      {"sequence": 4, "event": "Read /", "variables": {"right": 2, "left": 5}, "condition": "Integer division truncates toward zero.", "action": "Compute 5 / 2 = 2 and push the result.", "state_before": {"stack": [5, 2]}, "state_after": {"stack": [2]}}
+    ],
+    "final_result": 2
+  },
+  "edge_cases": [
+    {"case": "Subtraction and division are not commutative", "handling": "The first popped value is treated as right operand and the second as left operand."},
+    {"case": "Negative division", "handling": "Java integer division truncates toward zero, matching the requirement."},
+    {"case": "A single numeric token", "handling": "The sole stack value is returned directly."}
+  ]
+}

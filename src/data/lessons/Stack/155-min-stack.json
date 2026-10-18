@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 155,
+    "title": "Min Stack",
+    "url": "https://leetcode.com/problems/min-stack/",
+    "difficulty": "Medium",
+    "category": "Stack"
+  },
+  "problem_summary": {
+    "summary": "Design a stack that supports push, pop, top, and retrieving the current minimum, with every operation taking constant time.",
+    "input_output": "Implement MinStack with its constructor, push(int), pop(), top(), and getMin() methods.",
+    "constraints": ["-2^31 <= val <= 2^31 - 1", "pop, top, and getMin are called only when nonempty", "At most 3 * 10^4 operations are issued"]
+  },
+  "brute_force": {
+    "explanation": "Store values in an array-backed list. Push, pop, and top use the end of the list; getMin scans all current values.",
+    "correctness_idea": "The list contains exactly the stack contents in bottom-to-top order. Its final value is the top, and scanning all entries computes the minimum currently present.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass MinStack {\n    private final List<Integer> values = new ArrayList<>();\n\n    public MinStack() {\n    }\n\n    public void push(int val) {\n        values.add(val);\n    }\n\n    public void pop() {\n        values.remove(values.size() - 1);\n    }\n\n    public int top() {\n        return values.get(values.size() - 1);\n    }\n\n    public int getMin() {\n        int minimum = values.get(0);\n        for (int value : values) {\n            minimum = Math.min(minimum, value);\n        }\n        return minimum;\n    }\n}",
+    "time_complexity": "push, pop, and top are O(1) amortized; getMin is O(n) for a stack of n values.",
+    "space_complexity": "O(n) for the stored values."
+  },
+  "optimized": {
+    "explanation": "Maintain a value stack and a parallel minimum stack. Push the new value onto the minimum stack when it is no greater than the current minimum; pop both stacks together when removing a value.",
+    "correctness_idea": "The minimum stack records the minimum for each depth at which that minimum becomes active. Equal minima are recorded too, so popping one duplicate cannot erase the minimum while another copy remains.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.Deque;\n\nclass MinStack {\n    private final Deque<Integer> values = new ArrayDeque<>();\n    private final Deque<Integer> minima = new ArrayDeque<>();\n\n    public MinStack() {\n    }\n\n    public void push(int val) {\n        values.push(val);\n        if (minima.isEmpty() || val <= minima.peek()) {\n            minima.push(val);\n        }\n    }\n\n    public void pop() {\n        int removed = values.pop();\n        if (removed == minima.peek()) {\n            minima.pop();\n        }\n    }\n\n    public int top() {\n        return values.peek();\n    }\n\n    public int getMin() {\n        return minima.peek();\n    }\n}",
+    "time_complexity": "O(1) for push, pop, top, and getMin.",
+    "space_complexity": "O(n) for values and up to O(n) additional entries in the minimum stack."
+  },
+  "dry_run": {
+    "sample_input": {"operations": ["push(4)", "push(-1)", "push(-1)", "getMin()", "pop()", "top()", "getMin()"], "outputs": [null, null, null, -1, null, -1, -1]},
+    "sample_output": [null, null, null, -1, null, -1, -1],
+    "steps": [
+      {"sequence": 1, "event": "push(4)", "variables": {"value": 4}, "condition": "Minimum stack is empty.", "action": "Push 4 onto both stacks.", "state_before": {"values": [], "minima": []}, "state_after": {"values": [4], "minima": [4]}},
+      {"sequence": 2, "event": "push(-1), then push(-1)", "variables": {"value": -1, "currentMinimum": 4}, "condition": "Each -1 is <= the current minimum.", "action": "Push each value and record each equal minimum.", "state_before": {"values": [4], "minima": [4]}, "state_after": {"values": [4, -1, -1], "minima": [4, -1, -1]}},
+      {"sequence": 3, "event": "getMin()", "variables": {"minimumTop": -1}, "condition": "Minimum stack is nonempty.", "action": "Return its top value.", "state_before": {"minima": [4, -1, -1]}, "state_after": {"returned": -1}},
+      {"sequence": 4, "event": "pop(), top(), getMin()", "variables": {"removed": -1}, "condition": "Removed top equals minimum-stack top.", "action": "Pop both; the remaining -1 still represents the minimum, and top() returns -1.", "state_before": {"values": [4, -1, -1], "minima": [4, -1, -1]}, "state_after": {"values": [4, -1], "minima": [4, -1], "top": -1, "minimum": -1}}
+    ],
+    "final_result": [null, null, null, -1, null, -1, -1]
+  },
+  "edge_cases": [
+    {"case": "Duplicate minimum values", "handling": "The optimized minimum stack records equal values and removes one copy per matching pop."},
+    {"case": "Popping the current minimum", "handling": "The previous minimum is exposed by the parallel stack."},
+    {"case": "Negative and extreme int values", "handling": "Comparisons use integer ordering without arithmetic transformations."}
+  ]
+}

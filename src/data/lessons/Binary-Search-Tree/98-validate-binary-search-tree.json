@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "problem_number": 98,
+    "title": "Validate Binary Search Tree",
+    "url": "https://leetcode.com/problems/validate-binary-search-tree/",
+    "difficulty": "Medium",
+    "category": "Binary Search Tree"
+  },
+  "problem_summary": {
+    "summary": "Determine whether every node obeys the strict BST ordering rule across its entire subtree, not only against its parent.",
+    "input_output": "Input: the root of a binary tree. Return true exactly when every left-subtree value is smaller and every right-subtree value is larger at each node.",
+    "constraints": ["1 <= number of nodes <= 10^4", "-2^31 <= Node.val <= 2^31 - 1"]
+  },
+  "brute_force": {
+    "explanation": "Collect all values with iterative inorder traversal, then check that every value is strictly greater than its predecessor.",
+    "correctness_idea": "A binary tree is a valid BST exactly when its inorder sequence is strictly increasing. The list check rejects duplicate values and any ancestor-bound violation because either would break that ordering.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.ArrayList;\nimport java.util.Deque;\nimport java.util.List;\n\nclass Solution {\n    public boolean isValidBST(TreeNode root) {\n        List<Integer> values = new ArrayList<>();\n        Deque<TreeNode> stack = new ArrayDeque<>();\n        TreeNode current = root;\n        while (current != null || !stack.isEmpty()) {\n            while (current != null) {\n                stack.push(current);\n                current = current.left;\n            }\n            current = stack.pop();\n            values.add(current.val);\n            current = current.right;\n        }\n        for (int index = 1; index < values.size(); index++) {\n            if (values.get(index) <= values.get(index - 1)) return false;\n        }\n        return true;\n    }\n}",
+    "time_complexity": "O(n) — the traversal and strictly increasing check each take linear time.",
+    "space_complexity": "O(n) auxiliary for all inorder values and the traversal stack."
+  },
+  "optimized": {
+    "explanation": "Traverse iteratively with a stack of frames carrying the exclusive lower and upper bounds allowed for each node. Reject a value outside its inherited bounds.",
+    "correctness_idea": "A node's value must be greater than every ancestor bound on its left and less than every ancestor bound on its right. Each child frame tightens the appropriate bound, so a node passes exactly when it satisfies all ancestor constraints. Exclusive comparisons also reject duplicates.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.Deque;\n\nclass Solution {\n    private static class Frame {\n        TreeNode node;\n        long lower;\n        long upper;\n\n        Frame(TreeNode node, long lower, long upper) {\n            this.node = node;\n            this.lower = lower;\n            this.upper = upper;\n        }\n    }\n\n    public boolean isValidBST(TreeNode root) {\n        Deque<Frame> stack = new ArrayDeque<>();\n        stack.push(new Frame(root, Long.MIN_VALUE, Long.MAX_VALUE));\n        while (!stack.isEmpty()) {\n            Frame frame = stack.pop();\n            long value = frame.node.val;\n            if (value <= frame.lower || value >= frame.upper) return false;\n            if (frame.node.right != null) {\n                stack.push(new Frame(frame.node.right, value, frame.upper));\n            }\n            if (frame.node.left != null) {\n                stack.push(new Frame(frame.node.left, frame.lower, value));\n            }\n        }\n        return true;\n    }\n}",
+    "time_complexity": "O(n) — each node is checked once and each edge creates at most one frame.",
+    "space_complexity": "O(h) auxiliary for the explicit depth-first stack, where h is tree height."
+  },
+  "dry_run": {
+    "sample_input": {"root": [8, 4, 12, null, null, 6, 14]},
+    "sample_output": false,
+    "steps": [
+      {"sequence": 1, "event": "Check root value 8 with the initial range.", "variables": {"node": 8, "allowedRange": "(-infinity, +infinity)", "stackTopFirst": ["8"]}, "condition": "8 is strictly inside the initial bounds.", "action": "Accept 8 and push right and left child frames with bounds based on 8.", "state_before": {"stackTopFirst": ["8: (-infinity, +infinity)"]}, "state_after": {"stackTopFirst": ["4: (-infinity, 8)", "12: (8, +infinity)"]}},
+      {"sequence": 2, "event": "Check left child value 4.", "variables": {"node": 4, "allowedRange": "(-infinity, 8)", "stackTopFirst": ["12: (8, +infinity)"]}, "condition": "4 is strictly inside its inherited range.", "action": "Accept 4; it has no children, so continue with the pending right subtree.", "state_before": {"stackTopFirst": ["4: (-infinity, 8)", "12: (8, +infinity)"]}, "state_after": {"stackTopFirst": ["12: (8, +infinity)"]}},
+      {"sequence": 3, "event": "Check node value 12 and enqueue its children.", "variables": {"node": 12, "allowedRange": "(8, +infinity)", "stackTopFirst": ["12: (8, +infinity)"]}, "condition": "12 is valid, and its left child must remain greater than 8.", "action": "Push 14 with range (12, +infinity), then 6 with range (8, 12).", "state_before": {"stackTopFirst": ["12: (8, +infinity)"]}, "state_after": {"stackTopFirst": ["6: (8, 12)", "14: (12, +infinity)"]}},
+      {"sequence": 4, "event": "Check node value 6 in the right subtree of 8.", "variables": {"node": 6, "allowedRange": "(8, 12)", "stackTopFirst": ["6: (8, 12)", "14: (12, +infinity)"]}, "condition": "6 <= lower bound 8, even though it is greater than its parent 4 would be.", "action": "Reject because this node violates an ancestor's strict lower bound.", "state_before": {"stackTopFirst": ["6: (8, 12)", "14: (12, +infinity)"]}, "state_after": {"stackTopFirst": ["14: (12, +infinity)"], "result": false}}
+    ],
+    "final_result": false
+  },
+  "edge_cases": [
+    {"case": "A child value violates a distant ancestor bound", "handling": "Inherited lower and upper bounds catch violations that a parent-only comparison would miss."},
+    {"case": "Duplicate values", "handling": "Strictly increasing inorder values and exclusive bounds both reject duplicates."},
+    {"case": "Node value is Integer.MIN_VALUE or Integer.MAX_VALUE", "handling": "The optimized method uses long bounds beyond the full int range instead of int sentinels."},
+    {"case": "Highly skewed tree", "handling": "Both implementations use explicit stacks and avoid recursive stack depth."}
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "metadata": {
+    "problem_number": 137,
+    "title": "Single Number II",
+    "url": "https://leetcode.com/problems/single-number-ii/",
+    "difficulty": "Medium",
+    "category": "Bit Manipulation"
+  },
+  "problem_summary": {
+    "summary": "Find the one array value occurring once when every other value occurs exactly three times.",
+    "input_output": "Input: a nonempty integer array nums. Output: its single-occurrence value.",
+    "constraints": [
+      "1 <= nums.length <= 3 * 10^4",
+      "-2^31 <= nums[i] <= 2^31 - 1",
+      "Exactly one value occurs once and every other value occurs three times",
+      "The required solution has linear runtime and constant extra space"
+    ]
+  },
+  "brute_force": {
+    "explanation": "Count values in a hash map and return the key with frequency one. It is a clear baseline, but the map exceeds the requested constant extra space.",
+    "correctness_idea": "The input guarantee makes the unique value the only value whose recorded frequency is one.",
+    "language": "java",
+    "code": "import java.util.HashMap;\nimport java.util.Map;\n\nclass Solution {\n    public int singleNumber(int[] nums) {\n        Map<Integer, Integer> frequency = new HashMap<>();\n        for (int value : nums) {\n            frequency.put(value, frequency.getOrDefault(value, 0) + 1);\n        }\n        for (int value : nums) {\n            if (frequency.get(value) == 1) {\n                return value;\n            }\n        }\n        return 0;\n    }\n}",
+    "time_complexity": "O(n) expected with hash map operations, where n = nums.length.",
+    "space_complexity": "O(u), where u is the number of distinct values; this is not constant extra space."
+  },
+  "optimized": {
+    "explanation": "Track bit positions that have appeared once in ones and twice in twos. For every number, update these masks and clear any bit that has now appeared three times. After all values, ones holds the unique number's bit pattern.",
+    "correctness_idea": "For each bit position independently, the two masks encode its occurrence count modulo three: neither mask means zero occurrences, ones means one, and twos means two. A third occurrence clears both masks. Thus triplicated values vanish and the single value remains. Bitwise operations work on the complete two's-complement representation, including negative inputs.",
+    "language": "java",
+    "code": "class Solution {\n    public int singleNumber(int[] nums) {\n        int ones = 0;\n        int twos = 0;\n        for (int value : nums) {\n            twos |= ones & value;\n            ones ^= value;\n            int threes = ones & twos;\n            ones &= ~threes;\n            twos &= ~threes;\n        }\n        return ones;\n    }\n}",
+    "time_complexity": "O(n), with a fixed number of bitwise operations per value.",
+    "space_complexity": "O(1) auxiliary space, using three fixed-width integer masks."
+  },
+  "dry_run": {
+    "sample_input": {"nums": [-2, -2, -2, 5, 5, 5, -7]},
+    "sample_output": -7,
+    "steps": [
+      {"sequence": 1, "event": "Process the first -2.", "variables": {"value": -2, "onesBefore": 0, "twosBefore": 0, "threes": 0}, "condition": "Each bit of this value has now appeared once.", "action": "Update the masks; no bit has reached three occurrences.", "state_before": {"ones": 0, "twos": 0}, "state_after": {"ones": -2, "twos": 0}},
+      {"sequence": 2, "event": "Process the second -2.", "variables": {"value": -2, "onesBefore": -2, "twosBefore": 0, "threes": 0}, "condition": "The bits set in -2 have now appeared twice.", "action": "Move those bits from ones into twos.", "state_before": {"ones": -2, "twos": 0}, "state_after": {"ones": 0, "twos": -2}},
+      {"sequence": 3, "event": "Process the third -2.", "variables": {"value": -2, "onesBefore": 0, "twosBefore": -2, "threes": -2}, "condition": "ones & twos identifies the bits reaching three occurrences.", "action": "Clear those bits from both masks.", "state_before": {"ones": 0, "twos": -2}, "state_after": {"ones": 0, "twos": 0}},
+      {"sequence": 4, "event": "Process the first 5.", "variables": {"value": 5, "onesBefore": 0, "twosBefore": 0, "threes": 0}, "condition": "The bits of 5 have appeared once.", "action": "Set those bits in ones.", "state_before": {"ones": 0, "twos": 0}, "state_after": {"ones": 5, "twos": 0}},
+      {"sequence": 5, "event": "Process the second 5.", "variables": {"value": 5, "onesBefore": 5, "twosBefore": 0, "threes": 0}, "condition": "The bits of 5 have appeared twice.", "action": "Move those bits to twos.", "state_before": {"ones": 5, "twos": 0}, "state_after": {"ones": 0, "twos": 5}},
+      {"sequence": 6, "event": "Process the third 5.", "variables": {"value": 5, "onesBefore": 0, "twosBefore": 5, "threes": 5}, "condition": "The bits of 5 have reached three occurrences.", "action": "Clear them from both masks.", "state_before": {"ones": 0, "twos": 5}, "state_after": {"ones": 0, "twos": 0}},
+      {"sequence": 7, "event": "Process the unique value -7.", "variables": {"value": -7, "onesBefore": 0, "twosBefore": 0, "threes": 0}, "condition": "Its bit pattern has appeared once and is not canceled.", "action": "Store its two's-complement pattern in ones; the array is exhausted.", "state_before": {"ones": 0, "twos": 0}, "state_after": {"ones": -7, "twos": 0}}
+    ],
+    "final_result": -7
+  },
+  "edge_cases": [
+    {"case": "The single value is zero", "handling": "Triplicated values cycle their masks back to zero, and the returned ones mask remains zero."},
+    {"case": "The single value is negative", "handling": "The masks process all 32 two's-complement bits, so the negative value's original bit pattern is retained."},
+    {"case": "Triplicated values have set sign bits", "handling": "The same per-bit modulo-three state transition handles the sign bit as every other bit."}
+  ]
+}

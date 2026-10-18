@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "problem_number": 97,
+    "title": "Interleaving String",
+    "url": "https://leetcode.com/problems/interleaving-string/",
+    "difficulty": "Medium",
+    "category": "Multidimensional DP"
+  },
+  "problem_summary": {
+    "summary": "Determine whether s3 can be formed by combining all characters of s1 and s2 while preserving the order within each source string.",
+    "input_output": "Input: strings s1, s2, and s3. Return true if s3 is an interleaving of s1 and s2, otherwise false.",
+    "constraints": ["0 <= s1.length, s2.length <= 100", "0 <= s3.length <= 200", "All strings contain lowercase English letters"]
+  },
+  "brute_force": {
+    "explanation": "Recursively match the next character of s3 using the next unused character from either source string whenever they match. Reject immediately when lengths differ or neither choice matches.",
+    "correctness_idea": "At every output position the next character must come from exactly one of the two source strings, and using either matching source preserves source order. Exploring both valid choices covers every possible interleaving.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean isInterleave(String s1, String s2, String s3) {\n        if (s1.length() + s2.length() != s3.length()) return false;\n        return matches(s1, s2, s3, 0, 0);\n    }\n\n    private boolean matches(String first, String second, String target, int i, int j) {\n        int k = i + j;\n        if (k == target.length()) return true;\n        boolean useFirst = i < first.length() && first.charAt(i) == target.charAt(k)\n                && matches(first, second, target, i + 1, j);\n        boolean useSecond = j < second.length() && second.charAt(j) == target.charAt(k)\n                && matches(first, second, target, i, j + 1);\n        return useFirst || useSecond;\n    }\n}",
+    "time_complexity": "O(2^(m+n)) as an upper bound on branching recursion, where m and n are the source lengths.",
+    "space_complexity": "O(m+n) auxiliary recursion stack space."
+  },
+  "optimized": {
+    "explanation": "Use a one-dimensional boolean DP over prefixes of s2. dp[j] means the already processed prefixes of s1 and s2 can form the corresponding prefix of s3. For each character, transition from the previous row (take from s1) or the current row's previous column (take from s2).",
+    "correctness_idea": "A prefix interleaving ends with a character from s1 or s2. The two transitions test exactly those possibilities against the next target character while relying on valid shorter prefixes, so induction over the table establishes the result.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean isInterleave(String s1, String s2, String s3) {\n        int firstLength = s1.length();\n        int secondLength = s2.length();\n        if (firstLength + secondLength != s3.length()) return false;\n        boolean[] possible = new boolean[secondLength + 1];\n        possible[0] = true;\n        for (int j = 1; j <= secondLength; j++) {\n            possible[j] = possible[j - 1] && s2.charAt(j - 1) == s3.charAt(j - 1);\n        }\n        for (int i = 1; i <= firstLength; i++) {\n            possible[0] = possible[0] && s1.charAt(i - 1) == s3.charAt(i - 1);\n            for (int j = 1; j <= secondLength; j++) {\n                char target = s3.charAt(i + j - 1);\n                possible[j] = (possible[j] && s1.charAt(i - 1) == target)\n                        || (possible[j - 1] && s2.charAt(j - 1) == target);\n            }\n        }\n        return possible[secondLength];\n    }\n}",
+    "time_complexity": "O(mn), where m and n are the lengths of s1 and s2.",
+    "space_complexity": "O(n) auxiliary space for the shorter-prefix dimension stored in the array (here n = s2.length())."
+  },
+  "dry_run": {
+    "sample_input": {"s1": "ab", "s2": "cd", "s3": "acbd"},
+    "sample_output": true,
+    "steps": [
+      {"sequence": 1, "event": "Initialize prefixes using s2 with an empty s1 prefix.", "variables": {"i": 0, "possible": [true, false, false]}, "condition": "Only the empty pair forms the empty target prefix; 'c' does not match target prefix 'a'.", "action": "Initialize the DP row to [true,false,false].", "state_before": {"possible": null}, "state_after": {"possible": [true, false, false]}},
+      {"sequence": 2, "event": "Process i=1, using s1[0]='a'.", "variables": {"i": 1, "targetPositions": [0, 1, 2], "possible": [true, true, false]}, "condition": "At j=0, 'a' matches target[0]; at j=1, 'c' matches target[1] from the left prefix.", "action": "Update the row to [true,true,false].", "state_before": {"possible": [true, false, false]}, "state_after": {"possible": [true, true, false]}},
+      {"sequence": 3, "event": "Process i=2, using s1[1]='b'.", "variables": {"i": 2, "targetPositions": [1, 2, 3], "possible": [false, true, true]}, "condition": "The leading target character does not match; 'b' extends the first-source prefix; then 'd' extends the second-source prefix.", "action": "Update the row to [false,true,true].", "state_before": {"possible": [true, true, false]}, "state_after": {"possible": [false, true, true]}},
+      {"sequence": 4, "event": "Read the complete-prefix state.", "variables": {"result": true, "possible": [false, true, true]}, "condition": "possible[2] represents using all of both sources to form all of s3.", "action": "Return true.", "state_before": {"possible[2]": true}, "state_after": {"result": true}}
+    ],
+    "final_result": true
+  },
+  "edge_cases": [
+    {"case": "Combined source length differs from target", "handling": "Returns false before allocating or scanning the DP states."},
+    {"case": "Both sources empty", "handling": "The initialized empty-prefix state is true and is returned."},
+    {"case": "One source empty", "handling": "The initialization/first-column progression checks whether the other source equals the target."},
+    {"case": "Matching next characters in both sources", "handling": "The DP preserves both possible prefix states rather than committing greedily."}
+  ]
+}

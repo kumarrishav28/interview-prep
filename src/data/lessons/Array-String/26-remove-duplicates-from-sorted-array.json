@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 26,
+    "title": "Remove Duplicates from Sorted Array",
+    "url": "https://leetcode.com/problems/remove-duplicates-from-sorted-array/",
+    "difficulty": "Easy",
+    "category": "Array / String"
+  },
+  "problem_summary": {
+    "summary": "Compact a non-decreasing integer array in place so each distinct value occurs once, preserving sorted order.",
+    "input_output": "Input: sorted nums. Return the unique-prefix length k and place the distinct values in nums[0..k-1]; the suffix is ignored.",
+    "constraints": ["1 <= nums.length <= 3 * 10^4", "-100 <= nums[i] <= 100", "nums is sorted in non-decreasing order"]
+  },
+  "brute_force": {
+    "explanation": "Copy values into a temporary array only when they differ from the last copied value, then copy that prefix back into nums.",
+    "correctness_idea": "Sorted order places equal values together, so comparing with the last accepted value keeps exactly the first occurrence of each value.",
+    "language": "java",
+    "code": "class Solution {\n    public int removeDuplicates(int[] nums) {\n        int[] unique = new int[nums.length];\n        int size = 0;\n        for (int value : nums) {\n            if (size == 0 || unique[size - 1] != value) {\n                unique[size++] = value;\n            }\n        }\n        System.arraycopy(unique, 0, nums, 0, size);\n        return size;\n    }\n}",
+    "time_complexity": "O(n) — each input value is checked once and the kept prefix is copied once.",
+    "space_complexity": "O(n) auxiliary — the temporary array stores the distinct prefix."
+  },
+  "optimized": {
+    "explanation": "Keep a write pointer at the next unique slot. Since nums is sorted, accept a read value only when it differs from the last written value.",
+    "correctness_idea": "The write prefix contains one copy of every distinct value encountered in sorted order; a later duplicate cannot be needed again because equal values are contiguous.",
+    "language": "java",
+    "code": "class Solution {\n    public int removeDuplicates(int[] nums) {\n        if (nums.length == 0) return 0;\n        int write = 1;\n        for (int read = 1; read < nums.length; read++) {\n            if (nums[read] != nums[write - 1]) {\n                nums[write] = nums[read];\n                write++;\n            }\n        }\n        return write;\n    }\n}",
+    "time_complexity": "O(n) — one scan.",
+    "space_complexity": "O(1) auxiliary — compaction is performed in nums."
+  },
+  "dry_run": {
+    "sample_input": {"nums": [0, 0, 2, 2, 4]},
+    "sample_output": {"k": 3, "prefix": [0, 2, 4]},
+    "steps": [
+      {"sequence": 1, "event": "Read index 1, value 0.", "variables": {"read": 1, "write": 1, "lastKept": 0}, "condition": "nums[read] == nums[write - 1].", "action": "Skip the duplicate; write remains 1.", "state_before": {"nums": [0, 0, 2, 2, 4], "write": 1}, "state_after": {"nums": [0, 0, 2, 2, 4], "write": 1}, "focus": {"array": "nums", "indices": [0, 1]}},
+      {"sequence": 2, "event": "Read index 2, value 2.", "variables": {"read": 2, "write": 1, "lastKept": 0}, "condition": "2 differs from nums[0].", "action": "Write 2 at index 1; write becomes 2.", "state_before": {"nums": [0, 0, 2, 2, 4], "write": 1}, "state_after": {"nums": [0, 2, 2, 2, 4], "write": 2}, "focus": {"array": "nums", "indices": [1, 2]}},
+      {"sequence": 3, "event": "Read index 3, value 2.", "variables": {"read": 3, "write": 2, "lastKept": 2}, "condition": "nums[read] == nums[write - 1].", "action": "Skip the duplicate; write remains 2.", "state_before": {"nums": [0, 2, 2, 2, 4], "write": 2}, "state_after": {"nums": [0, 2, 2, 2, 4], "write": 2}, "focus": {"array": "nums", "indices": [1, 3]}},
+      {"sequence": 4, "event": "Read index 4, value 4.", "variables": {"read": 4, "write": 2, "lastKept": 2}, "condition": "4 differs from nums[1].", "action": "Write 4 at index 2; write becomes 3 and is returned.", "state_before": {"nums": [0, 2, 2, 2, 4], "write": 2}, "state_after": {"nums": [0, 2, 4, 2, 4], "write": 3}, "focus": {"array": "nums", "indices": [2, 4]}}
+    ],
+    "final_result": {"k": 3, "prefix": [0, 2, 4]}
+  },
+  "edge_cases": [
+    {"case": "One value", "handling": "The initial write length of 1 is returned."},
+    {"case": "All values equal", "handling": "Only the first value is kept."},
+    {"case": "All values distinct", "handling": "Every value is already unique and the full length is returned."}
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "metadata": {"problem_number": 124, "title": "Binary Tree Maximum Path Sum", "url": "https://leetcode.com/problems/binary-tree-maximum-path-sum/", "difficulty": "Hard", "category": "Binary Tree General"},
+  "problem_summary": {"summary": "Return the greatest sum of any non-empty path, where a path may start and end at any nodes but cannot branch.", "input_output": "Input: a non-empty binary-tree root. Return the maximum path sum as an integer.", "constraints": ["1 <= number of nodes <= 3 * 10^4", "-1000 <= Node.val <= 1000"]},
+  "brute_force": {
+    "explanation": "For every node as a possible path apex, independently search its left and right descendant trees for their greatest downward sums; combine positive branches with the apex.",
+    "correctness_idea": "Every simple path has a unique highest node (its apex). At that apex the path consists of at most one downward chain in each child subtree, so evaluating the best such pair considers every path.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.ArrayList;\nimport java.util.Deque;\nimport java.util.List;\n\nclass Solution {\n    private static class State {\n        TreeNode node;\n        int sum;\n        State(TreeNode node, int sum) { this.node = node; this.sum = sum; }\n    }\n\n    public int maxPathSum(TreeNode root) {\n        List<TreeNode> nodes = new ArrayList<>();\n        Deque<TreeNode> pending = new ArrayDeque<>();\n        pending.push(root);\n        while (!pending.isEmpty()) {\n            TreeNode node = pending.pop();\n            nodes.add(node);\n            if (node.left != null) pending.push(node.left);\n            if (node.right != null) pending.push(node.right);\n        }\n        int best = Integer.MIN_VALUE;\n        for (TreeNode node : nodes) {\n            int left = Math.max(0, bestDown(node.left));\n            int right = Math.max(0, bestDown(node.right));\n            best = Math.max(best, node.val + left + right);\n        }\n        return best;\n    }\n\n    private int bestDown(TreeNode start) {\n        if (start == null) return 0;\n        int best = Integer.MIN_VALUE;\n        Deque<State> stack = new ArrayDeque<>();\n        stack.push(new State(start, start.val));\n        while (!stack.isEmpty()) {\n            State state = stack.pop();\n            best = Math.max(best, state.sum);\n            if (state.node.left != null) stack.push(new State(state.node.left, state.sum + state.node.left.val));\n            if (state.node.right != null) stack.push(new State(state.node.right, state.sum + state.node.right.val));\n        }\n        return best;\n    }\n}",
+    "time_complexity": "O(n^2) worst case because a descendant search is repeated for each possible apex.",
+    "space_complexity": "O(n) auxiliary for the node list and traversal stacks."
+  },
+  "optimized": {
+    "explanation": "Process nodes bottom-up without recursion. For each node, store the best downward gain from that node; update the global answer with the node plus positive gains from both children.",
+    "correctness_idea": "A parent can use only one child branch as a downward continuation, so each node returns its value plus the larger nonnegative child gain. A complete path may join both child gains at that node, which is considered for the global maximum.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.ArrayList;\nimport java.util.Deque;\nimport java.util.IdentityHashMap;\nimport java.util.List;\nimport java.util.Map;\n\nclass Solution {\n    public int maxPathSum(TreeNode root) {\n        List<TreeNode> order = new ArrayList<>();\n        Deque<TreeNode> stack = new ArrayDeque<>();\n        stack.push(root);\n        while (!stack.isEmpty()) {\n            TreeNode node = stack.pop();\n            order.add(node);\n            if (node.left != null) stack.push(node.left);\n            if (node.right != null) stack.push(node.right);\n        }\n        Map<TreeNode, Integer> gain = new IdentityHashMap<>();\n        int best = Integer.MIN_VALUE;\n        for (int index = order.size() - 1; index >= 0; index--) {\n            TreeNode node = order.get(index);\n            int left = node.left == null ? 0 : Math.max(0, gain.get(node.left));\n            int right = node.right == null ? 0 : Math.max(0, gain.get(node.right));\n            best = Math.max(best, node.val + left + right);\n            gain.put(node, node.val + Math.max(left, right));\n        }\n        return best;\n    }\n}",
+    "time_complexity": "O(n) — each node is placed in the traversal order once and processed once in reverse.",
+    "space_complexity": "O(n) auxiliary for the order list, gain map, and traversal stack; avoids call-stack overflow on a skewed tree."
+  },
+  "dry_run": {
+    "sample_input": {"root_level_order": [-4, 2, -1, 7, 1]},
+    "sample_output": 10,
+    "steps": [
+      {"sequence": 1, "event": "Process leaf 7 in reverse traversal order.", "variables": {"node": 7, "leftGain": 0, "rightGain": 0}, "condition": "No children contribute.", "action": "Store downward gain 7; global best becomes 7.", "state_before": {"gain": {}, "best": -2147483648}, "state_after": {"gain": {"7": 7}, "best": 7}},
+      {"sequence": 2, "event": "Process leaf 1.", "variables": {"node": 1, "leftGain": 0, "rightGain": 0}, "condition": "No children contribute.", "action": "Store gain 1; best remains 7.", "state_before": {"gain": {"7": 7}, "best": 7}, "state_after": {"gain": {"7": 7, "1": 1}, "best": 7}},
+      {"sequence": 3, "event": "Process node 2.", "variables": {"leftGain": 7, "rightGain": 1, "throughNode": 10}, "condition": "Both child gains are positive.", "action": "Update best to 10; return downward gain 2 + max(7,1) = 9.", "state_before": {"gain": {"7": 7, "1": 1}, "best": 7}, "state_after": {"gain": {"7": 7, "1": 1, "2": 9}, "best": 10}},
+      {"sequence": 4, "event": "Process node -1 and then root -4.", "variables": {"gainFromMinus1": -1, "rootCandidate": 5}, "condition": "Negative child gains are clamped to zero before extending a path.", "action": "Neither node improves the best path; retain 10.", "state_before": {"best": 10}, "state_after": {"best": 10, "winningPath": [7, 2, 1]}}
+    ],
+    "final_result": 10
+  },
+  "edge_cases": [
+    {"case": "All values are negative", "handling": "The answer starts at the smallest integer and each node is considered as a non-empty path."},
+    {"case": "One node", "handling": "Its value is the only possible path sum."},
+    {"case": "A child subtree has negative gain", "handling": "The gain is ignored when extending or joining a path."}
+  ]
+}

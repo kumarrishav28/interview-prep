@@ -1,0 +1,36 @@
+{
+  "metadata": {"problem_number": 222, "title": "Count Complete Tree Nodes", "url": "https://leetcode.com/problems/count-complete-tree-nodes/", "difficulty": "Medium", "category": "Binary Tree General"},
+  "problem_summary": {"summary": "Count the nodes in a complete binary tree, whose final level is filled from left to right.", "input_output": "Input: root of a guaranteed-complete binary tree. Return its node count.", "constraints": ["0 <= number of nodes <= 5 * 10^4", "0 <= Node.val <= 5 * 10^4", "The input tree is complete", "Requested algorithm should be faster than O(n)"]},
+  "brute_force": {
+    "explanation": "Traverse every node with a queue and increment a counter.",
+    "correctness_idea": "Every reachable node is enqueued exactly once, so the counter equals the total node count when the queue is empty.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.Queue;\n\nclass Solution {\n    public int countNodes(TreeNode root) {\n        if (root == null) return 0;\n        Queue<TreeNode> queue = new ArrayDeque<>();\n        queue.offer(root);\n        int count = 0;\n        while (!queue.isEmpty()) {\n            TreeNode node = queue.poll();\n            count++;\n            if (node.left != null) queue.offer(node.left);\n            if (node.right != null) queue.offer(node.right);\n        }\n        return count;\n    }\n}",
+    "time_complexity": "O(n) — all nodes are visited.",
+    "space_complexity": "O(w) auxiliary for the breadth-first queue."
+  },
+  "optimized": {
+    "explanation": "Compare the heights of the leftmost paths in the left and right subtrees. If equal, the left subtree is perfect; otherwise the right subtree is perfect. Count a perfect subtree directly and recurse only into the incomplete side.",
+    "correctness_idea": "Completeness guarantees that at least one of the two child subtrees of any node is perfect. A perfect subtree of height h contains 2^h - 1 nodes, so each recursive step counts one full side and descends into the only potentially incomplete side.",
+    "language": "java",
+    "code": "class Solution {\n    public int countNodes(TreeNode root) {\n        if (root == null) return 0;\n        int leftHeight = leftHeight(root.left);\n        int rightHeight = leftHeight(root.right);\n        if (leftHeight == rightHeight) {\n            return (1 << leftHeight) + countNodes(root.right);\n        }\n        return (1 << rightHeight) + countNodes(root.left);\n    }\n\n    private int leftHeight(TreeNode node) {\n        int height = 0;\n        while (node != null) {\n            height++;\n            node = node.left;\n        }\n        return height;\n    }\n}",
+    "time_complexity": "O(log^2 n) — each of O(log n) recursive levels measures paths of O(log n) length.",
+    "space_complexity": "O(log n) auxiliary recursion stack for a complete tree."
+  },
+  "dry_run": {
+    "sample_input": {"root_level_order": [1, 2, 3, 4, 5, 6]},
+    "sample_output": 6,
+    "steps": [
+      {"sequence": 1, "event": "Measure child leftmost heights at root 1.", "variables": {"leftHeight": 2, "rightHeight": 2}, "condition": "Equal heights mean the left subtree rooted at 2 is perfect.", "action": "Count root plus the left subtree as 2^2 = 4; recurse right.", "state_before": {"counted": 0}, "state_after": {"counted": 4, "pendingRoot": 3}},
+      {"sequence": 2, "event": "Measure child heights at node 3.", "variables": {"leftHeight": 1, "rightHeight": 0}, "condition": "Heights differ, so the empty right subtree is perfect.", "action": "Count node 3 as 1; recurse into left child 6.", "state_before": {"counted": 4}, "state_after": {"counted": 5, "pendingRoot": 6}},
+      {"sequence": 3, "event": "Count node 6.", "variables": {"leftHeight": 0, "rightHeight": 0}, "condition": "Both child subtrees are empty.", "action": "Count node 6 as 1 and return.", "state_before": {"counted": 5}, "state_after": {"counted": 6}},
+      {"sequence": 4, "event": "Complete the recursive result.", "variables": {"leftContribution": 4, "rightContribution": 2}, "condition": "All six nodes have been counted exactly once.", "action": "Return 6 total nodes.", "state_before": {"subtotals": [4, 2]}, "state_after": {"result": 6}}
+    ],
+    "final_result": 6
+  },
+  "edge_cases": [
+    {"case": "Empty tree", "handling": "Returns zero."},
+    {"case": "Perfect tree", "handling": "Equal child heights allow each subtree count to be computed directly."},
+    {"case": "Last level has only its leftmost node", "handling": "The unequal-height branch recurses into the left side and counts the perfect right side."}
+  ]
+}

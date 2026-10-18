@@ -1,0 +1,36 @@
+{
+  "metadata": {"problem_number": 200, "title": "Number of Islands", "url": "https://leetcode.com/problems/number-of-islands/", "difficulty": "Medium", "category": "Graph General"},
+  "problem_summary": {"summary": "Count groups of land cells connected horizontally or vertically in a binary character grid.", "input_output": "Input: an m by n grid of '1' land and '0' water. Return the number of four-directionally connected land components.", "constraints": ["1 <= m, n <= 300", "grid has m rows and n columns", "grid[i][j] is '0' or '1'"]},
+  "brute_force": {
+    "explanation": "For each land cell, run a fresh BFS over its whole connected component. Count that cell only if no cell with a smaller row-major index was reached. The repeated searches are wasteful, but give a direct reference implementation without relying on previously visited components.",
+    "correctness_idea": "Every land cell belongs to exactly one connected component. Within each component exactly one cell has the smallest row-major index, so exactly one search counts that component.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.Queue;\n\nclass Solution {\n    public int numIslands(char[][] grid) {\n        int rows = grid.length;\n        int cols = grid[0].length;\n        int islands = 0;\n        int[] rowStep = {-1, 1, 0, 0};\n        int[] colStep = {0, 0, -1, 1};\n        for (int startRow = 0; startRow < rows; startRow++) {\n            for (int startCol = 0; startCol < cols; startCol++) {\n                if (grid[startRow][startCol] != '1') continue;\n                boolean[][] seen = new boolean[rows][cols];\n                Queue<int[]> queue = new ArrayDeque<>();\n                queue.offer(new int[] {startRow, startCol});\n                seen[startRow][startCol] = true;\n                int smallestIndex = startRow * cols + startCol;\n                while (!queue.isEmpty()) {\n                    int[] cell = queue.poll();\n                    smallestIndex = Math.min(smallestIndex, cell[0] * cols + cell[1]);\n                    for (int direction = 0; direction < 4; direction++) {\n                        int nextRow = cell[0] + rowStep[direction];\n                        int nextCol = cell[1] + colStep[direction];\n                        if (nextRow >= 0 && nextRow < rows && nextCol >= 0 && nextCol < cols\n                                && grid[nextRow][nextCol] == '1' && !seen[nextRow][nextCol]) {\n                            seen[nextRow][nextCol] = true;\n                            queue.offer(new int[] {nextRow, nextCol});\n                        }\n                    }\n                }\n                if (smallestIndex == startRow * cols + startCol) islands++;\n            }\n        }\n        return islands;\n    }\n}",
+    "time_complexity": "O((mn)^2) worst case: each land cell can start a BFS visiting the whole grid.",
+    "space_complexity": "O(mn) auxiliary for one visited matrix and queue."
+  },
+  "optimized": {
+    "explanation": "Scan the grid once. On finding land, increment the count and iteratively flood-fill its component, marking cells as water when enqueued so none enters the queue twice.",
+    "correctness_idea": "Each scan-start land cell belongs to a component not previously visited, so it contributes one island. Flood fill reaches every cell in that component and marks it, preventing that component from being counted again.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.Queue;\n\nclass Solution {\n    public int numIslands(char[][] grid) {\n        int rows = grid.length;\n        int cols = grid[0].length;\n        int islands = 0;\n        int[] rowStep = {-1, 1, 0, 0};\n        int[] colStep = {0, 0, -1, 1};\n        Queue<int[]> queue = new ArrayDeque<>();\n        for (int row = 0; row < rows; row++) {\n            for (int col = 0; col < cols; col++) {\n                if (grid[row][col] != '1') continue;\n                islands++;\n                grid[row][col] = '0';\n                queue.offer(new int[] {row, col});\n                while (!queue.isEmpty()) {\n                    int[] cell = queue.poll();\n                    for (int direction = 0; direction < 4; direction++) {\n                        int nextRow = cell[0] + rowStep[direction];\n                        int nextCol = cell[1] + colStep[direction];\n                        if (nextRow >= 0 && nextRow < rows && nextCol >= 0 && nextCol < cols\n                                && grid[nextRow][nextCol] == '1') {\n                            grid[nextRow][nextCol] = '0';\n                            queue.offer(new int[] {nextRow, nextCol});\n                        }\n                    }\n                }\n            }\n        }\n        return islands;\n    }\n}",
+    "time_complexity": "O(mn): each cell is scanned and each land cell is enqueued at most once.",
+    "space_complexity": "O(mn) auxiliary worst case for the BFS queue; the grid is modified in place."
+  },
+  "dry_run": {
+    "sample_input": {"grid": [["1", "1", "0"], ["0", "1", "0"], ["0", "0", "1"]]},
+    "sample_output": 2,
+    "steps": [
+      {"sequence": 1, "event": "Scan reaches land at (0,0).", "variables": {"row": 0, "col": 0, "islands": 1}, "condition": "The cell is land and not previously cleared.", "action": "Count an island; enqueue and mark (0,0).", "state_before": {"grid": [["1", "1", "0"], ["0", "1", "0"], ["0", "0", "1"]], "queue": []}, "state_after": {"grid": [["0", "1", "0"], ["0", "1", "0"], ["0", "0", "1"]], "queue": [[0, 0]]}},
+      {"sequence": 2, "event": "Expand the first component.", "variables": {"dequeued": [0, 0], "queue": [[0, 1]]}, "condition": "(0,1) is adjacent land; processing it discovers (1,1).", "action": "Mark each discovered cell before enqueueing; finish with this component cleared.", "state_before": {"grid": [["0", "1", "0"], ["0", "1", "0"], ["0", "0", "1"]]}, "state_after": {"grid": [["0", "0", "0"], ["0", "0", "0"], ["0", "0", "1"]], "queue": []}},
+      {"sequence": 3, "event": "Scan reaches the remaining land at (2,2).", "variables": {"row": 2, "col": 2, "islands": 2}, "condition": "No four-directional land neighbor remains.", "action": "Count and clear the singleton component; return 2.", "state_before": {"grid": [["0", "0", "0"], ["0", "0", "0"], ["0", "0", "1"]]}, "state_after": {"grid": [["0", "0", "0"], ["0", "0", "0"], ["0", "0", "0"]], "islands": 2}}
+    ],
+    "final_result": 2
+  },
+  "edge_cases": [
+    {"case": "All water", "handling": "No BFS begins and the result is 0."},
+    {"case": "All land", "handling": "The first land cell clears the sole component; the result is 1."},
+    {"case": "Diagonal land cells", "handling": "Diagonal contact is not adjacency, so each disconnected diagonal cell counts separately."},
+    {"case": "Single-row or single-column grid", "handling": "Bounds checks retain only valid four-directional neighbors."}
+  ]
+}

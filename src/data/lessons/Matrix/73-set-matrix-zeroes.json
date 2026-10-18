@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 73,
+    "title": "Set Matrix Zeroes",
+    "url": "https://leetcode.com/problems/set-matrix-zeroes/",
+    "difficulty": "Medium",
+    "category": "Matrix"
+  },
+  "problem_summary": {
+    "summary": "For every zero already present in an integer matrix, make its entire row and column zero without replacing the matrix with another one.",
+    "input_output": "Input: an m x n integer matrix. Update it in place; the method returns nothing.",
+    "constraints": ["m == matrix.length", "n == matrix[0].length", "1 <= m, n <= 200", "-2^31 <= matrix[i][j] <= 2^31 - 1"]
+  },
+  "brute_force": {
+    "explanation": "Scan the matrix once to record which rows and columns contain an original zero in two boolean arrays. Scan again and zero each cell whose row or column is marked.",
+    "correctness_idea": "The first pass records exactly the rows and columns that must be cleared, before any values are changed. The second pass therefore applies all required zeroing without newly written zeros affecting the recorded targets.",
+    "language": "java",
+    "code": "class Solution {\n    public void setZeroes(int[][] matrix) {\n        int rows = matrix.length;\n        int cols = matrix[0].length;\n        boolean[] zeroRow = new boolean[rows];\n        boolean[] zeroCol = new boolean[cols];\n        for (int row = 0; row < rows; row++) {\n            for (int col = 0; col < cols; col++) {\n                if (matrix[row][col] == 0) {\n                    zeroRow[row] = true;\n                    zeroCol[col] = true;\n                }\n            }\n        }\n        for (int row = 0; row < rows; row++) {\n            for (int col = 0; col < cols; col++) {\n                if (zeroRow[row] || zeroCol[col]) matrix[row][col] = 0;\n            }\n        }\n    }\n}",
+    "time_complexity": "O(mn) — two full matrix scans.",
+    "space_complexity": "O(m + n) auxiliary for the row and column marker arrays."
+  },
+  "optimized": {
+    "explanation": "Use the first cell of each row and column as in-place markers. Separately remember whether the original first row or first column contained a zero, then mark from the interior, clear marked interior cells, and finally clear the first row and column when their saved flags require it.",
+    "correctness_idea": "The first row and column store the zero-row and zero-column information for all interior cells. Saving their original zero status separately prevents marker writes from losing the information needed to clear those boundary lines.",
+    "language": "java",
+    "code": "class Solution {\n    public void setZeroes(int[][] matrix) {\n        int rows = matrix.length;\n        int cols = matrix[0].length;\n        boolean zeroFirstRow = false;\n        boolean zeroFirstCol = false;\n        for (int col = 0; col < cols; col++) {\n            if (matrix[0][col] == 0) zeroFirstRow = true;\n        }\n        for (int row = 0; row < rows; row++) {\n            if (matrix[row][0] == 0) zeroFirstCol = true;\n        }\n        for (int row = 1; row < rows; row++) {\n            for (int col = 1; col < cols; col++) {\n                if (matrix[row][col] == 0) {\n                    matrix[row][0] = 0;\n                    matrix[0][col] = 0;\n                }\n            }\n        }\n        for (int row = 1; row < rows; row++) {\n            for (int col = 1; col < cols; col++) {\n                if (matrix[row][0] == 0 || matrix[0][col] == 0) matrix[row][col] = 0;\n            }\n        }\n        if (zeroFirstRow) {\n            for (int col = 0; col < cols; col++) matrix[0][col] = 0;\n        }\n        if (zeroFirstCol) {\n            for (int row = 0; row < rows; row++) matrix[row][0] = 0;\n        }\n    }\n}",
+    "time_complexity": "O(mn) — a constant number of full or partial matrix scans.",
+    "space_complexity": "O(1) auxiliary — two booleans store the original first-row and first-column conditions."
+  },
+  "dry_run": {
+    "sample_input": {"matrix": [[1, 1, 1], [1, 0, 1], [1, 1, 1]]},
+    "sample_output": [[1, 0, 1], [0, 0, 0], [1, 0, 1]],
+    "steps": [
+      {"sequence": 1, "event": "Inspect the original first row and first column.", "variables": {"zeroFirstRow": false, "zeroFirstCol": false}, "condition": "All values along both boundaries are 1.", "action": "Keep both flags false.", "state_before": {"matrix": [[1, 1, 1], [1, 0, 1], [1, 1, 1]]}, "state_after": {"matrix": [[1, 1, 1], [1, 0, 1], [1, 1, 1]], "zeroFirstRow": false, "zeroFirstCol": false}, "focus": {"firstRow": 0, "firstCol": 0}},
+      {"sequence": 2, "event": "Scan the interior and find matrix[1][1] == 0.", "variables": {"row": 1, "col": 1}, "condition": "The interior cell is zero.", "action": "Set its row marker matrix[1][0] and column marker matrix[0][1] to zero.", "state_before": {"matrix": [[1, 1, 1], [1, 0, 1], [1, 1, 1]]}, "state_after": {"matrix": [[1, 0, 1], [0, 0, 1], [1, 1, 1]]}, "focus": {"matrixCells": [[1, 1], [1, 0], [0, 1]]}},
+      {"sequence": 3, "event": "Apply markers to interior cells.", "variables": {"row": 1, "col": 1, "rowMarker": 0, "columnMarker": 0}, "condition": "For each interior cell, matrix[row][0] == 0 OR matrix[0][col] == 0 means it must be cleared.", "action": "Clear [1,1] from its column marker and [1,2] from its row marker; clear [2,1] from its column marker. [2,2] remains 1.", "state_before": {"matrix": [[1, 0, 1], [0, 0, 1], [1, 1, 1]]}, "state_after": {"matrix": [[1, 0, 1], [0, 0, 0], [1, 0, 1]]}, "focus": {"interiorCells": [[1, 1], [1, 2], [2, 1], [2, 2]]}},
+      {"sequence": 4, "event": "Restore the first row and column according to their saved flags.", "variables": {"zeroFirstRow": false, "zeroFirstCol": false}, "condition": "Both flags are false, so neither boundary needs additional clearing.", "action": "Leave the current matrix unchanged; return after the final boundary checks.", "state_before": {"matrix": [[1, 0, 1], [0, 0, 0], [1, 0, 1]]}, "state_after": {"matrix": [[1, 0, 1], [0, 0, 0], [1, 0, 1]]}, "focus": {"firstRow": 0, "firstCol": 0}}
+    ],
+    "final_result": [[1, 0, 1], [0, 0, 0], [1, 0, 1]]
+  },
+  "edge_cases": [
+    {"case": "Zero in the first row", "handling": "zeroFirstRow is saved before marker writes, then the entire first row is cleared at the end."},
+    {"case": "Zero in the first column", "handling": "zeroFirstCol is saved independently, then the entire first column is cleared at the end."},
+    {"case": "No zeros", "handling": "No markers are written and both boundary flags remain false, so the matrix is unchanged."}
+  ]
+}

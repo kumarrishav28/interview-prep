@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "problem_number": 221,
+    "title": "Maximal Square",
+    "url": "https://leetcode.com/problems/maximal-square/",
+    "difficulty": "Medium",
+    "category": "Multidimensional DP"
+  },
+  "problem_summary": {
+    "summary": "Find the area of the largest all-'1' square contained in a binary character matrix.",
+    "input_output": "Input: an m by n matrix of characters '0' and '1'. Return the maximum square area, or zero when no '1' exists.",
+    "constraints": ["1 <= m, n <= 300", "matrix[i][j] is '0' or '1'"]
+  },
+  "brute_force": {
+    "explanation": "For every top-left cell, try each square size that stays within the matrix and inspect all cells in that square. Keep the largest size containing only '1' characters. This direct enumeration is practical only for small matrices.",
+    "correctness_idea": "Every all-one square has a top-left coordinate and a side length considered by the loops. Inspecting its cells verifies whether it is valid, so the largest valid candidate is found.",
+    "language": "java",
+    "code": "class Solution {\n    public int maximalSquare(char[][] matrix) {\n        int rows = matrix.length;\n        int columns = matrix[0].length;\n        int largestSide = 0;\n        for (int top = 0; top < rows; top++) {\n            for (int left = 0; left < columns; left++) {\n                int limit = Math.min(rows - top, columns - left);\n                for (int side = 1; side <= limit; side++) {\n                    boolean allOnes = true;\n                    for (int row = top; row < top + side && allOnes; row++) {\n                        for (int column = left; column < left + side; column++) {\n                            if (matrix[row][column] == '0') {\n                                allOnes = false;\n                                break;\n                            }\n                        }\n                    }\n                    if (allOnes) largestSide = Math.max(largestSide, side);\n                }\n            }\n        }\n        return largestSide * largestSide;\n    }\n}",
+    "time_complexity": "O(mnq^3) as a worst-case upper bound, where q = min(m,n): each top-left position can test O(q) side lengths and inspect O(q^2) cells per square.",
+    "space_complexity": "O(1) auxiliary space."
+  },
+  "optimized": {
+    "explanation": "For each cell treated as a square's bottom-right corner, store the largest all-one square side ending there. If the cell is '1', its side is one plus the minimum of the top, left, and top-left diagonal side lengths. Use one row of DP values and preserve the previous diagonal value while scanning left to right.",
+    "correctness_idea": "A square of side s ending at the current cell requires a side-(s-1) square above, left, and diagonally up-left. The minimum of those three neighboring maximum sides is exactly the largest extendable interior, so the recurrence computes the maximum side for each endpoint.",
+    "language": "java",
+    "code": "class Solution {\n    public int maximalSquare(char[][] matrix) {\n        int rows = matrix.length;\n        int columns = matrix[0].length;\n        int[] dp = new int[columns + 1];\n        int largestSide = 0;\n        for (int row = 1; row <= rows; row++) {\n            int diagonal = 0;\n            for (int column = 1; column <= columns; column++) {\n                int above = dp[column];\n                if (matrix[row - 1][column - 1] == '1') {\n                    dp[column] = 1 + Math.min(diagonal,\n                            Math.min(dp[column - 1], dp[column]));\n                    largestSide = Math.max(largestSide, dp[column]);\n                } else {\n                    dp[column] = 0;\n                }\n                diagonal = above;\n            }\n        }\n        return largestSide * largestSide;\n    }\n}",
+    "time_complexity": "O(mn), processing each matrix cell once.",
+    "space_complexity": "O(n) auxiliary space for one rolling DP row and its zero sentinel."
+  },
+  "dry_run": {
+    "sample_input": {"matrix": [["1", "1", "0"], ["1", "1", "1"], ["0", "1", "1"]]},
+    "sample_output": 4,
+    "steps": [
+      {"sequence": 1, "event": "Process the first matrix row.", "variables": {"row": 1, "dp": [0, 1, 1, 0], "largestSide": 1}, "condition": "Each '1' in the first row can form a side-one square; '0' resets its state.", "action": "Update row states to [1,1,0].", "state_before": {"dp": [0, 0, 0, 0]}, "state_after": {"dp": [0, 1, 1, 0]}},
+      {"sequence": 2, "event": "Process row 2, column 1 containing '1'.", "variables": {"row": 2, "column": 1, "diagonal": 0, "left": 0, "above": 1}, "condition": "The three neighboring square sizes have minimum zero.", "action": "Set dp[1] to one.", "state_before": {"dp": [0, 1, 1, 0]}, "state_after": {"dp": [0, 1, 1, 0]}},
+      {"sequence": 3, "event": "Process row 2, column 2 containing '1'.", "variables": {"row": 2, "column": 2, "diagonal": 1, "left": 1, "above": 1}, "condition": "All three neighbor sizes are one, so a side-two square ends here.", "action": "Set dp[2] to two and update largestSide to two.", "state_before": {"dp": [0, 1, 1, 0], "largestSide": 1}, "state_after": {"dp": [0, 1, 2, 0], "largestSide": 2}},
+      {"sequence": 4, "event": "Process row 2, column 3 containing '1'.", "variables": {"row": 2, "column": 3, "diagonal": 1, "left": 2, "above": 0}, "condition": "The above state is zero, so the square ending here has side one.", "action": "Set dp[3] to one.", "state_before": {"dp": [0, 1, 2, 0]}, "state_after": {"dp": [0, 1, 2, 1]}},
+      {"sequence": 5, "event": "Process row 3 and return the maximum area.", "variables": {"row": 3, "dp": [0, 0, 1, 2], "largestSide": 2}, "condition": "No later cell extends a square beyond side two.", "action": "Return largestSide squared: 2*2.", "state_before": {"largestSide": 2}, "state_after": {"result": 4}}
+    ],
+    "final_result": 4
+  },
+  "edge_cases": [
+    {"case": "Matrix contains only zeroes", "handling": "No DP state grows above zero, so the returned area is zero."},
+    {"case": "Single row or column", "handling": "The recurrence can grow only to side one, returning one if any cell is '1'."},
+    {"case": "All cells are one", "handling": "The DP grows the side length along valid diagonal regions and returns the smaller dimension squared."},
+    {"case": "A zero breaks a potential square", "handling": "Its state resets to zero and prevents any larger square using that endpoint."}
+  ]
+}

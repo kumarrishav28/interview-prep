@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "problem_number": 55,
+    "title": "Jump Game",
+    "url": "https://leetcode.com/problems/jump-game/",
+    "difficulty": "Medium",
+    "category": "Array / String"
+  },
+  "problem_summary": {
+    "summary": "Starting at index zero, determine whether the final array index can be reached when each value gives the maximum forward jump from that position.",
+    "input_output": "Input: non-empty nums of maximum jump lengths. Return whether index nums.length - 1 is reachable.",
+    "constraints": ["1 <= nums.length <= 10^4", "0 <= nums[i] <= 10^5"]
+  },
+  "brute_force": {
+    "explanation": "Use a boolean reachability table. From each reachable index, mark every position within its allowed jump range.",
+    "correctness_idea": "The table marks exactly positions reachable by a legal final jump from an already reachable position; induction from index zero covers every possible path.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean canJump(int[] nums) {\n        boolean[] reachable = new boolean[nums.length];\n        reachable[0] = true;\n        for (int index = 0; index < nums.length; index++) {\n            if (!reachable[index]) continue;\n            int end = (int) Math.min(nums.length - 1L, (long) index + nums[index]);\n            for (int next = index + 1; next <= end; next++) {\n                reachable[next] = true;\n            }\n        }\n        return reachable[nums.length - 1];\n    }\n}",
+    "time_complexity": "O(n^2) worst case — many reachable indices may mark long overlapping ranges.",
+    "space_complexity": "O(n) — one reachability flag is stored per index."
+  },
+  "optimized": {
+    "explanation": "Track the farthest index reachable from any position scanned so far. If the scan reaches beyond that boundary, the last index is unreachable.",
+    "correctness_idea": "Every scanned index at or before farthest is reachable. Extending farthest with index + nums[index] includes all positions reachable through that index; a gap past the boundary cannot be crossed.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean canJump(int[] nums) {\n        int farthest = 0;\n        for (int index = 0; index < nums.length; index++) {\n            if (index > farthest) return false;\n            farthest = Math.max(farthest, index + nums[index]);\n            if (farthest >= nums.length - 1) return true;\n        }\n        return true;\n    }\n}",
+    "time_complexity": "O(n) — indices are scanned at most once.",
+    "space_complexity": "O(1) auxiliary — only the farthest reachable index is maintained."
+  },
+  "dry_run": {
+    "sample_input": {"nums": [2, 0, 2, 0, 1]},
+    "sample_output": true,
+    "steps": [
+      {"sequence": 1, "event": "Scan index 0 with jump length 2.", "variables": {"index": 0, "farthest": 2}, "condition": "0 <= current farthest 0.", "action": "Extend the reachable boundary to index 2.", "state_before": {"farthest": 0}, "state_after": {"farthest": 2}, "focus": {"array": "nums", "indices": [0, 2]}},
+      {"sequence": 2, "event": "Scan index 1 with jump length 0.", "variables": {"index": 1, "farthest": 2}, "condition": "1 <= current farthest 2; index + nums[index] is 1.", "action": "Keep farthest at 2.", "state_before": {"farthest": 2}, "state_after": {"farthest": 2}, "focus": {"array": "nums", "indices": [1]}},
+      {"sequence": 3, "event": "Scan index 2 with jump length 2.", "variables": {"index": 2, "farthest": 4}, "condition": "2 <= current farthest 2 and index + nums[index] = 4 reaches the last index.", "action": "Extend farthest to 4 and return true.", "state_before": {"farthest": 2}, "state_after": {"farthest": 4}, "focus": {"array": "nums", "indices": [2, 4]}}
+    ],
+    "final_result": true
+  },
+  "edge_cases": [
+    {"case": "Single-element array", "handling": "The starting position is already the final position."},
+    {"case": "Zero blocks all progress", "handling": "If the farthest boundary ends before the last index, the next index beyond it causes false."},
+    {"case": "A jump reaches or passes the last index", "handling": "The method returns true as soon as farthest reaches the goal."}
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "problem_number": 36,
+    "title": "Valid Sudoku",
+    "url": "https://leetcode.com/problems/valid-sudoku/",
+    "difficulty": "Medium",
+    "category": "Matrix"
+  },
+  "problem_summary": {
+    "summary": "Check whether the filled cells of a 9 x 9 Sudoku board repeat any digit in a row, column, or 3 x 3 box. Empty cells do not violate the rules, and the board need not be solvable.",
+    "input_output": "Input: board, a 9 x 9 character grid containing digits '1' through '9' or '.'. Return true if all filled cells satisfy the three uniqueness rules; otherwise return false.",
+    "constraints": ["board.length == 9", "board[i].length == 9", "Each cell is a digit '1'-'9' or '.'"]
+  },
+  "brute_force": {
+    "explanation": "For each filled cell, scan the rest of its row, column, and 3 x 3 box for the same digit. Return false on the first duplicate.",
+    "correctness_idea": "A violation must be a pair of equal filled digits sharing a row, column, or box. Scanning those peers for every filled cell detects every such pair.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean isValidSudoku(char[][] board) {\n        for (int row = 0; row < 9; row++) {\n            for (int col = 0; col < 9; col++) {\n                char digit = board[row][col];\n                if (digit == '.') continue;\n                for (int other = 0; other < 9; other++) {\n                    if (other != col && board[row][other] == digit) return false;\n                    if (other != row && board[other][col] == digit) return false;\n                }\n                int boxRow = (row / 3) * 3;\n                int boxCol = (col / 3) * 3;\n                for (int r = boxRow; r < boxRow + 3; r++) {\n                    for (int c = boxCol; c < boxCol + 3; c++) {\n                        if ((r != row || c != col) && board[r][c] == digit) return false;\n                    }\n                }\n            }\n        }\n        return true;\n    }\n}",
+    "time_complexity": "O(9^3) for the fixed board: at most 81 filled cells each scan a constant-size row, column, and box. More generally, O(N^3) for an N x N Sudoku with square-root-sized boxes.",
+    "space_complexity": "O(1) auxiliary space; only scalar loop variables are used."
+  },
+  "optimized": {
+    "explanation": "Scan once and record each seen digit in boolean tables for its row, column, and 3 x 3 box. The box index is (row / 3) * 3 + col / 3.",
+    "correctness_idea": "Before recording a digit, all three tables directly answer whether it has appeared in any required peer group. A repeated flag proves invalidity; otherwise recording all three flags preserves the invariant for the rest of the scan.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean isValidSudoku(char[][] board) {\n        boolean[][] rows = new boolean[9][10];\n        boolean[][] cols = new boolean[9][10];\n        boolean[][] boxes = new boolean[9][10];\n        for (int row = 0; row < 9; row++) {\n            for (int col = 0; col < 9; col++) {\n                char cell = board[row][col];\n                if (cell == '.') continue;\n                int digit = cell - '0';\n                int box = (row / 3) * 3 + col / 3;\n                if (rows[row][digit] || cols[col][digit] || boxes[box][digit]) return false;\n                rows[row][digit] = true;\n                cols[col][digit] = true;\n                boxes[box][digit] = true;\n            }\n        }\n        return true;\n    }\n}",
+    "time_complexity": "O(9^2) for the fixed board because every cell is visited at most once; more generally O(N^2) for an N x N board.",
+    "space_complexity": "O(1) auxiliary for the fixed 9 x 9 rules: three 9 x 10 boolean tables."
+  },
+  "dry_run": {
+    "sample_input": {"board": [["8","3",".",".","7",".",".",".","."],["6",".",".","1","9","5",".",".","."],[".","9","8",".",".",".",".","6","."],["8",".",".",".","6",".",".",".","3"],["4",".",".","8",".","3",".",".","1"],["7",".",".",".","2",".",".",".","6"],[".","6",".",".",".",".","2","8","."],[".",".",".","4","1","9",".",".","5"],[".",".",".",".","8",".",".","7","9"]]},
+    "sample_output": false,
+    "steps": [
+      {"sequence": 1, "event": "Visit board[0][0] = '8'.", "variables": {"row": 0, "col": 0, "digit": 8, "box": 0}, "condition": "rows[0][8], cols[0][8], and boxes[0][8] are all false.", "action": "Mark digit 8 in row 0, column 0, and box 0.", "state_before": {"row0Digits": [], "col0Digits": [], "box0Digits": []}, "state_after": {"row0Digits": [8], "col0Digits": [8], "box0Digits": [8]}, "focus": {"boardCell": [0, 0], "box": 0}},
+      {"sequence": 2, "event": "Visit board[0][1] = '3'.", "variables": {"row": 0, "col": 1, "digit": 3, "box": 0}, "condition": "Digit 3 is absent from row 0, column 1, and box 0.", "action": "Mark digit 3 in all three corresponding seen tables.", "state_before": {"row0Digits": [8], "col1Digits": [], "box0Digits": [8]}, "state_after": {"row0Digits": [8, 3], "col1Digits": [3], "box0Digits": [8, 3]}, "focus": {"boardCell": [0, 1], "box": 0}},
+      {"sequence": 3, "event": "Continue row-major scan; dots at [0,2], [0,3], and [0,5..8] are skipped. Visit [0,4] = '7'.", "variables": {"row": 0, "col": 4, "digit": 7, "box": 1}, "condition": "Digit 7 is not yet recorded for these groups.", "action": "Mark 7 in row 0, column 4, and box 1.", "state_before": {"row0Digits": [8, 3], "col4Digits": [], "box1Digits": []}, "state_after": {"row0Digits": [8, 3, 7], "col4Digits": [7], "box1Digits": [7]}, "focus": {"boardCell": [0, 4], "box": 1}},
+      {"sequence": 4, "event": "Visit board[1][0] = '6'.", "variables": {"row": 1, "col": 0, "digit": 6, "box": 0}, "condition": "Digit 6 is absent from row 1, column 0, and box 0.", "action": "Mark digit 6 in all three corresponding seen tables.", "state_before": {"row1Digits": [], "col0Digits": [8], "box0Digits": [8, 3]}, "state_after": {"row1Digits": [6], "col0Digits": [8, 6], "box0Digits": [8, 3, 6]}, "focus": {"boardCell": [1, 0], "box": 0}},
+      {"sequence": 5, "event": "Skip empty cells in row 1, then visit [1,3]='1', [1,4]='9', and [1,5]='5'.", "variables": {"row": 1, "digitsVisited": [1, 9, 5], "boxes": [1, 1, 1]}, "condition": "Each digit is absent from its row, column, and box when reached.", "action": "Record each digit in its three seen tables; row 1 now contains [6,1,9,5].", "state_before": {"row1Digits": [6], "box1Digits": [7], "box0Digits": [8, 3, 6]}, "state_after": {"row1Digits": [6, 1, 9, 5], "col3Digits": [1], "col4Digits": [7, 9], "col5Digits": [5], "box1Digits": [7, 1, 9, 5]}, "focus": {"boardCells": [[1, 3], [1, 4], [1, 5]], "box": 1}},
+      {"sequence": 6, "event": "Visit [2,1]='9', then [2,2]='8' after skipping dots at [2,0].", "variables": {"row": 2, "col": 2, "digit": 8, "box": 0}, "condition": "boxes[0][8] is already true from [0,0].", "action": "Return false immediately; no seen-table state is changed for this duplicate.", "state_before": {"box0Digits": [8, 3, 6, 9], "row2Digits": [9], "col2Digits": []}, "state_after": {"box0Digits": [8, 3, 6, 9], "row2Digits": [9], "col2Digits": []}, "focus": {"boardCell": [2, 2], "duplicateOf": [0, 0], "box": 0}}
+    ],
+    "final_result": false
+  },
+  "edge_cases": [
+    {"case": "Empty board", "handling": "Every cell is skipped, so the board is valid."},
+    {"case": "Duplicate in only one group type", "handling": "The row, column, and box flags are tested independently, so any one conflict returns false."},
+    {"case": "Valid but unsolvable board", "handling": "Only duplicate rules are checked; solvability is not required."}
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 128,
+    "title": "Longest Consecutive Sequence",
+    "url": "https://leetcode.com/problems/longest-consecutive-sequence/",
+    "difficulty": "Medium",
+    "category": "Hashmap"
+  },
+  "problem_summary": {
+    "summary": "Return the length of the longest run of consecutive integer values present in an unsorted array, regardless of their original order.",
+    "input_output": "Input: possibly empty integer array nums. Return the maximum length of a consecutive-value sequence.",
+    "constraints": ["0 <= nums.length <= 10^5", "-10^9 <= nums[i] <= 10^9", "The algorithm must run in O(n) time"]
+  },
+  "brute_force": {
+    "explanation": "For each array value, repeatedly linearly scan the array for the next integer and count how long that run continues. Keep the largest count.",
+    "correctness_idea": "Every consecutive run present in the input begins at some input value. Starting a search from every value therefore checks the full longest run, though many runs are redundantly checked.",
+    "language": "java",
+    "code": "class Solution {\n    public int longestConsecutive(int[] nums) {\n        int best = 0;\n        for (int value : nums) {\n            int length = 1;\n            int next = value + 1;\n            while (contains(nums, next)) {\n                length++;\n                next++;\n            }\n            best = Math.max(best, length);\n        }\n        return best;\n    }\n\n    private boolean contains(int[] nums, int target) {\n        for (int value : nums) {\n            if (value == target) return true;\n        }\n        return false;\n    }\n}",
+    "time_complexity": "O(n^2) worst case: each start may extend through many values, and each extension linearly scans the array.",
+    "space_complexity": "O(1) auxiliary."
+  },
+  "optimized": {
+    "explanation": "Put all values in a hash set. Start counting only at values whose predecessor is absent, then walk forward while consecutive values exist in the set.",
+    "correctness_idea": "A maximal consecutive sequence has exactly one start whose predecessor is absent. Expanding from each such start visits its sequence once, while membership tests avoid sorting and make each lookup expected constant time.",
+    "language": "java",
+    "code": "import java.util.HashSet;\nimport java.util.Set;\n\nclass Solution {\n    public int longestConsecutive(int[] nums) {\n        Set<Integer> values = new HashSet<>();\n        for (int value : nums) values.add(value);\n        int best = 0;\n        for (int value : values) {\n            if (!values.contains(value - 1)) {\n                int current = value;\n                int length = 1;\n                while (values.contains(current + 1)) {\n                    current++;\n                    length++;\n                }\n                best = Math.max(best, length);\n            }\n        }\n        return best;\n    }\n}",
+    "time_complexity": "O(n) expected: set construction, start checks, and sequence expansion use expected constant-time membership; each distinct value is expanded from only its sequence start.",
+    "space_complexity": "O(n) auxiliary for the set of distinct values."
+  },
+  "dry_run": {
+    "sample_input": {"nums": [8, 3, 6, 4, 5, 20]},
+    "sample_output": 4,
+    "steps": [
+      {"sequence": 1, "event": "Build the set and inspect value 8.", "variables": {"value": 8, "predecessor": 7, "best": 0}, "condition": "7 is absent, so 8 starts a run; 9 is absent.", "action": "Run length is 1; set best to 1.", "state_before": {"values": [8, 3, 6, 4, 5, 20], "best": 0}, "state_after": {"values": [8, 3, 6, 4, 5, 20], "best": 1}},
+      {"sequence": 2, "event": "Inspect value 3.", "variables": {"value": 3, "predecessor": 2, "current": 6, "length": 4, "best": 1}, "condition": "2 is absent, then 4, 5, and 6 are present while 7 is absent.", "action": "Count sequence 3 through 6 and update best to 4.", "state_before": {"best": 1}, "state_after": {"best": 4}},
+      {"sequence": 3, "event": "Inspect values 6, 4, and 5.", "variables": {"valuesChecked": [6, 4, 5], "best": 4}, "condition": "Each has its predecessor in the set.", "action": "Skip expansion because these are not sequence starts.", "state_before": {"best": 4}, "state_after": {"best": 4}},
+      {"sequence": 4, "event": "Inspect value 20.", "variables": {"value": 20, "predecessor": 19, "best": 4}, "condition": "19 is absent and 21 is absent.", "action": "Its run length is 1; best stays 4 and the method returns 4.", "state_before": {"best": 4}, "state_after": {"best": 4}}
+    ],
+    "final_result": 4
+  },
+  "edge_cases": [
+    {"case": "Empty array", "handling": "The set and scan are empty, so the initial best value 0 is returned."},
+    {"case": "Duplicate values", "handling": "The set stores each value once; duplicates cannot inflate a sequence length."},
+    {"case": "Negative values", "handling": "Predecessor and successor membership checks work across negative and zero values."}
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 4,
+    "title": "Median of Two Sorted Arrays",
+    "url": "https://leetcode.com/problems/median-of-two-sorted-arrays/",
+    "difficulty": "Hard",
+    "category": "Binary Search"
+  },
+  "problem_summary": {
+    "summary": "Return the median of two individually sorted arrays, with at least one array nonempty.",
+    "input_output": "Input: two ascending integer arrays nums1 and nums2. Return their combined median as a double.",
+    "constraints": ["0 <= nums1.length, nums2.length <= 1000", "1 <= nums1.length + nums2.length <= 2000", "-10^6 <= nums1[i], nums2[i] <= 10^6", "Both input arrays are sorted", "The required overall runtime is O(log(m + n))"]
+  },
+  "brute_force": {
+    "explanation": "Merge both sorted arrays into a new sorted array, then take the center value or average the two center values.",
+    "correctness_idea": "The merge preserves the total sorted order. The median of a sorted sequence is its middle element for odd length and the average of its two middle elements for even length, so those positions give the required answer.",
+    "language": "java",
+    "code": "class Solution {\n    public double findMedianSortedArrays(int[] nums1, int[] nums2) {\n        int total = nums1.length + nums2.length;\n        int[] merged = new int[total];\n        int first = 0;\n        int second = 0;\n        int write = 0;\n        while (first < nums1.length && second < nums2.length) {\n            if (nums1[first] <= nums2[second]) {\n                merged[write++] = nums1[first++];\n            } else {\n                merged[write++] = nums2[second++];\n            }\n        }\n        while (first < nums1.length) merged[write++] = nums1[first++];\n        while (second < nums2.length) merged[write++] = nums2[second++];\n        int middle = total / 2;\n        if (total % 2 == 1) return merged[middle];\n        return (merged[middle - 1] + merged[middle]) / 2.0;\n    }\n}",
+    "time_complexity": "O(m + n), where m and n are the input lengths; all elements are merged.",
+    "space_complexity": "O(m + n) auxiliary space for the merged array."
+  },
+  "optimized": {
+    "explanation": "Binary-search a partition in the shorter array and choose the matching partition in the other array so the left side contains half of all values. A partition is valid when each left maximum is no greater than the opposite right minimum. Adjust the first partition until valid, then compute the median from the boundary values.",
+    "correctness_idea": "The partition places exactly the lower half of the combined sorted order on the left. Cross-boundary ordering makes every left value no greater than every right value, so the left maximum (odd total) or the average of the left maximum and right minimum (even total) is the median. Searching the shorter array keeps the partition bounds valid and minimizes the binary-search range.",
+    "language": "java",
+    "code": "class Solution {\n    public double findMedianSortedArrays(int[] nums1, int[] nums2) {\n        if (nums1.length > nums2.length) {\n            return findMedianSortedArrays(nums2, nums1);\n        }\n        int firstLength = nums1.length;\n        int secondLength = nums2.length;\n        int leftSize = (firstLength + secondLength + 1) / 2;\n        int low = 0;\n        int high = firstLength;\n        while (low <= high) {\n            int cutFirst = low + (high - low) / 2;\n            int cutSecond = leftSize - cutFirst;\n            int leftFirst = cutFirst == 0 ? Integer.MIN_VALUE : nums1[cutFirst - 1];\n            int rightFirst = cutFirst == firstLength ? Integer.MAX_VALUE : nums1[cutFirst];\n            int leftSecond = cutSecond == 0 ? Integer.MIN_VALUE : nums2[cutSecond - 1];\n            int rightSecond = cutSecond == secondLength ? Integer.MAX_VALUE : nums2[cutSecond];\n            if (leftFirst <= rightSecond && leftSecond <= rightFirst) {\n                int leftMax = Math.max(leftFirst, leftSecond);\n                if ((firstLength + secondLength) % 2 == 1) return leftMax;\n                int rightMin = Math.min(rightFirst, rightSecond);\n                return (leftMax + rightMin) / 2.0;\n            }\n            if (leftFirst > rightSecond) {\n                high = cutFirst - 1;\n            } else {\n                low = cutFirst + 1;\n            }\n        }\n        return 0.0;\n    }\n}",
+    "time_complexity": "O(1 + log(min(m, n) + 1)) partition search; the constant term covers an empty shorter array. This is within the required O(log(m + n)) asymptotically.",
+    "space_complexity": "O(1) auxiliary space."
+  },
+  "dry_run": {
+    "sample_input": {"nums1": [1, 6, 10], "nums2": [2, 3, 7, 11, 14]},
+    "sample_output": 6.5,
+    "steps": [
+      {"sequence": 1, "event": "Choose nums1 as the shorter array and search its partition; total left size is 4.", "variables": {"low": 0, "high": 3, "cutFirst": 1, "cutSecond": 3, "leftFirst": 1, "rightFirst": 6, "leftSecond": 7, "rightSecond": 11}, "condition": "leftSecond 7 > rightFirst 6, so too few nums1 values are on the left.", "action": "Move the nums1 cut right by setting low to 2.", "state_before": {"partition": {"nums1Left": [1], "nums2Left": [2, 3, 7]}}, "state_after": {"low": 2, "high": 3}},
+      {"sequence": 2, "event": "Test the next partition.", "variables": {"low": 2, "high": 3, "cutFirst": 2, "cutSecond": 2, "leftFirst": 6, "rightFirst": 10, "leftSecond": 3, "rightSecond": 7}, "condition": "6 <= 7 and 3 <= 10; both cross-boundary ordering checks pass.", "action": "The even-length median is the average of max(6, 3) and min(10, 7).", "state_before": {"leftSize": 4, "total": 8}, "state_after": {"leftMax": 6, "rightMin": 7, "result": 6.5}}
+    ],
+    "final_result": 6.5
+  },
+  "edge_cases": [
+    {"case": "One input array is empty", "handling": "The partition boundaries of the empty array use sentinels, leaving the other array's median values as the result."},
+    {"case": "Combined length is odd", "handling": "Return the largest value on the left partition."},
+    {"case": "Combined length is even", "handling": "Average the left maximum and right minimum as a double."},
+    {"case": "Inputs have very different lengths", "handling": "The optimized method searches the shorter array, so its partition and corresponding cut remain within bounds."},
+    {"case": "Both arrays empty", "handling": "Excluded because the combined length constraint is at least one."}
+  ]
+}

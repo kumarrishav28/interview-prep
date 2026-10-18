@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "problem_number": 238,
+    "title": "Product of Array Except Self",
+    "url": "https://leetcode.com/problems/product-of-array-except-self/",
+    "difficulty": "Medium",
+    "category": "Array / String"
+  },
+  "problem_summary": {
+    "summary": "For every index, return the product of all input values except the value at that index, without division.",
+    "input_output": "Input: an integer array nums. Return an equally sized answer array.",
+    "constraints": ["2 <= nums.length <= 10^5", "-30 <= nums[i] <= 30", "Every prefix and suffix product fits in a 32-bit integer", "Each answer[i] fits in a 32-bit integer"]
+  },
+  "brute_force": {
+    "explanation": "For each output position, multiply every input value whose index differs from that position. This directly mirrors the definition but repeats many multiplications.",
+    "correctness_idea": "The inner loop visits exactly all indices other than i, so its accumulated product is precisely answer[i].",
+    "language": "java",
+    "code": "class Solution {\n    public int[] productExceptSelf(int[] nums) {\n        int[] answer = new int[nums.length];\n        for (int index = 0; index < nums.length; index++) {\n            int product = 1;\n            for (int other = 0; other < nums.length; other++) {\n                if (other != index) product *= nums[other];\n            }\n            answer[index] = product;\n        }\n        return answer;\n    }\n}",
+    "time_complexity": "O(n^2) — each of n outputs scans n input positions.",
+    "space_complexity": "O(n) for the returned answer; O(1) auxiliary space apart from it."
+  },
+  "optimized": {
+    "explanation": "Build answer with the product strictly to the left of each position. Then scan from right to left, multiplying each entry by the running product strictly to its right. The output array stores the left products, so no second array or division is needed.",
+    "correctness_idea": "For index i, the first pass stores the product of indices below i, and the reverse pass multiplies by the product of indices above i. Their product includes every input except nums[i].",
+    "language": "java",
+    "code": "class Solution {\n    public int[] productExceptSelf(int[] nums) {\n        int[] answer = new int[nums.length];\n        int prefix = 1;\n        for (int index = 0; index < nums.length; index++) {\n            answer[index] = prefix;\n            prefix *= nums[index];\n        }\n        int suffix = 1;\n        for (int index = nums.length - 1; index >= 0; index--) {\n            answer[index] *= suffix;\n            suffix *= nums[index];\n        }\n        return answer;\n    }\n}",
+    "time_complexity": "O(n) — two linear passes.",
+    "space_complexity": "O(1) auxiliary space beyond the O(n) returned answer."
+  },
+  "dry_run": {
+    "sample_input": {"nums": [2, 3, 4]},
+    "sample_output": [12, 8, 6],
+    "steps": [
+      {"sequence": 1, "event": "Prefix pass at index 0.", "variables": {"index": 0, "prefix": 1}, "condition": "No values lie to the left.", "action": "Store 1, then update prefix to 1 * 2 = 2.", "state_before": {"answer": [0, 0, 0], "prefix": 1}, "state_after": {"answer": [1, 0, 0], "prefix": 2}},
+      {"sequence": 2, "event": "Prefix pass at index 1.", "variables": {"index": 1, "prefix": 2}, "condition": "The left product is 2.", "action": "Store 2, then update prefix to 2 * 3 = 6.", "state_before": {"answer": [1, 0, 0], "prefix": 2}, "state_after": {"answer": [1, 2, 0], "prefix": 6}},
+      {"sequence": 3, "event": "Prefix pass at index 2.", "variables": {"index": 2, "prefix": 6}, "condition": "The left product is 2 * 3.", "action": "Store 6; prefix pass is complete.", "state_before": {"answer": [1, 2, 0], "prefix": 6}, "state_after": {"answer": [1, 2, 6], "prefix": 24}},
+      {"sequence": 4, "event": "Suffix pass at index 2.", "variables": {"index": 2, "suffix": 1}, "condition": "No values lie to the right.", "action": "Multiply answer[2] by 1; update suffix to 4.", "state_before": {"answer": [1, 2, 6], "suffix": 1}, "state_after": {"answer": [1, 2, 6], "suffix": 4}},
+      {"sequence": 5, "event": "Suffix pass at index 1.", "variables": {"index": 1, "suffix": 4}, "condition": "The right product is 4.", "action": "Set answer[1] to 2 * 4 = 8; update suffix to 12.", "state_before": {"answer": [1, 2, 6], "suffix": 4}, "state_after": {"answer": [1, 8, 6], "suffix": 12}},
+      {"sequence": 6, "event": "Suffix pass at index 0.", "variables": {"index": 0, "suffix": 12}, "condition": "The right product is 3 * 4.", "action": "Set answer[0] to 1 * 12 = 12.", "state_before": {"answer": [1, 8, 6], "suffix": 12}, "state_after": {"answer": [12, 8, 6], "suffix": 24}}
+    ],
+    "final_result": [12, 8, 6]
+  },
+  "edge_cases": [
+    {"case": "One zero in nums", "handling": "Only the zero's output position can contain the product of all nonzero values; every other output becomes zero."},
+    {"case": "At least two zeros", "handling": "Every output is zero because excluding only one position still leaves a zero."},
+    {"case": "Negative values", "handling": "Prefix and suffix multiplication naturally preserve signs."}
+  ]
+}

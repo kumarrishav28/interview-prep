@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "problem_number": 198,
+    "title": "House Robber",
+    "url": "https://leetcode.com/problems/house-robber/",
+    "difficulty": "Medium",
+    "category": "1D DP"
+  },
+  "problem_summary": {
+    "summary": "Choose non-adjacent houses from a street to maximize the total money taken.",
+    "input_output": "Input: nums, where nums[i] is the non-negative amount at house i. Return the maximum amount obtainable without choosing adjacent houses.",
+    "constraints": ["1 <= nums.length <= 100", "0 <= nums[i] <= 400"]
+  },
+  "brute_force": {
+    "explanation": "At each house, recursively compare skipping it with robbing it and moving past the adjacent house. The method mirrors the choices directly, though different paths repeat the same suffix problems.",
+    "correctness_idea": "Any valid selection either excludes the current house, leaving the next house available, or includes it, forcing the next choice to start two positions later. Taking the larger result covers all legal selections.",
+    "language": "java",
+    "code": "class Solution {\n    public int rob(int[] nums) {\n        return bestFrom(nums, 0);\n    }\n\n    private int bestFrom(int[] nums, int index) {\n        if (index >= nums.length) return 0;\n        int skip = bestFrom(nums, index + 1);\n        int take = nums[index] + bestFrom(nums, index + 2);\n        return Math.max(skip, take);\n    }\n}",
+    "time_complexity": "O(2^n) — each call may branch into a skip and take call.",
+    "space_complexity": "O(n) auxiliary — recursive depth is at most n."
+  },
+  "optimized": {
+    "explanation": "Scan left to right while storing the best totals for the previous position and the position before it. For each house, compare skipping it with adding its value to the best total two positions back.",
+    "correctness_idea": "For a prefix ending at the current house, every legal optimum either skips that house and equals the previous prefix optimum, or takes it and combines its value with the optimum through the house before the previous one. The rolling variables retain precisely these alternatives.",
+    "language": "java",
+    "code": "class Solution {\n    public int rob(int[] nums) {\n        int twoBack = 0;\n        int oneBack = 0;\n        for (int amount : nums) {\n            int current = Math.max(oneBack, twoBack + amount);\n            twoBack = oneBack;\n            oneBack = current;\n        }\n        return oneBack;\n    }\n}",
+    "time_complexity": "O(n) — every house is processed once.",
+    "space_complexity": "O(1) auxiliary — only two previous optimum values are retained."
+  },
+  "dry_run": {
+    "sample_input": {"nums": [2, 7, 4, 9, 3]},
+    "sample_output": 16,
+    "steps": [
+      {"sequence": 1, "event": "Process house 0 with value 2.", "variables": {"index": 0, "amount": 2, "take": 2, "skip": 0, "current": 2}, "condition": "Taking gives 0 + 2 = 2; skipping gives 0.", "action": "Keep 2 as the best total through this house.", "state_before": {"twoBack": 0, "oneBack": 0}, "state_after": {"twoBack": 0, "oneBack": 2}},
+      {"sequence": 2, "event": "Process house 1 with value 7.", "variables": {"index": 1, "amount": 7, "take": 7, "skip": 2, "current": 7}, "condition": "Taking house 1 beats the previous total of 2.", "action": "Store 7 as the best total through house 1.", "state_before": {"twoBack": 0, "oneBack": 2}, "state_after": {"twoBack": 2, "oneBack": 7}},
+      {"sequence": 3, "event": "Process house 2 with value 4.", "variables": {"index": 2, "amount": 4, "take": 6, "skip": 7, "current": 7}, "condition": "Taking gives 2 + 4 = 6, less than skipping with 7.", "action": "Keep the previous best total.", "state_before": {"twoBack": 2, "oneBack": 7}, "state_after": {"twoBack": 7, "oneBack": 7}},
+      {"sequence": 4, "event": "Process house 3 with value 9.", "variables": {"index": 3, "amount": 9, "take": 16, "skip": 7, "current": 16}, "condition": "Taking gives 7 + 9 = 16, greater than skipping with 7.", "action": "Store 16 as the best total through house 3.", "state_before": {"twoBack": 7, "oneBack": 7}, "state_after": {"twoBack": 7, "oneBack": 16}},
+      {"sequence": 5, "event": "Process house 4 with value 3.", "variables": {"index": 4, "amount": 3, "take": 10, "skip": 16, "current": 16}, "condition": "Taking gives 7 + 3 = 10, less than skipping with 16.", "action": "Keep 16 and return it after the scan.", "state_before": {"twoBack": 7, "oneBack": 16}, "state_after": {"twoBack": 16, "oneBack": 16}}
+    ],
+    "final_result": 16
+  },
+  "edge_cases": [
+    {"case": "One house", "handling": "The loop chooses its value or zero, so the house's amount is returned."},
+    {"case": "All house values are zero", "handling": "Both choices remain zero throughout, producing zero."},
+    {"case": "Best choice skips multiple adjacent houses", "handling": "Each index compares the best prefix with the best two positions back plus the current value, allowing such selections."}
+  ]
+}

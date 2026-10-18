@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "problem_number": 199,
+    "title": "Binary Tree Right Side View",
+    "url": "https://leetcode.com/problems/binary-tree-right-side-view/",
+    "difficulty": "Medium",
+    "category": "Binary Tree BFS"
+  },
+  "problem_summary": {
+    "summary": "Return the value visible at the rightmost position of each tree level, ordered from the root level downward.",
+    "input_output": "Input: the root of a binary tree. Return an integer list containing one visible value per non-empty level; an empty tree returns an empty list.",
+    "constraints": ["0 <= number of nodes <= 100", "-100 <= Node.val <= 100"]
+  },
+  "brute_force": {
+    "explanation": "Visit each node in root-right-left order. The first node encountered at each depth is that level's rightmost visible node.",
+    "correctness_idea": "At every depth, right-first depth-first traversal reaches the rightmost existing node before any node to its left. Recording only the first visit at that depth therefore records exactly the right-side view.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass Solution {\n    public List<Integer> rightSideView(TreeNode root) {\n        List<Integer> view = new ArrayList<>();\n        visit(root, 0, view);\n        return view;\n    }\n\n    private void visit(TreeNode node, int depth, List<Integer> view) {\n        if (node == null) return;\n        if (depth == view.size()) view.add(node.val);\n        visit(node.right, depth + 1, view);\n        visit(node.left, depth + 1, view);\n    }\n}",
+    "time_complexity": "O(n) — every node is visited once.",
+    "space_complexity": "O(h) auxiliary recursion stack, where h is tree height; O(h) output values."
+  },
+  "optimized": {
+    "explanation": "Run breadth-first search by fixed-size levels and append the last node processed at each level.",
+    "correctness_idea": "The queue processes each level from left to right. Its final node at a level is precisely the rightmost node present there, including when that position is occupied only by a left-subtree node.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.ArrayList;\nimport java.util.List;\nimport java.util.Queue;\n\nclass Solution {\n    public List<Integer> rightSideView(TreeNode root) {\n        List<Integer> view = new ArrayList<>();\n        if (root == null) return view;\n        Queue<TreeNode> queue = new ArrayDeque<>();\n        queue.offer(root);\n        while (!queue.isEmpty()) {\n            int levelSize = queue.size();\n            for (int index = 0; index < levelSize; index++) {\n                TreeNode node = queue.poll();\n                if (index == levelSize - 1) view.add(node.val);\n                if (node.left != null) queue.offer(node.left);\n                if (node.right != null) queue.offer(node.right);\n            }\n        }\n        return view;\n    }\n}",
+    "time_complexity": "O(n) — each node enters and leaves the queue once.",
+    "space_complexity": "O(w) auxiliary for the queue, where w is the maximum level width; O(h) output values."
+  },
+  "dry_run": {
+    "sample_input": {"root": [8, 4, 12, null, 6, null, 14]},
+    "sample_output": [8, 12, 14],
+    "steps": [
+      {"sequence": 1, "event": "Process the root level.", "variables": {"levelSize": 1, "levelValues": [8], "rightmost": 8, "queueAfterLevel": [4, 12]}, "condition": "The root is the only node in this level.", "action": "Append 8 and enqueue its existing children left to right.", "state_before": {"queue": [8], "view": []}, "state_after": {"queue": [4, 12], "view": [8]}},
+      {"sequence": 2, "event": "Process level 1.", "variables": {"levelSize": 2, "levelValues": [4, 12], "rightmost": 12, "queueAfterLevel": [6, 14]}, "condition": "Node 12 is the last node processed at this level.", "action": "Append 12 and queue the existing right children 6 and 14.", "state_before": {"queue": [4, 12], "view": [8]}, "state_after": {"queue": [6, 14], "view": [8, 12]}},
+      {"sequence": 3, "event": "Process level 2.", "variables": {"levelSize": 2, "levelValues": [6, 14], "rightmost": 14, "queueAfterLevel": []}, "condition": "14 is the last existing node on this level.", "action": "Append 14 and finish after the queue empties.", "state_before": {"queue": [6, 14], "view": [8, 12]}, "state_after": {"queue": [], "view": [8, 12, 14]}}
+    ],
+    "final_result": [8, 12, 14]
+  },
+  "edge_cases": [
+    {"case": "Empty tree", "handling": "The BFS returns an empty list; the DFS records no depth."},
+    {"case": "Only one node at a level", "handling": "That node is appended as the level's visible value."},
+    {"case": "A level has no right child on its far edge", "handling": "The rightmost existing node is still recorded, even if it belongs to a left subtree."}
+  ]
+}

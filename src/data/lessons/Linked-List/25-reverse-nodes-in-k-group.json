@@ -1,0 +1,39 @@
+{
+  "metadata": {"problem_number": 25, "title": "Reverse Nodes in k-Group", "url": "https://leetcode.com/problems/reverse-nodes-in-k-group/", "difficulty": "Hard", "category": "Linked List"},
+  "problem_summary": {
+    "summary": "Reverse each consecutive group of k nodes, preserving the order of any final group shorter than k.",
+    "input_output": "Inputs: possibly-null ListNode head and positive integer k. Return the modified head without changing node values. The judge supplies ListNode { int val; ListNode next; }.",
+    "constraints": ["1 <= k <= n <= 5000", "0 <= Node.val <= 1000", "Any incomplete final group remains unchanged"]
+  },
+  "brute_force": {
+    "explanation": "Collect node references, reverse each complete k-sized interval in the array, and reconnect the sequence. Incomplete tail references remain in their original order.",
+    "correctness_idea": "Each complete array block is replaced by its exact reverse, while the final short block is untouched. Reconnecting adjacent references implements precisely that ordering on the original nodes.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass Solution {\n    public ListNode reverseKGroup(ListNode head, int k) {\n        List<ListNode> nodes = new ArrayList<>();\n        for (ListNode current = head; current != null; current = current.next) nodes.add(current);\n        for (int start = 0; start + k <= nodes.size(); start += k) {\n            int left = start;\n            int right = start + k - 1;\n            while (left < right) {\n                ListNode temporary = nodes.get(left);\n                nodes.set(left++, nodes.get(right));\n                nodes.set(right--, temporary);\n            }\n        }\n        for (int index = 0; index + 1 < nodes.size(); index++) nodes.get(index).next = nodes.get(index + 1);\n        if (nodes.isEmpty()) return null;\n        nodes.get(nodes.size() - 1).next = null;\n        return nodes.get(0);\n    }\n}",
+    "time_complexity": "O(n) — every node is collected and each complete group's references are reversed once.",
+    "space_complexity": "O(n) auxiliary for the node-reference array."
+  },
+  "optimized": {
+    "explanation": "Use a dummy predecessor. Before reversing a group, scan ahead k nodes; if the group is complete, reverse its links in place and connect its new head and tail to neighboring groups.",
+    "correctness_idea": "The look-ahead prevents any partial suffix from being touched. Reversing exactly the k links swaps that group's endpoints while preserving every node, and reconnecting the saved boundaries maintains one list.",
+    "language": "java",
+    "code": "class Solution {\n    public ListNode reverseKGroup(ListNode head, int k) {\n        ListNode dummy = new ListNode(0, head);\n        ListNode groupPrevious = dummy;\n        while (true) {\n            ListNode kth = groupPrevious;\n            for (int count = 0; count < k && kth != null; count++) kth = kth.next;\n            if (kth == null) break;\n            ListNode groupNext = kth.next;\n            ListNode previous = groupNext;\n            ListNode current = groupPrevious.next;\n            while (current != groupNext) {\n                ListNode next = current.next;\n                current.next = previous;\n                previous = current;\n                current = next;\n            }\n            ListNode oldGroupHead = groupPrevious.next;\n            groupPrevious.next = kth;\n            groupPrevious = oldGroupHead;\n        }\n        return dummy.next;\n    }\n}",
+    "time_complexity": "O(n) — look-ahead and reversal together process each node a constant number of times.",
+    "space_complexity": "O(1) auxiliary."
+  },
+  "dry_run": {
+    "sample_input": {"head": [1, 3, 5, 7, 9], "k": 2},
+    "sample_output": [3, 1, 7, 5, 9],
+    "steps": [
+      {"sequence": 1, "event": "Reverse the first complete pair.", "variables": {"groupPrevious": "dummy", "kth": 3, "groupNext": 5}, "condition": "Two nodes are available.", "action": "Reverse 1 and 3, then connect dummy to 3 and 1 to 5.", "state_before": {"list": [1, 3, 5, 7, 9]}, "state_after": {"list": [3, 1, 5, 7, 9]}},
+      {"sequence": 2, "event": "Reverse the second complete pair.", "variables": {"groupPrevious": 1, "kth": 7, "groupNext": 9}, "condition": "Two nodes are available after node 1.", "action": "Reverse 5 and 7; node 1 links to 7 and node 5 links to 9.", "state_before": {"list": [3, 1, 5, 7, 9]}, "state_after": {"list": [3, 1, 7, 5, 9]}},
+      {"sequence": 3, "event": "Check the final suffix.", "variables": {"groupPrevious": 5, "availableNodes": 1}, "condition": "Fewer than k nodes remain.", "action": "Stop without reversing the suffix.", "state_before": {"list": [3, 1, 7, 5, 9]}, "state_after": {"list": [3, 1, 7, 5, 9]}}
+    ],
+    "final_result": [3, 1, 7, 5, 9]
+  },
+  "edge_cases": [
+    {"case": "k == 1", "handling": "Each group contains one node, so all links remain in the same order."},
+    {"case": "List length is not divisible by k", "handling": "The incomplete suffix is detected before mutation and stays unchanged."},
+    {"case": "Empty list", "handling": "The dummy's next is null and null is returned."}
+  ]
+}

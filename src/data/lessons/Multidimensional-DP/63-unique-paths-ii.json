@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "problem_number": 63,
+    "title": "Unique Paths II",
+    "url": "https://leetcode.com/problems/unique-paths-ii/",
+    "difficulty": "Medium",
+    "category": "Multidimensional DP"
+  },
+  "problem_summary": {
+    "summary": "Count paths from the upper-left to lower-right of a grid, moving only right or down and never entering an obstacle.",
+    "input_output": "Input: an m by n grid where 1 marks an obstacle and 0 marks an open cell. Return the number of valid paths.",
+    "constraints": ["1 <= m, n <= 100", "obstacleGrid[i][j] is 0 or 1", "The answer for each test case is at most 2 * 10^9"]
+  },
+  "brute_force": {
+    "explanation": "Recursively count valid continuations from the start, returning zero for an obstacle and one after reaching the open destination. The recursion explores every right/down route, making it suitable only for small grids.",
+    "correctness_idea": "A valid route reaching a free cell must continue right or down, and an obstacle contributes no route. Summing those disjoint continuation counts counts every valid path exactly once.",
+    "language": "java",
+    "code": "class Solution {\n    public int uniquePathsWithObstacles(int[][] obstacleGrid) {\n        return countFrom(obstacleGrid, 0, 0);\n    }\n\n    private int countFrom(int[][] grid, int row, int column) {\n        int rows = grid.length;\n        int columns = grid[0].length;\n        if (row >= rows || column >= columns || grid[row][column] == 1) return 0;\n        if (row == rows - 1 && column == columns - 1) return 1;\n        return countFrom(grid, row + 1, column) + countFrom(grid, row, column + 1);\n    }\n}",
+    "time_complexity": "O(2^(m+n)) as an upper bound on the un-memoized path recursion.",
+    "space_complexity": "O(m+n) auxiliary recursion stack space."
+  },
+  "optimized": {
+    "explanation": "Use a one-dimensional long array of path counts. Scan row by row: an obstacle resets its count to zero; an open cell other than the start adds the count from above to the count from the left. The extra width in long protects intermediate cell counts; the constrained destination answer fits the required int return type.",
+    "correctness_idea": "Every path to an open cell comes from its top or left neighbor, and these sets of paths are disjoint. Obstacles have no paths through them, so zeroing their state blocks all routes that would pass through.",
+    "language": "java",
+    "code": "class Solution {\n    public int uniquePathsWithObstacles(int[][] obstacleGrid) {\n        int rows = obstacleGrid.length;\n        int columns = obstacleGrid[0].length;\n        long[] paths = new long[columns];\n        paths[0] = obstacleGrid[0][0] == 0 ? 1L : 0L;\n        for (int row = 0; row < rows; row++) {\n            for (int column = 0; column < columns; column++) {\n                if (obstacleGrid[row][column] == 1) {\n                    paths[column] = 0L;\n                } else if (row > 0 && column > 0) {\n                    paths[column] += paths[column - 1];\n                }\n            }\n        }\n        return (int) paths[columns - 1];\n    }\n}",
+    "time_complexity": "O(mn), processing each grid cell once.",
+    "space_complexity": "O(n) auxiliary space for the rolling path counts."
+  },
+  "dry_run": {
+    "sample_input": {"obstacleGrid": [[0, 0, 0], [0, 1, 0], [0, 0, 0]]},
+    "sample_output": 2,
+    "steps": [
+      {"sequence": 1, "event": "Initialize the open start and scan row 0.", "variables": {"row": 0, "paths": [1, 1, 1]}, "condition": "The start has one way; open first-row cells inherit paths from the left.", "action": "Set the first row counts to [1,1,1].", "state_before": {"paths": [1, 0, 0]}, "state_after": {"paths": [1, 1, 1]}},
+      {"sequence": 2, "event": "Scan row 1.", "variables": {"row": 1, "obstacleColumn": 1}, "condition": "Column 0 inherits one path from above; column 1 is blocked; column 2 inherits only its above count.", "action": "Update the counts to [1,0,1].", "state_before": {"paths": [1, 1, 1]}, "state_after": {"paths": [1, 0, 1]}},
+      {"sequence": 3, "event": "Scan row 2.", "variables": {"row": 2, "openCells": [0, 1, 2]}, "condition": "At column 0 keep the above count; afterward add the left count to each above count.", "action": "Update the counts to [1,1,2].", "state_before": {"paths": [1, 0, 1]}, "state_after": {"paths": [1, 1, 2]}},
+      {"sequence": 4, "event": "Return the destination count.", "variables": {"result": 2}, "condition": "The last path count represents routes to the lower-right cell.", "action": "Return paths[2].", "state_before": {"paths": [1, 1, 2]}, "state_after": {"result": 2}}
+    ],
+    "final_result": 2
+  },
+  "edge_cases": [
+    {"case": "Start is blocked", "handling": "The initialized count is zero and remains zero."},
+    {"case": "Destination is blocked", "handling": "Its count is reset to zero when scanned."},
+    {"case": "One-cell open grid", "handling": "The start is also the destination, so the result is one."},
+    {"case": "Narrow grid", "handling": "The rolling recurrence reduces to carrying the only possible path count."}
+  ]
+}

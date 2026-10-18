@@ -1,0 +1,37 @@
+{
+  "metadata": {"problem_number": 208, "title": "Implement Trie (Prefix Tree)", "url": "https://leetcode.com/problems/implement-trie-prefix-tree/", "difficulty": "Medium", "category": "Trie"},
+  "problem_summary": {"summary": "Design a string set supporting insertion, exact-word membership, and prefix membership for lowercase English words.", "input_output": "Implement Trie with a constructor, insert(word), search(word), and startsWith(prefix). Insert returns nothing; both queries return booleans.", "constraints": ["1 <= word.length, prefix.length <= 2000", "Words and prefixes use lowercase English letters", "At most 30,000 operations are performed"]},
+  "brute_force": {
+    "explanation": "Store inserted words in a list. Exact search scans for equality; prefix search scans for any stored word beginning with the requested prefix. This keeps the data structure simple but repeats work on every query.",
+    "correctness_idea": "The list contains every inserted string. Equality directly implements search, and startsWith is true exactly when at least one stored string begins with the supplied prefix.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass Trie {\n    private final List<String> words = new ArrayList<>();\n    public Trie() {}\n    public void insert(String word) { words.add(word); }\n    public boolean search(String word) {\n        for (String stored : words) if (stored.equals(word)) return true;\n        return false;\n    }\n    public boolean startsWith(String prefix) {\n        for (String stored : words) if (stored.startsWith(prefix)) return true;\n        return false;\n    }\n}",
+    "time_complexity": "O(L) per insert; O(W) expected string-hash/equality work per exact search and O(WL) worst case per prefix query, where W is the number of insertions and L is word length.",
+    "space_complexity": "O(WL) for storing all inserted strings, including duplicates."
+  },
+  "optimized": {
+    "explanation": "Store each character path once in a 26-child trie. Mark the final node of each inserted word; search requires that marker, while startsWith only requires reaching the prefix node.",
+    "correctness_idea": "A trie path spells exactly the characters consumed from the root. A terminal marker distinguishes a complete inserted word from a prefix that only begins some longer word.",
+    "language": "java",
+    "code": "class Trie {\n    private static class TrieNode {\n        TrieNode[] children = new TrieNode[26];\n        boolean isWord;\n    }\n    private final TrieNode root = new TrieNode();\n    public Trie() {}\n    public void insert(String word) {\n        TrieNode node = root;\n        for (int index = 0; index < word.length(); index++) {\n            int letter = word.charAt(index) - 'a';\n            if (node.children[letter] == null) node.children[letter] = new TrieNode();\n            node = node.children[letter];\n        }\n        node.isWord = true;\n    }\n    public boolean search(String word) {\n        TrieNode node = findNode(word);\n        return node != null && node.isWord;\n    }\n    public boolean startsWith(String prefix) { return findNode(prefix) != null; }\n    private TrieNode findNode(String text) {\n        TrieNode node = root;\n        for (int index = 0; index < text.length(); index++) {\n            node = node.children[text.charAt(index) - 'a'];\n            if (node == null) return null;\n        }\n        return node;\n    }\n}",
+    "time_complexity": "O(L) per insert, search, or prefix query, where L is the input string length.",
+    "space_complexity": "O(T) auxiliary for trie nodes, where T is the total number of distinct character-prefix nodes and T is at most the total inserted characters plus the root."
+  },
+  "dry_run": {
+    "sample_input": {"operations": [["insert", "apple"], ["search", "apple"], ["search", "app"], ["startsWith", "app"], ["insert", "app"], ["search", "app"]]},
+    "sample_output": [null, true, false, true, null, true],
+    "steps": [
+      {"sequence": 1, "event": "Insert apple.", "variables": {"word": "apple", "characters": ["a", "p", "p", "l", "e"]}, "condition": "The path is absent at its first character and then continues through each letter.", "action": "Create any missing nodes and mark the final e node terminal.", "state_before": {"triePaths": []}, "state_after": {"triePaths": ["a", "ap", "app", "appl", "apple"], "terminal": ["apple"]}},
+      {"sequence": 2, "event": "Search apple and app.", "variables": {"appleTerminal": true, "appTerminal": false}, "condition": "Both strings reach existing nodes, but only apple currently has a terminal marker.", "action": "Return true for apple and false for app.", "state_before": {"terminal": ["apple"]}, "state_after": {"results": [true, false]}},
+      {"sequence": 3, "event": "Check prefix app, then insert app.", "variables": {"prefixNodeExists": true, "appTerminalBefore": false}, "condition": "The app path exists as the beginning of apple.", "action": "startsWith returns true; mark the existing app node terminal on insert.", "state_before": {"terminal": ["apple"]}, "state_after": {"terminal": ["apple", "app"]}},
+      {"sequence": 4, "event": "Search app again.", "variables": {"nodeReached": true, "isWord": true}, "condition": "The app node now marks an inserted word.", "action": "Return true.", "state_before": {"terminal": ["apple", "app"]}, "state_after": {"result": true}}
+    ],
+    "final_result": [null, true, false, true, null, true]
+  },
+  "edge_cases": [
+    {"case": "A prefix path exists but is not a complete word", "handling": "startsWith returns true while search returns false until the node is marked terminal."},
+    {"case": "Insert the same word more than once", "handling": "Setting an existing terminal marker again leaves membership unchanged."},
+    {"case": "Search diverges at a missing child", "handling": "The trie query returns false immediately."},
+    {"case": "One-letter word", "handling": "Its first child node is marked terminal and queried normally."}
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "problem_number": 71,
+    "title": "Simplify Path",
+    "url": "https://leetcode.com/problems/simplify-path/",
+    "difficulty": "Medium",
+    "category": "Stack"
+  },
+  "problem_summary": {
+    "summary": "Normalize an absolute Unix-style path by resolving current and parent directory markers and redundant separators.",
+    "input_output": "Input: an absolute path string. Return its canonical form with one leading slash, single separators, and no trailing slash except at root.",
+    "constraints": ["1 <= path.length <= 3000", "path contains English letters, digits, periods, slashes, and underscores", "The input is a valid absolute path"]
+  },
+  "brute_force": {
+    "explanation": "Split on slashes, ignore empty and '.' components, pop one stored directory for '..' when possible, and append ordinary names to the canonical result with immutable string concatenation.",
+    "correctness_idea": "Each ordinary component adds one directory level, '.' changes nothing, and '..' removes the most recent level if one exists. Ignoring empty components collapses repeated separators; joining the remaining names yields canonical form.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.Deque;\n\nclass Solution {\n    public String simplifyPath(String path) {\n        Deque<String> directories = new ArrayDeque<>();\n        for (String component : path.split(\"/\")) {\n            if (component.isEmpty() || component.equals(\".\")) {\n                continue;\n            }\n            if (component.equals(\"..\")) {\n                if (!directories.isEmpty()) {\n                    directories.removeLast();\n                }\n            } else {\n                directories.addLast(component);\n            }\n        }\n        String result = \"\";\n        for (String directory : directories) {\n            result = result + \"/\" + directory;\n        }\n        return result.isEmpty() ? \"/\" : result;\n    }\n}",
+    "time_complexity": "O(n^2) worst case due to repeatedly copying the growing output string, where n is path.length.",
+    "space_complexity": "O(n) for split components, stored directories, and intermediate strings."
+  },
+  "optimized": {
+    "explanation": "Scan path components by index without creating a split array. Keep surviving directory names in a deque and build the canonical path once with StringBuilder.",
+    "correctness_idea": "The component rules are identical to path resolution: ignore empty and current-directory parts, pop for parent-directory parts without crossing root, and retain all other names including names such as '...'. Joining retained components with one slash enforces canonical formatting.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.Deque;\n\nclass Solution {\n    public String simplifyPath(String path) {\n        Deque<String> directories = new ArrayDeque<>();\n        int index = 0;\n        while (index < path.length()) {\n            while (index < path.length() && path.charAt(index) == '/') {\n                index++;\n            }\n            int start = index;\n            while (index < path.length() && path.charAt(index) != '/') {\n                index++;\n            }\n            if (start == index) {\n                continue;\n            }\n            String component = path.substring(start, index);\n            if (component.equals(\".\")) {\n                continue;\n            }\n            if (component.equals(\"..\")) {\n                if (!directories.isEmpty()) {\n                    directories.removeLast();\n                }\n            } else {\n                directories.addLast(component);\n            }\n        }\n        StringBuilder result = new StringBuilder();\n        for (String directory : directories) {\n            result.append('/').append(directory);\n        }\n        return result.length() == 0 ? \"/\" : result.toString();\n    }\n}",
+    "time_complexity": "O(n); each path character is scanned a constant number of times and written at most once.",
+    "space_complexity": "O(n) for the retained directory components and returned path."
+  },
+  "dry_run": {
+    "sample_input": {"path": "/a//b/../..././c/"},
+    "sample_output": "/a/.../c",
+    "steps": [
+      {"sequence": 1, "event": "Read component a", "variables": {"component": "a", "directories": []}, "condition": "Ordinary name.", "action": "Push the directory name.", "state_before": {"directories": []}, "state_after": {"directories": ["a"]}},
+      {"sequence": 2, "event": "Read component b after repeated slashes", "variables": {"component": "b", "directories": ["a"]}, "condition": "Repeated separators create no components; b is ordinary.", "action": "Push b.", "state_before": {"directories": ["a"]}, "state_after": {"directories": ["a", "b"]}},
+      {"sequence": 3, "event": "Read ..", "variables": {"component": "..", "directories": ["a", "b"]}, "condition": "Parent marker and stack is nonempty.", "action": "Pop b.", "state_before": {"directories": ["a", "b"]}, "state_after": {"directories": ["a"]}},
+      {"sequence": 4, "event": "Read ... then .", "variables": {"components": ["...", "."], "directories": ["a"]}, "condition": "... is an ordinary name; . means current directory.", "action": "Push ... and ignore the single dot.", "state_before": {"directories": ["a"]}, "state_after": {"directories": ["a", "..."]}},
+      {"sequence": 5, "event": "Read c and build output", "variables": {"component": "c", "directories": ["a", "..."]}, "condition": "c is an ordinary name; trailing slash has no component.", "action": "Append each name with exactly one leading separator.", "state_before": {"path": ""}, "state_after": {"path": "/a/.../c"}}
+    ],
+    "final_result": "/a/.../c"
+  },
+  "edge_cases": [
+    {"case": "Parent traversal above root", "handling": "The deque is popped only when nonempty, so the result remains at root."},
+    {"case": "Repeated or trailing slashes", "handling": "Empty components are ignored and output separators are reconstructed once."},
+    {"case": "Names containing periods such as ...", "handling": "Only exact '.' and '..' components have special meaning."}
+  ]
+}

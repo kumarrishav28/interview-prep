@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "problem_number": 139,
+    "title": "Word Break",
+    "url": "https://leetcode.com/problems/word-break/",
+    "difficulty": "Medium",
+    "category": "1D DP"
+  },
+  "problem_summary": {
+    "summary": "Decide whether a string can be split into dictionary words, with dictionary entries reusable.",
+    "input_output": "Input: a lowercase string s and a list wordDict of unique lowercase words. Return true if concatenating one or more dictionary words can form s.",
+    "constraints": ["1 <= s.length <= 300", "1 <= wordDict.length <= 1000", "1 <= wordDict[i].length <= 20", "s and wordDict[i] contain only lowercase English letters", "All wordDict entries are unique"]
+  },
+  "brute_force": {
+    "explanation": "Try each dictionary word that matches at the current string position, then recursively test the remaining suffix. This checks possible segmentations directly and can be useful for understanding the choices, but it repeats suffix checks.",
+    "correctness_idea": "A valid segmentation must begin with some dictionary word matching the current position. Recursing after each such match explores every possible first word; reaching the end means all characters were covered exactly.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean wordBreak(String s, List<String> wordDict) {\n        return canSegmentFrom(s, wordDict, 0);\n    }\n\n    private boolean canSegmentFrom(String s, List<String> wordDict, int start) {\n        if (start == s.length()) return true;\n        for (String word : wordDict) {\n            if (s.startsWith(word, start)\n                    && canSegmentFrom(s, wordDict, start + word.length())) {\n                return true;\n            }\n        }\n        return false;\n    }\n}",
+    "time_complexity": "O(D * L * 2^n) upper bound — there can be exponentially many segmentation paths, and each recursive position scans D words with at most L characters compared per match attempt; n is the string length and L is the maximum dictionary word length.",
+    "space_complexity": "O(n) auxiliary — the recursion depth is at most n because every dictionary word has positive length."
+  },
+  "optimized": {
+    "explanation": "Use reachable[i] to mark that the prefix s[0..i) can be segmented. From each reachable prefix boundary, test each dictionary word with startsWith and mark the boundary after every match.",
+    "correctness_idea": "The empty prefix is reachable. Every newly marked boundary extends a reachable prefix by exactly one dictionary word, so it is valid. Conversely, the final word of any valid segmentation begins at a reachable boundary and will be tested, marking the full string reachable.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean wordBreak(String s, List<String> wordDict) {\n        boolean[] reachable = new boolean[s.length() + 1];\n        reachable[0] = true;\n        for (int start = 0; start < s.length(); start++) {\n            if (!reachable[start]) continue;\n            for (String word : wordDict) {\n                if (s.startsWith(word, start)) {\n                    reachable[start + word.length()] = true;\n                }\n            }\n        }\n        return reachable[s.length()];\n    }\n}",
+    "time_complexity": "O(n * D * L) — at most n reachable boundaries each test D words, with startsWith comparing at most L characters; n is the string length, D the dictionary size, and L the maximum word length.",
+    "space_complexity": "O(n) auxiliary — the reachability array stores one boolean per prefix boundary; the method does not copy or index the dictionary."
+  },
+  "dry_run": {
+    "sample_input": {"s": "catsanddog", "wordDict": ["cat", "cats", "and", "sand", "dog"]},
+    "sample_output": true,
+    "steps": [
+      {"sequence": 1, "event": "Start at reachable boundary 0 and test the dictionary in its listed order.", "variables": {"start": 0, "matchingWords": ["cat", "cats"], "newBoundaries": [3, 4]}, "condition": "The string begins with both cat and cats at index 0.", "action": "Mark the prefixes ending at indices 3 and 4 reachable.", "state_before": {"reachableIndices": [0]}, "state_after": {"reachableIndices": [0, 3, 4]}},
+      {"sequence": 2, "event": "Visit reachable boundary 3.", "variables": {"start": 3, "matchingWords": ["sand"], "newBoundaries": [7]}, "condition": "The suffix beginning at 3 starts with sand.", "action": "Mark boundary 7 reachable.", "state_before": {"reachableIndices": [0, 3, 4]}, "state_after": {"reachableIndices": [0, 3, 4, 7]}},
+      {"sequence": 3, "event": "Visit reachable boundary 4.", "variables": {"start": 4, "matchingWords": ["and"], "newBoundaries": [7]}, "condition": "The suffix beginning at 4 starts with and; boundary 7 is already reachable.", "action": "Keep boundary 7 reachable.", "state_before": {"reachableIndices": [0, 3, 4, 7]}, "state_after": {"reachableIndices": [0, 3, 4, 7]}},
+      {"sequence": 4, "event": "Visit reachable boundary 7.", "variables": {"start": 7, "matchingWords": ["dog"], "newBoundaries": [10]}, "condition": "The suffix beginning at 7 starts with dog and ends at s.length = 10.", "action": "Mark the full string reachable.", "state_before": {"reachableIndices": [0, 3, 4, 7]}, "state_after": {"reachableIndices": [0, 3, 4, 7, 10]}},
+      {"sequence": 5, "event": "Finish scanning reachable positions.", "variables": {"targetBoundary": 10, "reachable": true}, "condition": "reachable[10] is true.", "action": "Return true.", "state_before": {"reachableIndices": [0, 3, 4, 7, 10]}, "state_after": {"reachableIndices": [0, 3, 4, 7, 10]}}
+    ],
+    "final_result": true
+  },
+  "edge_cases": [
+    {"case": "A segmentation requires reusing a dictionary word", "handling": "Each matching dictionary entry may be used at every reachable start position, so reuse is supported."},
+    {"case": "A matching prefix cannot complete the rest of the string", "handling": "That boundary may be marked reachable, but the final boundary remains false unless a complete segmentation exists."},
+    {"case": "No dictionary word matches the first character", "handling": "No new boundary is marked from index 0, and the method returns false."}
+  ]
+}

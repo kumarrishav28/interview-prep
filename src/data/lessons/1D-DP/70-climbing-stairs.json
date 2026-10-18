@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 70,
+    "title": "Climbing Stairs",
+    "url": "https://leetcode.com/problems/climbing-stairs/",
+    "difficulty": "Easy",
+    "category": "1D DP"
+  },
+  "problem_summary": {
+    "summary": "Count the distinct ways to reach the top of a staircase when each move climbs either one or two steps.",
+    "input_output": "Input: an integer n for the number of steps. Return the number of distinct ways to reach step n.",
+    "constraints": ["1 <= n <= 45"]
+  },
+  "brute_force": {
+    "explanation": "Recursively count the ways after choosing a one-step move and a two-step move. This direct recurrence is useful for revealing the state relationship, but repeatedly solves the same remaining-step subproblems.",
+    "correctness_idea": "Every valid path to the top ends with either a one-step move from n - 1 or a two-step move from n - 2. The recursive calls enumerate both disjoint cases, and negative remaining steps contribute no paths.",
+    "language": "java",
+    "code": "class Solution {\n    public int climbStairs(int n) {\n        return countWays(n);\n    }\n\n    private int countWays(int remaining) {\n        if (remaining < 0) return 0;\n        if (remaining == 0) return 1;\n        return countWays(remaining - 1) + countWays(remaining - 2);\n    }\n}",
+    "time_complexity": "O(2^n) — without caching, the recursion branches into overlapping subproblems.",
+    "space_complexity": "O(n) auxiliary — the deepest recursion path has at most n calls."
+  },
+  "optimized": {
+    "explanation": "Use the recurrence ways(n) = ways(n - 1) + ways(n - 2), retaining only the two preceding counts instead of a full table.",
+    "correctness_idea": "A final move to step n comes from exactly one of steps n - 1 or n - 2. These sets of paths are disjoint, so their counts add. The rolling variables preserve those two required counts at every iteration.",
+    "language": "java",
+    "code": "class Solution {\n    public int climbStairs(int n) {\n        if (n == 1) return 1;\n        int oneStepBefore = 1;\n        int twoStepsBefore = 2;\n        for (int step = 3; step <= n; step++) {\n            int current = oneStepBefore + twoStepsBefore;\n            oneStepBefore = twoStepsBefore;\n            twoStepsBefore = current;\n        }\n        return twoStepsBefore;\n    }\n}",
+    "time_complexity": "O(n) — each step from 3 through n is processed once.",
+    "space_complexity": "O(1) auxiliary — only two prior counts and one temporary count are stored."
+  },
+  "dry_run": {
+    "sample_input": {"n": 5},
+    "sample_output": 8,
+    "steps": [
+      {"sequence": 1, "event": "Initialize the counts for steps 1 and 2.", "variables": {"step": 2, "oneStepBefore": 1, "twoStepsBefore": 2}, "condition": "The loop begins at step 3, so the first two counts are base values.", "action": "Set ways(1) = 1 and ways(2) = 2.", "state_before": {"oneStepBefore": null, "twoStepsBefore": null}, "state_after": {"oneStepBefore": 1, "twoStepsBefore": 2}},
+      {"sequence": 2, "event": "Compute ways for step 3.", "variables": {"step": 3, "current": 3, "oneStepBefore": 2, "twoStepsBefore": 3}, "condition": "ways(3) = ways(2) + ways(1) = 2 + 1.", "action": "Shift the two stored counts forward.", "state_before": {"oneStepBefore": 1, "twoStepsBefore": 2}, "state_after": {"oneStepBefore": 2, "twoStepsBefore": 3}},
+      {"sequence": 3, "event": "Compute ways for step 4.", "variables": {"step": 4, "current": 5, "oneStepBefore": 3, "twoStepsBefore": 5}, "condition": "ways(4) = ways(3) + ways(2) = 3 + 2.", "action": "Shift the two stored counts forward.", "state_before": {"oneStepBefore": 2, "twoStepsBefore": 3}, "state_after": {"oneStepBefore": 3, "twoStepsBefore": 5}},
+      {"sequence": 4, "event": "Compute ways for step 5.", "variables": {"step": 5, "current": 8, "oneStepBefore": 5, "twoStepsBefore": 8}, "condition": "ways(5) = ways(4) + ways(3) = 5 + 3.", "action": "Store 8 as the count for the top and return it.", "state_before": {"oneStepBefore": 3, "twoStepsBefore": 5}, "state_after": {"oneStepBefore": 5, "twoStepsBefore": 8}}
+    ],
+    "final_result": 8
+  },
+  "edge_cases": [
+    {"case": "n = 1", "handling": "The optimized method returns the single one-step path directly."},
+    {"case": "n = 2", "handling": "The initialized base count of two is returned without entering the loop."},
+    {"case": "Maximum n = 45", "handling": "The result is 1,836,311,903, which fits in a Java int under the stated constraint."}
+  ]
+}

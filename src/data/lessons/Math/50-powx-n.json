@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "problem_number": 50,
+    "title": "Pow(x, n)",
+    "url": "https://leetcode.com/problems/powx-n/",
+    "difficulty": "Medium",
+    "category": "Math"
+  },
+  "problem_summary": {
+    "summary": "Compute x raised to the integer power n, including negative exponents.",
+    "input_output": "Input: a floating-point base x and signed 32-bit integer n. Return x^n as a double.",
+    "constraints": ["-100.0 < x < 100.0", "-2^31 <= n <= 2^31 - 1", "n is an integer", "Either x is nonzero or n is positive", "The result is within [-10^4, 10^4]"]
+  },
+  "brute_force": {
+    "explanation": "Multiply by x once for each unit of the exponent's magnitude, then take the reciprocal for a negative exponent. Convert n to long before negating so Integer.MIN_VALUE is handled safely.",
+    "correctness_idea": "Repeated multiplication applies the definition of an integer power. For negative n, x^n equals 1 divided by x to the magnitude of n.",
+    "language": "java",
+    "code": "class Solution {\n    public double myPow(double x, int n) {\n        long exponent = n;\n        boolean negative = exponent < 0;\n        if (negative) {\n            exponent = -exponent;\n        }\n        double result = 1.0;\n        for (long count = 0; count < exponent; count++) {\n            result *= x;\n        }\n        return negative ? 1.0 / result : result;\n    }\n}",
+    "time_complexity": "O(|n|) multiplications.",
+    "space_complexity": "O(1) auxiliary."
+  },
+  "optimized": {
+    "explanation": "Use exponentiation by squaring. For each exponent bit, multiply the result by the current base when the bit is set, square the base, and shift the exponent right. For a negative exponent, invert the base after widening n to long.",
+    "correctness_idea": "At every iteration, the unprocessed exponent is represented by powers of two. Squaring advances the base from x^(2^k) to x^(2^(k+1)); consuming a set bit multiplies in exactly that factor. The widened exponent safely represents the magnitude of Integer.MIN_VALUE.",
+    "language": "java",
+    "code": "class Solution {\n    public double myPow(double x, int n) {\n        long exponent = n;\n        if (exponent < 0) {\n            x = 1.0 / x;\n            exponent = -exponent;\n        }\n        double result = 1.0;\n        while (exponent > 0) {\n            if ((exponent & 1L) == 1L) {\n                result *= x;\n            }\n            x *= x;\n            exponent >>= 1;\n        }\n        return result;\n    }\n}",
+    "time_complexity": "O(log |n|) multiplications; O(1) when n is zero.",
+    "space_complexity": "O(1) auxiliary."
+  },
+  "dry_run": {
+    "sample_input": {"x": 2.0, "n": -5},
+    "sample_output": 0.03125,
+    "steps": [
+      {"sequence": 1, "event": "Normalize the negative exponent.", "variables": {"base": 0.5, "exponent": 5, "result": 1.0}, "condition": "n is negative, so invert the base and negate the widened exponent.", "action": "Represent 2^-5 as (1/2)^5.", "state_before": {"base": 2.0, "exponent": -5, "result": 1.0}, "state_after": {"base": 0.5, "exponent": 5, "result": 1.0}},
+      {"sequence": 2, "event": "Process the low bit of exponent 5.", "variables": {"base": 0.5, "exponent": 5, "result": 0.5}, "condition": "5 is odd, so its low bit is set.", "action": "Multiply result by base, square base, and shift exponent right.", "state_before": {"base": 0.5, "exponent": 5, "result": 1.0}, "state_after": {"base": 0.25, "exponent": 2, "result": 0.5}},
+      {"sequence": 3, "event": "Process exponent 2.", "variables": {"base": 0.25, "exponent": 2, "result": 0.5}, "condition": "2 is even, so its low bit is not set.", "action": "Leave result unchanged, square base, and shift exponent right.", "state_before": {"base": 0.25, "exponent": 2, "result": 0.5}, "state_after": {"base": 0.0625, "exponent": 1, "result": 0.5}},
+      {"sequence": 4, "event": "Process exponent 1.", "variables": {"base": 0.0625, "exponent": 1, "result": 0.03125}, "condition": "1 is odd, so multiply by the current base.", "action": "Update result to 0.5 * 0.0625 and shift exponent to zero.", "state_before": {"base": 0.0625, "exponent": 1, "result": 0.5}, "state_after": {"base": 0.00390625, "exponent": 0, "result": 0.03125}},
+      {"sequence": 5, "event": "Finish after all exponent bits are consumed.", "variables": {"exponent": 0, "result": 0.03125}, "condition": "The loop stops when exponent is zero.", "action": "Return 0.03125, equal to 1 / 32.", "state_before": {"exponent": 0, "result": 0.03125}, "state_after": {"result": 0.03125}}
+    ],
+    "final_result": 0.03125
+  },
+  "edge_cases": [
+    {"case": "Exponent is zero", "handling": "The loop is skipped and the multiplicative identity 1.0 is returned."},
+    {"case": "Negative exponent", "handling": "The optimized method reciprocates the base and uses a positive exponent magnitude."},
+    {"case": "n equals Integer.MIN_VALUE", "handling": "Widening to long before negation avoids signed int overflow."},
+    {"case": "Base is zero", "handling": "The given constraints only allow zero base with a positive exponent, so no reciprocal of zero is taken."}
+  ]
+}

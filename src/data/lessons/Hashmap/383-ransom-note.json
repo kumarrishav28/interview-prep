@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 383,
+    "title": "Ransom Note",
+    "url": "https://leetcode.com/problems/ransom-note/",
+    "difficulty": "Easy",
+    "category": "Hashmap"
+  },
+  "problem_summary": {
+    "summary": "Determine whether the letters in one string can be selected from a second string, using each available letter no more than once.",
+    "input_output": "Input: lowercase strings ransomNote and magazine. Return true if magazine has enough copies of every needed letter; otherwise return false.",
+    "constraints": ["1 <= ransomNote.length, magazine.length <= 10^5", "Both strings contain lowercase English letters"]
+  },
+  "brute_force": {
+    "explanation": "For each note character, scan magazine for an equal unused position and mark that position used. A missing match makes construction impossible.",
+    "correctness_idea": "Each successful match reserves a distinct magazine position, so the process succeeds exactly when every requested character has a separate available copy.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean canConstruct(String ransomNote, String magazine) {\n        boolean[] used = new boolean[magazine.length()];\n        for (int i = 0; i < ransomNote.length(); i++) {\n            int match = -1;\n            for (int j = 0; j < magazine.length(); j++) {\n                if (!used[j] && magazine.charAt(j) == ransomNote.charAt(i)) {\n                    match = j;\n                    break;\n                }\n            }\n            if (match == -1) return false;\n            used[match] = true;\n        }\n        return true;\n    }\n}",
+    "time_complexity": "O(r * m) worst case, where r and m are the note and magazine lengths.",
+    "space_complexity": "O(m) auxiliary for tracking used magazine positions."
+  },
+  "optimized": {
+    "explanation": "Count magazine letters in a 26-entry array, then consume one count for each note letter; fail as soon as a count is zero.",
+    "correctness_idea": "The count array records the exact available multiplicity of every lowercase letter. Decrementing once per requested occurrence enforces the one-use limit and succeeds iff all demands are met.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean canConstruct(String ransomNote, String magazine) {\n        int[] available = new int[26];\n        for (int i = 0; i < magazine.length(); i++) {\n            available[magazine.charAt(i) - 'a']++;\n        }\n        for (int i = 0; i < ransomNote.length(); i++) {\n            int index = ransomNote.charAt(i) - 'a';\n            if (available[index] == 0) return false;\n            available[index]--;\n        }\n        return true;\n    }\n}",
+    "time_complexity": "O(r + m), where r and m are the input lengths.",
+    "space_complexity": "O(1) auxiliary: the 26 counters have fixed size."
+  },
+  "dry_run": {
+    "sample_input": {"ransomNote": "aba", "magazine": "aab"},
+    "sample_output": true,
+    "steps": [
+      {"sequence": 1, "event": "Count magazine letters.", "variables": {"i": 0, "letter": "a"}, "condition": "Each magazine position contributes one copy.", "action": "Finish the pass with a:2 and b:1; other counts are zero.", "state_before": {"available": {"a": 0, "b": 0}}, "state_after": {"available": {"a": 2, "b": 1}}},
+      {"sequence": 2, "event": "Consume note character at index 0.", "variables": {"i": 0, "letter": "a", "count": 2}, "condition": "available[a] > 0.", "action": "Decrement a's count.", "state_before": {"available": {"a": 2, "b": 1}}, "state_after": {"available": {"a": 1, "b": 1}}},
+      {"sequence": 3, "event": "Consume note character at index 1.", "variables": {"i": 1, "letter": "b", "count": 1}, "condition": "available[b] > 0.", "action": "Decrement b's count.", "state_before": {"available": {"a": 1, "b": 1}}, "state_after": {"available": {"a": 1, "b": 0}}},
+      {"sequence": 4, "event": "Consume note character at index 2.", "variables": {"i": 2, "letter": "a", "count": 1}, "condition": "available[a] > 0.", "action": "Decrement a; all note characters were supplied, so return true.", "state_before": {"available": {"a": 1, "b": 0}}, "state_after": {"available": {"a": 0, "b": 0}}}
+    ],
+    "final_result": true
+  },
+  "edge_cases": [
+    {"case": "A requested letter is absent", "handling": "Its count is zero when consumed, so false is returned immediately."},
+    {"case": "The note needs more copies than available", "handling": "Each occurrence decrements the count; the first overdraw returns false."},
+    {"case": "Magazine contains extra letters", "handling": "Unused counts do not affect success."}
+  ]
+}

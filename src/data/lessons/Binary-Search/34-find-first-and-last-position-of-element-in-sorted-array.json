@@ -1,0 +1,50 @@
+{
+  "metadata": {
+    "problem_number": 34,
+    "title": "Find First and Last Position of Element in Sorted Array",
+    "url": "https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/",
+    "difficulty": "Medium",
+    "category": "Binary Search"
+  },
+  "problem_summary": {
+    "summary": "Return the first and last indices of a target in a non-decreasing array, or [-1, -1] if it is absent.",
+    "input_output": "Input: a sorted integer array nums, which may be empty, and target. Return a two-element array containing the inclusive range of target indices or [-1, -1].",
+    "constraints": ["0 <= nums.length <= 10^5", "-10^9 <= nums[i], target <= 10^9", "nums is non-decreasing", "The required algorithm runs in O(log n) time"]
+  },
+  "brute_force": {
+    "explanation": "Scan the array once, recording the first and most recent index equal to target. If no match was recorded, return [-1, -1].",
+    "correctness_idea": "The first matching position encountered is the left endpoint, and each later match updates the right endpoint. Since the array is sorted, all occurrences are contiguous; after the scan the recorded endpoints cover them all.",
+    "language": "java",
+    "code": "class Solution {\n    public int[] searchRange(int[] nums, int target) {\n        int first = -1;\n        int last = -1;\n        for (int index = 0; index < nums.length; index++) {\n            if (nums[index] == target) {\n                if (first == -1) first = index;\n                last = index;\n            }\n        }\n        return new int[] {first, last};\n    }\n}",
+    "time_complexity": "O(n), where n is nums.length.",
+    "space_complexity": "O(1) auxiliary space, excluding the two-element returned array."
+  },
+  "optimized": {
+    "explanation": "Run binary search twice: once for the first index with value >= target, and once for the first index with value > target. If the first bound is at the end or does not equal target, return [-1, -1]; otherwise the range is [first, upperBound - 1].",
+    "correctness_idea": "The lower bound marks the earliest possible occurrence and the upper bound marks the first position after every occurrence. Their difference spans exactly the contiguous target run; checking the lower-bound value handles absence.",
+    "language": "java",
+    "code": "class Solution {\n    public int[] searchRange(int[] nums, int target) {\n        int first = bound(nums, target, false);\n        if (first == nums.length || nums[first] != target) {\n            return new int[] {-1, -1};\n        }\n        int afterLast = bound(nums, target, true);\n        return new int[] {first, afterLast - 1};\n    }\n\n    private int bound(int[] nums, int target, boolean upper) {\n        int left = 0;\n        int right = nums.length;\n        while (left < right) {\n            int mid = left + (right - left) / 2;\n            if (nums[mid] < target || (upper && nums[mid] == target)) {\n                left = mid + 1;\n            } else {\n                right = mid;\n            }\n        }\n        return left;\n    }\n}",
+    "time_complexity": "O(log n): two binary searches, each over n elements.",
+    "space_complexity": "O(1) auxiliary space, excluding the two-element returned array."
+  },
+  "dry_run": {
+    "sample_input": {"nums": [1, 2, 2, 2, 5, 8], "target": 2},
+    "sample_output": [1, 3],
+    "steps": [
+      {"sequence": 1, "event": "Start lower-bound search for the first value >= 2.", "variables": {"left": 0, "right": 6, "mid": 3, "value": 2, "upper": false}, "condition": "2 is not less than target, so the lower bound is at mid or earlier.", "action": "Set right to mid.", "state_before": {"interval": [0, 6]}, "state_after": {"interval": [0, 3]}},
+      {"sequence": 2, "event": "Continue lower-bound search.", "variables": {"left": 0, "right": 3, "mid": 1, "value": 2, "upper": false}, "condition": "2 is not less than target.", "action": "Set right to mid.", "state_before": {"interval": [0, 3]}, "state_after": {"interval": [0, 1]}},
+      {"sequence": 3, "event": "Finish lower-bound search.", "variables": {"left": 0, "right": 1, "mid": 0, "value": 1, "upper": false}, "condition": "1 < 2, so index 0 cannot be the lower bound.", "action": "Set left to mid + 1; the bound is index 1.", "state_before": {"interval": [0, 1]}, "state_after": {"interval": [1, 1], "first": 1}},
+      {"sequence": 4, "event": "Start upper-bound search for the first value > 2.", "variables": {"left": 0, "right": 6, "mid": 3, "value": 2, "upper": true}, "condition": "For an upper bound, a value equal to target must be skipped.", "action": "Set left to mid + 1.", "state_before": {"interval": [0, 6]}, "state_after": {"interval": [4, 6]}},
+      {"sequence": 5, "event": "Continue upper-bound search.", "variables": {"left": 4, "right": 6, "mid": 5, "value": 8, "upper": true}, "condition": "8 > 2, so the upper bound is at mid or earlier.", "action": "Set right to mid.", "state_before": {"interval": [4, 6]}, "state_after": {"interval": [4, 5]}},
+      {"sequence": 6, "event": "Finish upper-bound search.", "variables": {"left": 4, "right": 5, "mid": 4, "value": 5, "upper": true}, "condition": "5 > 2, so the upper bound is at mid or earlier.", "action": "Set right to mid; the bound is index 4.", "state_before": {"interval": [4, 5]}, "state_after": {"interval": [4, 4], "afterLast": 4}},
+      {"sequence": 7, "event": "Construct the inclusive result range.", "variables": {"first": 1, "afterLast": 4}, "condition": "nums[first] equals target.", "action": "Return [first, afterLast - 1].", "state_before": {"range": [1, 4]}, "state_after": {"result": [1, 3]}}
+    ],
+    "final_result": [1, 3]
+  },
+  "edge_cases": [
+    {"case": "Empty array", "handling": "The lower bound is 0 == nums.length, so the result is [-1, -1]."},
+    {"case": "Target absent between values", "handling": "The lower-bound value differs from target, so the result is [-1, -1]."},
+    {"case": "Every element equals target", "handling": "The bounds are 0 and nums.length, yielding the full range."},
+    {"case": "Only one occurrence", "handling": "The two bounds differ by one, so both result endpoints are that index."}
+  ]
+}

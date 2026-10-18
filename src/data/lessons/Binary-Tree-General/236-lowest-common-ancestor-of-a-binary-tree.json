@@ -1,0 +1,35 @@
+{
+  "metadata": {"problem_number": 236, "title": "Lowest Common Ancestor of a Binary Tree", "url": "https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/", "difficulty": "Medium", "category": "Binary Tree General"},
+  "problem_summary": {"summary": "Find the deepest node that is an ancestor of both given node references; either target may itself be the answer.", "input_output": "Input: root and existing node references p and q with distinct values. Return the LCA node reference.", "constraints": ["2 <= number of nodes <= 10^5", "-10^9 <= Node.val <= 10^9", "Node values are unique", "p and q are distinct and both exist in the tree"]},
+  "brute_force": {
+    "explanation": "Find a root-to-node path for p and another for q using iterative DFS, then scan their common prefix; its final node is the lowest common ancestor.",
+    "correctness_idea": "Both paths share exactly the nodes from the root through their LCA. After the paths diverge, they cannot rejoin in a tree, so the last common reference is the deepest shared ancestor.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.ArrayList;\nimport java.util.Collections;\nimport java.util.Deque;\nimport java.util.HashMap;\nimport java.util.List;\nimport java.util.Map;\n\nclass Solution {\n    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {\n        List<TreeNode> firstPath = findPath(root, p);\n        List<TreeNode> secondPath = findPath(root, q);\n        TreeNode answer = null;\n        for (int index = 0; index < Math.min(firstPath.size(), secondPath.size()); index++) {\n            if (firstPath.get(index) != secondPath.get(index)) break;\n            answer = firstPath.get(index);\n        }\n        return answer;\n    }\n\n    private List<TreeNode> findPath(TreeNode root, TreeNode target) {\n        Map<TreeNode, TreeNode> parent = new HashMap<>();\n        Deque<TreeNode> stack = new ArrayDeque<>();\n        parent.put(root, null);\n        stack.push(root);\n        while (!stack.isEmpty() && !parent.containsKey(target)) {\n            TreeNode node = stack.pop();\n            if (node.right != null) {\n                parent.put(node.right, node);\n                stack.push(node.right);\n            }\n            if (node.left != null) {\n                parent.put(node.left, node);\n                stack.push(node.left);\n            }\n        }\n        List<TreeNode> path = new ArrayList<>();\n        for (TreeNode node = target; node != null; node = parent.get(node)) path.add(node);\n        Collections.reverse(path);\n        return path;\n    }\n}",
+    "time_complexity": "O(n) expected for two iterative searches and path comparison.",
+    "space_complexity": "O(n) auxiliary for the parent map and the two target paths."
+  },
+  "optimized": {
+    "explanation": "Traverse once while recording each discovered node's parent, stopping after both targets are found. Put p and all its ancestors in a set, then climb q until it reaches that set.",
+    "correctness_idea": "The first node on q's upward chain that also lies on p's ancestor chain is the deepest shared ancestor, which is the LCA by definition.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.Deque;\nimport java.util.HashMap;\nimport java.util.HashSet;\nimport java.util.Map;\nimport java.util.Set;\n\nclass Solution {\n    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {\n        Map<TreeNode, TreeNode> parent = new HashMap<>();\n        Deque<TreeNode> stack = new ArrayDeque<>();\n        parent.put(root, null);\n        stack.push(root);\n        while (!parent.containsKey(p) || !parent.containsKey(q)) {\n            TreeNode node = stack.pop();\n            if (node.left != null) {\n                parent.put(node.left, node);\n                stack.push(node.left);\n            }\n            if (node.right != null) {\n                parent.put(node.right, node);\n                stack.push(node.right);\n            }\n        }\n        Set<TreeNode> ancestors = new HashSet<>();\n        while (p != null) {\n            ancestors.add(p);\n            p = parent.get(p);\n        }\n        while (!ancestors.contains(q)) {\n            q = parent.get(q);\n        }\n        return q;\n    }\n}",
+    "time_complexity": "O(n) expected — one traversal and at most O(h) ancestor lookups.",
+    "space_complexity": "O(n) auxiliary for the parent map and ancestor set."
+  },
+  "dry_run": {
+    "sample_input": {"root_level_order": [6, 2, 8, 0, 4, 7, 9, null, null, 3, 5], "p": 2, "q": 4},
+    "sample_output": 2,
+    "steps": [
+      {"sequence": 1, "event": "Traverse and record parents until both targets are discovered.", "variables": {"parentOf2": 6, "parentOf4": 2}, "condition": "Both target references are now keys in the parent map.", "action": "Stop tree traversal.", "state_before": {"discovered": [6, 2, 8]}, "state_after": {"parentLinks": {"2": 6, "4": 2}, "discoveredTargets": [2, 4]}},
+      {"sequence": 2, "event": "Walk ancestors from p=2.", "variables": {"current": [2, 6]}, "condition": "Continue through parent links to null.", "action": "Add 2 and 6 to the ancestor set.", "state_before": {"ancestors": []}, "state_after": {"ancestors": [2, 6]}},
+      {"sequence": 3, "event": "Climb from q=4.", "variables": {"q": 4, "parentOfQ": 2}, "condition": "4 is not in the ancestor set; its parent 2 is.", "action": "Return node 2.", "state_before": {"q": 4, "ancestors": [2, 6]}, "state_after": {"result": 2}}
+    ],
+    "final_result": 2
+  },
+  "edge_cases": [
+    {"case": "One target is an ancestor of the other", "handling": "The ancestor target appears on the other target's chain and is returned."},
+    {"case": "Targets lie in different root subtrees", "handling": "Their common ancestor chain first intersects at the root or a lower branching node."},
+    {"case": "Deep skewed tree", "handling": "Both implementations use explicit stacks rather than Java recursion."}
+  ]
+}

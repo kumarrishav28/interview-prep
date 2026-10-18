@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 14,
+    "title": "Longest Common Prefix",
+    "url": "https://leetcode.com/problems/longest-common-prefix/",
+    "difficulty": "Easy",
+    "category": "Array / String"
+  },
+  "problem_summary": {
+    "summary": "Find the longest string that is a prefix of every string in the input; return empty when no nonempty prefix is shared.",
+    "input_output": "Input: a nonempty array of strings. Return their longest common prefix.",
+    "constraints": ["1 <= strs.length <= 200", "0 <= strs[i].length <= 200", "Nonempty strings contain lowercase English letters"]
+  },
+  "brute_force": {
+    "explanation": "Use the first string's prefixes as candidates, from longest to shortest, and test each candidate against every string. Return the first candidate shared by all.",
+    "correctness_idea": "The candidates are considered in decreasing length. The first one that prefixes every input string is therefore the longest common prefix; if none is shared, the empty string remains the answer.",
+    "language": "java",
+    "code": "class Solution {\n    public String longestCommonPrefix(String[] strs) {\n        String first = strs[0];\n        for (int length = first.length(); length >= 0; length--) {\n            String candidate = first.substring(0, length);\n            boolean common = true;\n            for (String word : strs) {\n                if (!word.startsWith(candidate)) {\n                    common = false;\n                    break;\n                }\n            }\n            if (common) return candidate;\n        }\n        return \"\";\n    }\n}",
+    "time_complexity": "O(n * m^2) worst case from testing up to m candidate prefixes against n strings; m is the maximum input-string length.",
+    "space_complexity": "O(m) for candidate substring allocations; the returned prefix is at most m characters."
+  },
+  "optimized": {
+    "explanation": "Compare strings vertically using the first string as the reference. For each character position, check that every other string has the same character; stop at the first mismatch or when any string ends.",
+    "correctness_idea": "A position belongs in the shared prefix exactly when all strings contain the same character there. The first mismatch or end marks the longest possible common prefix boundary.",
+    "language": "java",
+    "code": "class Solution {\n    public String longestCommonPrefix(String[] strs) {\n        for (int index = 0; index < strs[0].length(); index++) {\n            char expected = strs[0].charAt(index);\n            for (int word = 1; word < strs.length; word++) {\n                if (index == strs[word].length() || strs[word].charAt(index) != expected) {\n                    return strs[0].substring(0, index);\n                }\n            }\n        }\n        return strs[0];\n    }\n}",
+    "time_complexity": "O(n * m) worst case, where n is the number of strings and m is the shortest string length.",
+    "space_complexity": "O(p) for the returned prefix of length p; O(1) auxiliary space beyond the result."
+  },
+  "dry_run": {
+    "sample_input": {"strs": ["stone", "stove", "story"]},
+    "sample_output": "sto",
+    "steps": [
+      {"sequence": 1, "event": "Compare character position 0.", "variables": {"index": 0, "expected": "s", "observed": ["s", "s", "s"]}, "condition": "All strings have 's' at index 0.", "action": "Continue to the next position.", "state_before": {"prefixLength": 0}, "state_after": {"prefixLength": 1}},
+      {"sequence": 2, "event": "Compare character position 1.", "variables": {"index": 1, "expected": "t", "observed": ["t", "t", "t"]}, "condition": "All strings have 't' at index 1.", "action": "Continue to the next position.", "state_before": {"prefixLength": 1}, "state_after": {"prefixLength": 2}},
+      {"sequence": 3, "event": "Compare character position 2.", "variables": {"index": 2, "expected": "o", "observed": ["o", "o", "o"]}, "condition": "All strings have 'o' at index 2.", "action": "Continue to the next position.", "state_before": {"prefixLength": 2}, "state_after": {"prefixLength": 3}},
+      {"sequence": 4, "event": "Compare character position 3.", "variables": {"index": 3, "expected": "n", "observed": ["v", "r"]}, "condition": "The characters do not all equal 'n'.", "action": "Return the first string from index 0 up to, but not including, index 3.", "state_before": {"prefixLength": 3}, "state_after": {"prefixLength": 3, "result": "sto"}}
+    ],
+    "final_result": "sto"
+  },
+  "edge_cases": [
+    {"case": "One input string", "handling": "Every character in that string is the common prefix, so the string itself is returned."},
+    {"case": "An input string is empty", "handling": "The comparison reaches its end at index zero and returns the empty prefix."},
+    {"case": "First characters differ", "handling": "The first comparison returns an empty string."}
+  ]
+}

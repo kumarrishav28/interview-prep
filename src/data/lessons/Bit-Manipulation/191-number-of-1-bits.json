@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "problem_number": 191,
+    "title": "Number of 1 Bits",
+    "url": "https://leetcode.com/problems/number-of-1-bits/",
+    "difficulty": "Easy",
+    "category": "Bit Manipulation"
+  },
+  "problem_summary": {
+    "summary": "Return the number of set bits in the binary representation of a positive integer.",
+    "input_output": "Input: positive integer n. Output: its Hamming weight, the count of bits equal to 1.",
+    "constraints": [
+      "1 <= n <= 2^31 - 1"
+    ]
+  },
+  "brute_force": {
+    "explanation": "Inspect each of the 32 positions with a mask and increment the count whenever that position is set. This predictable scan is useful as a simple reference implementation.",
+    "correctness_idea": "Every bit position is checked exactly once, and each set position contributes one to the count.",
+    "language": "java",
+    "code": "class Solution {\n    public int hammingWeight(int n) {\n        int count = 0;\n        for (int bitIndex = 0; bitIndex < 32; bitIndex++) {\n            if ((n & (1 << bitIndex)) != 0) {\n                count++;\n            }\n        }\n        return count;\n    }\n}",
+    "time_complexity": "O(32) = O(1) for a fixed-width integer.",
+    "space_complexity": "O(1) auxiliary space."
+  },
+  "optimized": {
+    "explanation": "Use Brian Kernighan's operation n & (n - 1), which clears the rightmost set bit. Repeat until n becomes zero; the number of iterations equals the number of set bits.",
+    "correctness_idea": "Each update removes exactly one set bit and never changes any other set bit. The loop stops only after every original set bit has been removed, so its iteration count is the Hamming weight.",
+    "language": "java",
+    "code": "class Solution {\n    public int hammingWeight(int n) {\n        int count = 0;\n        while (n != 0) {\n            n &= n - 1;\n            count++;\n        }\n        return count;\n    }\n}",
+    "time_complexity": "O(k), where k is the number of set bits; worst case O(32) = O(1) for a fixed-width integer.",
+    "space_complexity": "O(1) auxiliary space."
+  },
+  "dry_run": {
+    "sample_input": {"n": 45, "binary": "101101"},
+    "sample_output": 4,
+    "steps": [
+      {"sequence": 1, "event": "Clear the rightmost set bit.", "variables": {"nBefore": 45, "binaryBefore": "101101", "countBefore": 0}, "condition": "n != 0.", "action": "Compute 45 & 44 = 44; increment count.", "state_before": {"n": 45, "count": 0}, "state_after": {"n": 44, "count": 1}},
+      {"sequence": 2, "event": "Clear the next rightmost set bit.", "variables": {"nBefore": 44, "binaryBefore": "101100", "countBefore": 1}, "condition": "n != 0.", "action": "Compute 44 & 43 = 40; increment count.", "state_before": {"n": 44, "count": 1}, "state_after": {"n": 40, "count": 2}},
+      {"sequence": 3, "event": "Clear the next rightmost set bit.", "variables": {"nBefore": 40, "binaryBefore": "101000", "countBefore": 2}, "condition": "n != 0.", "action": "Compute 40 & 39 = 32; increment count.", "state_before": {"n": 40, "count": 2}, "state_after": {"n": 32, "count": 3}},
+      {"sequence": 4, "event": "Clear the final set bit.", "variables": {"nBefore": 32, "binaryBefore": "100000", "countBefore": 3}, "condition": "n != 0.", "action": "Compute 32 & 31 = 0; increment count, then the loop ends.", "state_before": {"n": 32, "count": 3}, "state_after": {"n": 0, "count": 4}}
+    ],
+    "final_result": 4
+  },
+  "edge_cases": [
+    {"case": "n is a power of two", "handling": "Exactly one set bit is cleared, so the result is 1."},
+    {"case": "n has all 31 allowed bits set", "handling": "The optimized loop runs once per set bit; the scan checks all positions and both return 31."},
+    {"case": "n is zero", "handling": "Although excluded by the stated constraint, both implementations naturally return 0."}
+  ]
+}

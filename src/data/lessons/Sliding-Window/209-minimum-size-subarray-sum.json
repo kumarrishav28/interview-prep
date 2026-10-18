@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 209,
+    "title": "Minimum Size Subarray Sum",
+    "url": "https://leetcode.com/problems/minimum-size-subarray-sum/",
+    "difficulty": "Medium",
+    "category": "Sliding Window"
+  },
+  "problem_summary": {
+    "summary": "Find the shortest contiguous subarray whose sum is at least target, or report that none exists.",
+    "input_output": "Input: positive target and positive integer array nums. Return the minimum qualifying subarray length, or 0 if no subarray qualifies.",
+    "constraints": ["1 <= target <= 10^9", "1 <= nums.length <= 10^5", "1 <= nums[i] <= 10^4"]
+  },
+  "brute_force": {
+    "explanation": "Start at every index, extend the subarray to the right while maintaining its sum, and record the first length that reaches target.",
+    "correctness_idea": "For each possible left endpoint, the scan checks subarrays in increasing length. Positive values make the sum nondecreasing, so its first qualifying endpoint is the shortest qualifying subarray for that start. Taking the minimum over all starts gives the global minimum.",
+    "language": "java",
+    "code": "class Solution {\n    public int minSubArrayLen(int target, int[] nums) {\n        int best = nums.length + 1;\n        for (int start = 0; start < nums.length; start++) {\n            int sum = 0;\n            for (int end = start; end < nums.length; end++) {\n                sum += nums[end];\n                if (sum >= target) {\n                    best = Math.min(best, end - start + 1);\n                    break;\n                }\n            }\n        }\n        return best == nums.length + 1 ? 0 : best;\n    }\n}",
+    "time_complexity": "O(n^2) worst case — every start may scan most of the remaining array.",
+    "space_complexity": "O(1) auxiliary — only running sums and indices are stored."
+  },
+  "optimized": {
+    "explanation": "Expand a right endpoint while accumulating the window sum. Whenever the sum reaches target, record its length and repeatedly advance the left endpoint while the window remains valid.",
+    "correctness_idea": "All values are positive, so expanding can only increase the sum and contracting can only decrease it. For each right endpoint, contracting while valid finds the shortest qualifying window ending there. Every candidate endpoint is visited, so the minimum recorded length is global.",
+    "language": "java",
+    "code": "class Solution {\n    public int minSubArrayLen(int target, int[] nums) {\n        int left = 0;\n        int sum = 0;\n        int best = nums.length + 1;\n        for (int right = 0; right < nums.length; right++) {\n            sum += nums[right];\n            while (sum >= target) {\n                best = Math.min(best, right - left + 1);\n                sum -= nums[left];\n                left++;\n            }\n        }\n        return best == nums.length + 1 ? 0 : best;\n    }\n}",
+    "time_complexity": "O(n) — each array element enters and leaves the window at most once.",
+    "space_complexity": "O(1) auxiliary — only pointers, the running sum, and the best length are stored."
+  },
+  "dry_run": {
+    "sample_input": {"target": 7, "nums": [2, 3, 1, 2, 4, 3]},
+    "sample_output": 2,
+    "steps": [
+      {"sequence": 1, "event": "Expand right through index 2.", "variables": {"left": 0, "right": 2, "sum": 6, "best": 7}, "condition": "The window sum 6 is below target 7.", "action": "Keep expanding right.", "state_before": {"left": 0, "sum": 5, "best": 7}, "state_after": {"left": 0, "sum": 6, "best": 7}, "focus": {"array": "nums", "indices": [0, 2]}},
+      {"sequence": 2, "event": "Add nums[3] = 2, then contract the valid window.", "variables": {"left": 0, "right": 3, "sum": 8, "best": 4}, "condition": "The sum is at least 7, so [0..3] is a candidate; after removing nums[0], the sum is 6.", "action": "Record length 4, move left to 1, and resume expansion.", "state_before": {"left": 0, "sum": 6, "best": 7}, "state_after": {"left": 1, "sum": 6, "best": 4}, "focus": {"array": "nums", "indices": [0, 3]}},
+      {"sequence": 3, "event": "Add nums[4] = 4 and contract while valid.", "variables": {"left": 3, "right": 4, "sum": 6, "best": 3}, "condition": "The sum becomes 10; removing nums[1] leaves 7 and records length 3, then removing nums[2] leaves 6.", "action": "Continue with left at index 3 and sum 6.", "state_before": {"left": 1, "sum": 6, "best": 4}, "state_after": {"left": 3, "sum": 6, "best": 3}, "focus": {"array": "nums", "indices": [1, 4]}},
+      {"sequence": 4, "event": "Add nums[5] = 3 and contract the valid window.", "variables": {"left": 5, "right": 5, "sum": 3, "best": 2}, "condition": "The sum becomes 9; removing nums[3] leaves 7 and records length 2, then removing nums[4] leaves 3.", "action": "The window is now invalid; finish with minimum length 2.", "state_before": {"left": 3, "sum": 6, "best": 3}, "state_after": {"left": 5, "sum": 3, "best": 2}, "focus": {"array": "nums", "indices": [3, 5]}}
+    ],
+    "final_result": 2
+  },
+  "edge_cases": [
+    {"case": "No subarray reaches target", "handling": "The sentinel best value remains unchanged, so the method returns 0."},
+    {"case": "One element meets target", "handling": "The window contracts immediately and records length 1."},
+    {"case": "Positive-value requirement", "handling": "The monotonic expansion/contraction argument depends on nums[i] being positive, as guaranteed by constraints."}
+  ]
+}

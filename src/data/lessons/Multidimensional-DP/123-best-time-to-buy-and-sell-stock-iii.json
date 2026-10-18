@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "problem_number": 123,
+    "title": "Best Time to Buy and Sell Stock III",
+    "url": "https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iii/",
+    "difficulty": "Hard",
+    "category": "Multidimensional DP"
+  },
+  "problem_summary": {
+    "summary": "Choose at most two non-overlapping buy-then-sell transactions to maximize total profit.",
+    "input_output": "Input: daily stock prices. Return the maximum profit while completing no more than two transactions and holding at most one share at a time.",
+    "constraints": ["1 <= prices.length <= 10^5", "0 <= prices[i] <= 10^5"]
+  },
+  "brute_force": {
+    "explanation": "Enumerate a first buy/sell pair, then every legal second buy/sell pair after the first sale; also allow a single transaction or no transaction. This straightforward schedule enumeration is for small arrays only.",
+    "correctness_idea": "Every feasible strategy has either zero, one, or two ordered buy/sell pairs. The loops consider every legal pair ordering and keep the largest sum of transaction profits.",
+    "language": "java",
+    "code": "class Solution {\n    public int maxProfit(int[] prices) {\n        int best = 0;\n        int days = prices.length;\n        for (int buy1 = 0; buy1 < days; buy1++) {\n            for (int sell1 = buy1 + 1; sell1 < days; sell1++) {\n                best = Math.max(best, prices[sell1] - prices[buy1]);\n                for (int buy2 = sell1 + 1; buy2 < days; buy2++) {\n                    for (int sell2 = buy2 + 1; sell2 < days; sell2++) {\n                        int profit = prices[sell1] - prices[buy1]\n                                + prices[sell2] - prices[buy2];\n                        best = Math.max(best, profit);\n                    }\n                }\n            }\n        }\n        return best;\n    }\n}",
+    "time_complexity": "O(n^4) in the worst case from enumerating all four-day transaction schedules.",
+    "space_complexity": "O(1) auxiliary space."
+  },
+  "optimized": {
+    "explanation": "Track four best states while scanning prices: balance after first buy, profit after first sale, balance after second buy, and profit after second sale. Update each state with the better choice to act today or retain the previous best.",
+    "correctness_idea": "A valid strategy progresses through the ordered states buy1, sell1, buy2, sell2. At each day each state stores the best achievable balance/profit for that stage, so the final sell2 state is the best profit with at most two completed transactions.",
+    "language": "java",
+    "code": "class Solution {\n    public int maxProfit(int[] prices) {\n        int firstBuy = Integer.MIN_VALUE;\n        int firstSell = 0;\n        int secondBuy = Integer.MIN_VALUE;\n        int secondSell = 0;\n        for (int price : prices) {\n            firstBuy = Math.max(firstBuy, -price);\n            firstSell = Math.max(firstSell, firstBuy + price);\n            secondBuy = Math.max(secondBuy, firstSell - price);\n            secondSell = Math.max(secondSell, secondBuy + price);\n        }\n        return secondSell;\n    }\n}",
+    "time_complexity": "O(n), one pass through the prices.",
+    "space_complexity": "O(1) auxiliary space for four state values."
+  },
+  "dry_run": {
+    "sample_input": {"prices": [1, 3, 2, 4]},
+    "sample_output": 4,
+    "steps": [
+      {"sequence": 1, "event": "Process price 1.", "variables": {"price": 1, "firstBuy": -1, "firstSell": 0, "secondBuy": -1, "secondSell": 0}, "condition": "This is the first available buy; no positive sale has occurred.", "action": "Update the four states in order.", "state_before": {"firstBuy": null, "firstSell": 0, "secondBuy": null, "secondSell": 0}, "state_after": {"firstBuy": -1, "firstSell": 0, "secondBuy": -1, "secondSell": 0}},
+      {"sequence": 2, "event": "Process price 3.", "variables": {"price": 3, "firstBuy": -1, "firstSell": 2, "secondBuy": -1, "secondSell": 2}, "condition": "The first sale earns 2; a second buy at 3 has balance -1 and selling immediately cannot add profit.", "action": "Keep firstBuy -1; raise firstSell to 2; retain secondSell 2.", "state_before": {"firstBuy": -1, "firstSell": 0, "secondBuy": -1, "secondSell": 0}, "state_after": {"firstBuy": -1, "firstSell": 2, "secondBuy": -1, "secondSell": 2}},
+      {"sequence": 3, "event": "Process price 2.", "variables": {"price": 2, "firstBuy": -1, "firstSell": 2, "secondBuy": 0, "secondSell": 2}, "condition": "Using firstSell 2 to buy at 2 yields secondBuy 0.", "action": "Update secondBuy to 0; other best values stay unchanged.", "state_before": {"firstBuy": -1, "firstSell": 2, "secondBuy": -1, "secondSell": 2}, "state_after": {"firstBuy": -1, "firstSell": 2, "secondBuy": 0, "secondSell": 2}},
+      {"sequence": 4, "event": "Process price 4.", "variables": {"price": 4, "firstSellCandidate": 3, "secondSellCandidate": 4, "secondSell": 4}, "condition": "Selling after the second buy produces total profit 4.", "action": "Raise firstSell to 3 and secondSell to 4.", "state_before": {"firstBuy": -1, "firstSell": 2, "secondBuy": 0, "secondSell": 2}, "state_after": {"firstBuy": -1, "firstSell": 3, "secondBuy": 0, "secondSell": 4}},
+      {"sequence": 5, "event": "Return the best two-sale state.", "variables": {"result": 4}, "condition": "secondSell is the maximum balance after up to two completed sales.", "action": "Return secondSell.", "state_before": {"secondSell": 4}, "state_after": {"result": 4}}
+    ],
+    "final_result": 4
+  },
+  "edge_cases": [
+    {"case": "One day or a steadily falling market", "handling": "Both sell states remain zero, so no trade is selected."},
+    {"case": "Only one profitable transaction exists", "handling": "firstSell captures it and secondSell can retain that profit."},
+    {"case": "Two separated rises", "handling": "The second buy/sell states combine the best first sale with the later opportunity."},
+    {"case": "Repeated prices", "handling": "Taking no action on equal-valued alternatives preserves the same best state."}
+  ]
+}

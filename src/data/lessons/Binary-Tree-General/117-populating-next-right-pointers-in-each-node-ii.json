@@ -1,0 +1,35 @@
+{
+  "metadata": {"problem_number": 117, "title": "Populating Next Right Pointers in Each Node II", "url": "https://leetcode.com/problems/populating-next-right-pointers-in-each-node-ii/", "difficulty": "Medium", "category": "Binary Tree General"},
+  "problem_summary": {"summary": "Set each node's next reference to the next node on its level, or null at the level's end, for an arbitrary binary tree.", "input_output": "Input: root of a binary tree using Node with left, right, and next links. Return root after setting next links.", "constraints": ["0 <= number of nodes <= 6000", "-100 <= Node.val <= 100", "Initially every next link is null", "Follow-up: O(1) extra space"]},
+  "brute_force": {
+    "explanation": "Perform breadth-first traversal and connect consecutive nodes within each queue level.",
+    "correctness_idea": "The queue contains exactly one tree level at the start of each iteration, so linking its nodes in removal order assigns every next pointer to the correct same-level neighbor.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.Queue;\n\nclass Solution {\n    public Node connect(Node root) {\n        if (root == null) {\n            return null;\n        }\n        Queue<Node> queue = new ArrayDeque<>();\n        queue.offer(root);\n        while (!queue.isEmpty()) {\n            int levelSize = queue.size();\n            Node previous = null;\n            for (int index = 0; index < levelSize; index++) {\n                Node current = queue.poll();\n                if (previous != null) {\n                    previous.next = current;\n                }\n                previous = current;\n                if (current.left != null) {\n                    queue.offer(current.left);\n                }\n                if (current.right != null) {\n                    queue.offer(current.right);\n                }\n            }\n            previous.next = null;\n        }\n        return root;\n    }\n}",
+    "time_complexity": "O(n) — each node is visited once.",
+    "space_complexity": "O(w) auxiliary queue space, where w is maximum level width."
+  },
+  "optimized": {
+    "explanation": "Use already-built next links to scan a level, while a dummy head and tail collect the next level's existing children from left to right.",
+    "correctness_idea": "Scanning the current level by next visits nodes in left-to-right order. Appending each present child in that order builds precisely the next level's chain; resetting the dummy for each level prevents stale links.",
+    "language": "java",
+    "code": "class Solution {\n    public Node connect(Node root) {\n        Node levelStart = root;\n        while (levelStart != null) {\n            Node dummy = new Node(0);\n            Node tail = dummy;\n            for (Node current = levelStart; current != null; current = current.next) {\n                if (current.left != null) {\n                    tail.next = current.left;\n                    tail = tail.next;\n                }\n                if (current.right != null) {\n                    tail.next = current.right;\n                    tail = tail.next;\n                }\n            }\n            levelStart = dummy.next;\n        }\n        return root;\n    }\n}",
+    "time_complexity": "O(n) — each node is scanned once while its level is processed.",
+    "space_complexity": "O(1) auxiliary, excluding the returned tree; only a dummy node and pointers are used."
+  },
+  "dry_run": {
+    "sample_input": {"root_level_order": [1, 2, 3, 4, 5, null, 7]},
+    "sample_output": [[1], [2, 3], [4, 5, 7]],
+    "steps": [
+      {"sequence": 1, "event": "Scan level containing only 1.", "variables": {"current": 1, "levelStart": 1}, "condition": "Node 1 has children 2 then 3.", "action": "Append both children to the dummy-headed next-level chain.", "state_before": {"chain": ["dummy"]}, "state_after": {"chain": ["dummy", 2, 3], "nextLinks": {"1": null}}},
+      {"sequence": 2, "event": "Scan level 2 through existing next links.", "variables": {"current": 2, "then": 3}, "condition": "Children encountered left-to-right are 4, 5, and 7.", "action": "Append each child; 4.next=5, 5.next=7, and tail 7.next remains null.", "state_before": {"levelLinks": {"2": 3, "3": null}, "chain": ["dummy"]}, "state_after": {"chain": ["dummy", 4, 5, 7], "nextLinks": {"4": 5, "5": 7, "7": null}}},
+      {"sequence": 3, "event": "Scan the final level.", "variables": {"current": [4, 5, 7]}, "condition": "All three nodes are leaves.", "action": "No next-level child is collected; traversal ends.", "state_before": {"levelLinks": {"4": 5, "5": 7, "7": null}}, "state_after": {"nextLevel": null}}
+    ],
+    "final_result": [[1], [2, 3], [4, 5, 7]]
+  },
+  "edge_cases": [
+    {"case": "Empty tree", "handling": "The loop does not start and null is returned."},
+    {"case": "Sparse level", "handling": "Only existing children are appended, preserving their left-to-right order."},
+    {"case": "Single node", "handling": "Its next pointer remains null and there is no next level."}
+  ]
+}

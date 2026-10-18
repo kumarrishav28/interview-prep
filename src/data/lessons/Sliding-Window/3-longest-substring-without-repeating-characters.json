@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 3,
+    "title": "Longest Substring Without Repeating Characters",
+    "url": "https://leetcode.com/problems/longest-substring-without-repeating-characters/",
+    "difficulty": "Medium",
+    "category": "Sliding Window"
+  },
+  "problem_summary": {
+    "summary": "Return the length of the longest contiguous substring in which no character appears more than once.",
+    "input_output": "Input: a string s containing English letters, digits, symbols, and spaces. Return an integer length; the empty string has answer 0.",
+    "constraints": ["0 <= s.length <= 10^5", "s consists of English letters, digits, symbols and spaces"]
+  },
+  "brute_force": {
+    "explanation": "For each start position, extend a fresh set of seen characters until the next character repeats, tracking the longest valid span.",
+    "correctness_idea": "Every substring has a start position considered by the outer loop. For that start, the scan visits all consecutive extensions up to (but not including) the first repeated character; no longer extension from that start can be valid.",
+    "language": "java",
+    "code": "import java.util.HashSet;\nimport java.util.Set;\n\nclass Solution {\n    public int lengthOfLongestSubstring(String s) {\n        int best = 0;\n        for (int start = 0; start < s.length(); start++) {\n            Set<Character> seen = new HashSet<>();\n            for (int end = start; end < s.length(); end++) {\n                char value = s.charAt(end);\n                if (!seen.add(value)) break;\n                best = Math.max(best, end - start + 1);\n            }\n        }\n        return best;\n    }\n}",
+    "time_complexity": "O(n^2) expected — each start may scan most of the remaining characters, with expected constant-time set operations.",
+    "space_complexity": "O(min(n, alphabet size)) auxiliary — the set contains distinct characters from one active scan."
+  },
+  "optimized": {
+    "explanation": "Maintain a window with unique characters and a map of each character's most recent index. On a repeat inside the window, jump the left boundary past its previous occurrence.",
+    "correctness_idea": "The left boundary never moves backward. After processing each right endpoint, any repeated character in the window has been excluded by moving left beyond its earlier occurrence, so the current window is unique. Every valid substring ending at that right endpoint is no longer than the maintained window.",
+    "language": "java",
+    "code": "import java.util.HashMap;\nimport java.util.Map;\n\nclass Solution {\n    public int lengthOfLongestSubstring(String s) {\n        Map<Character, Integer> lastSeen = new HashMap<>();\n        int left = 0;\n        int best = 0;\n        for (int right = 0; right < s.length(); right++) {\n            char value = s.charAt(right);\n            if (lastSeen.containsKey(value)) {\n                left = Math.max(left, lastSeen.get(value) + 1);\n            }\n            lastSeen.put(value, right);\n            best = Math.max(best, right - left + 1);\n        }\n        return best;\n    }\n}",
+    "time_complexity": "O(n) expected — each character is processed once with expected constant-time map operations.",
+    "space_complexity": "O(min(n, alphabet size)) auxiliary — the map holds last positions for distinct characters seen."
+  },
+  "dry_run": {
+    "sample_input": {"s": "abba"},
+    "sample_output": 2,
+    "steps": [
+      {"sequence": 1, "event": "Process right index 0, character a.", "variables": {"left": 0, "right": 0, "window": "a", "best": 1, "lastSeen": {"a": 0}}, "condition": "a has not appeared before.", "action": "Store its index and update the best length.", "state_before": {"left": 0, "lastSeen": {}}, "state_after": {"left": 0, "lastSeen": {"a": 0}, "best": 1}, "focus": {"string": "abba", "indices": [0]}},
+      {"sequence": 2, "event": "Process right index 1, character b.", "variables": {"left": 0, "right": 1, "window": "ab", "best": 2, "lastSeen": {"a": 0, "b": 1}}, "condition": "b is new to the window.", "action": "Store index 1; update best to 2.", "state_before": {"left": 0, "best": 1}, "state_after": {"left": 0, "lastSeen": {"a": 0, "b": 1}, "best": 2}, "focus": {"string": "abba", "indices": [0, 1]}},
+      {"sequence": 3, "event": "Process right index 2, character b.", "variables": {"left": 2, "right": 2, "previousIndex": 1, "window": "b", "best": 2}, "condition": "The previous b lies inside the current window, so left moves to 2.", "action": "Update b's last position to 2; best remains 2.", "state_before": {"left": 0, "lastSeen": {"a": 0, "b": 1}}, "state_after": {"left": 2, "lastSeen": {"a": 0, "b": 2}, "best": 2}, "focus": {"string": "abba", "indices": [1, 2]}},
+      {"sequence": 4, "event": "Process right index 3, character a.", "variables": {"left": 2, "right": 3, "window": "ba", "best": 2, "previousIndex": 0}, "condition": "The previous a is before left, so max(left, previousIndex + 1) keeps left at 2.", "action": "Store a at index 3; best remains 2.", "state_before": {"left": 2, "best": 2}, "state_after": {"left": 2, "lastSeen": {"a": 3, "b": 2}, "best": 2}, "focus": {"string": "abba", "indices": [2, 3]}}
+    ],
+    "final_result": 2
+  },
+  "edge_cases": [
+    {"case": "Empty string", "handling": "No iterations occur and the initial best length 0 is returned."},
+    {"case": "All characters equal", "handling": "Each repeat advances the left boundary, so the best length is 1 for non-empty input."},
+    {"case": "Repeat occurred before the current window", "handling": "max(left, previousIndex + 1) prevents the left boundary from moving backward."}
+  ]
+}

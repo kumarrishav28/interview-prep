@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "problem_number": 58,
+    "title": "Length of Last Word",
+    "url": "https://leetcode.com/problems/length-of-last-word/",
+    "difficulty": "Easy",
+    "category": "Array / String"
+  },
+  "problem_summary": {
+    "summary": "Return the number of characters in the final word, where words are maximal runs of non-space characters.",
+    "input_output": "Input: a string containing English letters and spaces with at least one word. Return the last word's length.",
+    "constraints": ["1 <= s.length <= 10^4", "s contains English letters and spaces", "At least one word is present"]
+  },
+  "brute_force": {
+    "explanation": "Trim the ends, split on one or more spaces, then return the length of the final token. This is concise but constructs an array and tokens.",
+    "correctness_idea": "Trimming removes outside spaces and splitting on runs of spaces produces the words in order, so the last token is exactly the final word.",
+    "language": "java",
+    "code": "class Solution {\n    public int lengthOfLastWord(String s) {\n        String[] words = s.trim().split(\" +\");\n        return words[words.length - 1].length();\n    }\n}",
+    "time_complexity": "O(n) — trimming and splitting scan the input.",
+    "space_complexity": "O(n) for the trimmed string and token array."
+  },
+  "optimized": {
+    "explanation": "Scan backward over trailing spaces, then continue backward over the final non-space run. The distance between the two boundaries is its length.",
+    "correctness_idea": "The first loop skips only trailing spaces; after it stops, the next contiguous non-space run is precisely the last word. Counting that run gives its exact length.",
+    "language": "java",
+    "code": "class Solution {\n    public int lengthOfLastWord(String s) {\n        int index = s.length() - 1;\n        while (index >= 0 && s.charAt(index) == ' ') index--;\n        int length = 0;\n        while (index >= 0 && s.charAt(index) != ' ') {\n            length++;\n            index--;\n        }\n        return length;\n    }\n}",
+    "time_complexity": "O(n) worst case; the scan touches at most each character once.",
+    "space_complexity": "O(1) auxiliary space."
+  },
+  "dry_run": {
+    "sample_input": {"s": "  code review  "},
+    "sample_output": 6,
+    "steps": [
+      {"sequence": 1, "event": "Skip trailing spaces.", "variables": {"index": 14, "character": " ", "length": 0}, "condition": "The characters at indices 14 and 13 are spaces.", "action": "Decrement index until it points to 'w' at index 12.", "state_before": {"index": 14, "length": 0}, "state_after": {"index": 12, "length": 0}},
+      {"sequence": 2, "event": "Count the final word characters.", "variables": {"index": 12, "character": "w", "length": 1}, "condition": "The character is not a space.", "action": "Count backward across review, ending at index 6 with length 6.", "state_before": {"index": 12, "length": 0}, "state_after": {"index": 6, "length": 6}},
+      {"sequence": 3, "event": "Stop at the preceding separator.", "variables": {"index": 6, "character": " ", "length": 6}, "condition": "The character is a space.", "action": "Stop and return 6.", "state_before": {"index": 6, "length": 6}, "state_after": {"index": 6, "length": 6}}
+    ],
+    "final_result": 6
+  },
+  "edge_cases": [
+    {"case": "Trailing spaces", "handling": "The backward scan skips them before counting the word."},
+    {"case": "One word only", "handling": "The scan counts the full non-space portion."},
+    {"case": "Multiple spaces between words", "handling": "The scan stops at the first separator before the final word and ignores earlier content."}
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "problem_number": 120,
+    "title": "Triangle",
+    "url": "https://leetcode.com/problems/triangle/",
+    "difficulty": "Medium",
+    "category": "Multidimensional DP"
+  },
+  "problem_summary": {
+    "summary": "Starting at the triangle's top, choose an adjacent entry in each next row and return the smallest possible top-to-bottom sum.",
+    "input_output": "Input: a list of rows where row i has i + 1 integers. Return the minimum sum along a valid path from the first row to the last.",
+    "constraints": ["1 <= triangle.length <= 200", "triangle[0].length == 1", "triangle[i].length == triangle[i - 1].length + 1", "-10^4 <= triangle[i][j] <= 10^4"]
+  },
+  "brute_force": {
+    "explanation": "Recursively follow both permitted child positions from each entry, except at row edges, and return the smaller complete path sum. This directly checks every possible route and is useful for establishing the recurrence on tiny triangles.",
+    "correctness_idea": "Every path from a cell must next use one of its two adjacent children. Recursing over those choices enumerates all valid paths, so the minimum returned from the top is the global minimum.",
+    "language": "java",
+    "code": "class Solution {\n    public int minimumTotal(List<List<Integer>> triangle) {\n        return bestFrom(triangle, 0, 0);\n    }\n\n    private int bestFrom(List<List<Integer>> triangle, int row, int column) {\n        int value = triangle.get(row).get(column);\n        if (row == triangle.size() - 1) return value;\n        int left = bestFrom(triangle, row + 1, column);\n        int right = bestFrom(triangle, row + 1, column + 1);\n        return value + Math.min(left, right);\n    }\n}",
+    "time_complexity": "O(2^r), where r is the number of rows; the recursion may explore two choices at each row.",
+    "space_complexity": "O(r) auxiliary stack space, where r is the number of rows."
+  },
+  "optimized": {
+    "explanation": "Copy the bottom row into a one-dimensional array. Move upward; at each cell replace its value with that cell plus the smaller of the two reachable totals below it. The first array entry is the answer.",
+    "correctness_idea": "After processing a row, each array entry stores the minimum path sum from that triangle cell to the bottom. The recurrence takes the smaller of exactly the two legal children, and induction upward makes the top entry the required minimum.",
+    "language": "java",
+    "code": "class Solution {\n    public int minimumTotal(List<List<Integer>> triangle) {\n        int rows = triangle.size();\n        int[] best = new int[rows];\n        for (int column = 0; column < rows; column++) {\n            best[column] = triangle.get(rows - 1).get(column);\n        }\n        for (int row = rows - 2; row >= 0; row--) {\n            for (int column = 0; column <= row; column++) {\n                best[column] = triangle.get(row).get(column)\n                        + Math.min(best[column], best[column + 1]);\n            }\n        }\n        return best[0];\n    }\n}",
+    "time_complexity": "O(r^2), processing every triangle entry once.",
+    "space_complexity": "O(r) auxiliary space for the rolling totals, where r is the number of rows."
+  },
+  "dry_run": {
+    "sample_input": {"triangle": [[2], [3, 4], [6, 5, 7], [4, 1, 8, 3]]},
+    "sample_output": 11,
+    "steps": [
+      {"sequence": 1, "event": "Initialize totals from the bottom row.", "variables": {"row": 3, "best": [4, 1, 8, 3]}, "condition": "Each bottom entry is already its own minimum suffix path.", "action": "Use [4, 1, 8, 3] as the starting totals.", "state_before": {"best": null}, "state_after": {"best": [4, 1, 8, 3]}},
+      {"sequence": 2, "event": "Fold row 2 into the totals.", "variables": {"row": 2, "cells": [6, 5, 7], "bestBefore": [4, 1, 8, 3]}, "condition": "Each cell adds the smaller total of its two children.", "action": "Compute [6+min(4,1), 5+min(1,8), 7+min(8,3)].", "state_before": {"best": [4, 1, 8, 3]}, "state_after": {"best": [7, 6, 10, 3]}},
+      {"sequence": 3, "event": "Fold row 1 into the totals.", "variables": {"row": 1, "cells": [3, 4], "bestBefore": [7, 6, 10, 3]}, "condition": "The reachable child totals are [7,6] and [6,10].", "action": "Replace the first two entries with 3+6 and 4+6.", "state_before": {"best": [7, 6, 10, 3]}, "state_after": {"best": [9, 10, 10, 3]}},
+      {"sequence": 4, "event": "Fold the top entry.", "variables": {"row": 0, "value": 2, "bestChildren": [9, 10]}, "condition": "Choose the smaller child total, 9.", "action": "Set best[0] to 2 + 9.", "state_before": {"best": [9, 10, 10, 3]}, "state_after": {"best": [11, 10, 10, 3]}},
+      {"sequence": 5, "event": "Return the top total.", "variables": {"result": 11}, "condition": "best[0] stores the minimum suffix sum.", "action": "Return best[0].", "state_before": {"best": [11, 10, 10, 3]}, "state_after": {"result": 11}}
+    ],
+    "final_result": 11
+  },
+  "edge_cases": [
+    {"case": "Single-row triangle", "handling": "The sole entry is copied and returned without a transition."},
+    {"case": "Negative entries", "handling": "Addition and Math.min work without assuming non-negative values."},
+    {"case": "Minimum path follows an edge", "handling": "Boundary entries still have their two valid children in the next triangular row."}
+  ]
+}

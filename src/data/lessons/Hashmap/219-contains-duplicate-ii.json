@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "problem_number": 219,
+    "title": "Contains Duplicate II",
+    "url": "https://leetcode.com/problems/contains-duplicate-ii/",
+    "difficulty": "Easy",
+    "category": "Hashmap"
+  },
+  "problem_summary": {
+    "summary": "Check whether equal values occur at two distinct indices no more than k positions apart.",
+    "input_output": "Input: integer array nums and nonnegative integer k. Return true if any pair of equal values has index distance at most k.",
+    "constraints": ["1 <= nums.length <= 10^5", "-10^9 <= nums[i] <= 10^9", "0 <= k <= 10^5"]
+  },
+  "brute_force": {
+    "explanation": "For each index, inspect later indices only as far as k positions away and compare values.",
+    "correctness_idea": "Every possible pair satisfying the distance bound is visited by the nested loops. The method returns true exactly when one such pair has equal values.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean containsNearbyDuplicate(int[] nums, int k) {\n        for (int i = 0; i < nums.length; i++) {\n            int end = Math.min(nums.length - 1, i + k);\n            for (int j = i + 1; j <= end; j++) {\n                if (nums[i] == nums[j]) return true;\n            }\n        }\n        return false;\n    }\n}",
+    "time_complexity": "O(n * min(n, k)) worst case, where n is the array length.",
+    "space_complexity": "O(1) auxiliary."
+  },
+  "optimized": {
+    "explanation": "Scan from left to right and store the latest index for each value. If the current index minus the stored index is at most k, a nearby duplicate exists; otherwise update the latest index.",
+    "correctness_idea": "For any value, its latest prior occurrence gives the smallest possible distance to the current index. If even that distance exceeds k, no earlier occurrence can qualify; storing the latest position preserves the best check for future elements.",
+    "language": "java",
+    "code": "import java.util.HashMap;\nimport java.util.Map;\n\nclass Solution {\n    public boolean containsNearbyDuplicate(int[] nums, int k) {\n        Map<Integer, Integer> lastIndex = new HashMap<>();\n        for (int i = 0; i < nums.length; i++) {\n            Integer previous = lastIndex.get(nums[i]);\n            if (previous != null && i - previous <= k) return true;\n            lastIndex.put(nums[i], i);\n        }\n        return false;\n    }\n}",
+    "time_complexity": "O(n) expected, with one scan and expected constant-time map operations.",
+    "space_complexity": "O(n) auxiliary in the worst case for the latest index of each distinct value."
+  },
+  "dry_run": {
+    "sample_input": {"nums": [5, 1, 5, 7], "k": 2},
+    "sample_output": true,
+    "steps": [
+      {"sequence": 1, "event": "Inspect index 0, value 5.", "variables": {"i": 0, "value": 5, "previous": null}, "condition": "No previous index for 5.", "action": "Store index 0.", "state_before": {"lastIndex": {}}, "state_after": {"lastIndex": {"5": 0}}},
+      {"sequence": 2, "event": "Inspect index 1, value 1.", "variables": {"i": 1, "value": 1, "previous": null}, "condition": "No previous index for 1.", "action": "Store index 1.", "state_before": {"lastIndex": {"5": 0}}, "state_after": {"lastIndex": {"5": 0, "1": 1}}},
+      {"sequence": 3, "event": "Inspect index 2, value 5.", "variables": {"i": 2, "value": 5, "previous": 0, "distance": 2}, "condition": "A previous index exists and distance 2 <= k 2.", "action": "Return true immediately; the map remains unchanged.", "state_before": {"lastIndex": {"5": 0, "1": 1}}, "state_after": {"lastIndex": {"5": 0, "1": 1}}}
+    ],
+    "final_result": true
+  },
+  "edge_cases": [
+    {"case": "k is zero", "handling": "Distinct indices cannot have distance zero, so no pair qualifies."},
+    {"case": "Same value repeats just beyond k", "handling": "The previous occurrence fails the distance check and the map is updated to the newer index."},
+    {"case": "No duplicates", "handling": "The full scan completes and returns false."}
+  ]
+}

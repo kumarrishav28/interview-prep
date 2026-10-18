@@ -1,0 +1,50 @@
+{
+  "metadata": {
+    "problem_number": 274,
+    "title": "H-Index",
+    "url": "https://leetcode.com/problems/h-index/",
+    "difficulty": "Medium",
+    "category": "Array / String"
+  },
+  "problem_summary": {
+    "summary": "Compute the greatest h such that at least h papers each have h or more citations.",
+    "input_output": "Input: citations, one non-negative citation count per paper. Return the researcher's h-index.",
+    "constraints": ["1 <= citations.length <= 5000", "0 <= citations[i] <= 1000"]
+  },
+  "brute_force": {
+    "explanation": "Sort a copy of the citation counts, then check each possible suffix size from largest citation downward until that many papers meet the threshold.",
+    "correctness_idea": "In sorted order, papers from index i onward all have at least citations[i] citations; testing these suffix sizes finds the largest qualifying h.",
+    "language": "java",
+    "code": "import java.util.Arrays;\n\nclass Solution {\n    public int hIndex(int[] citations) {\n        int[] sorted = citations.clone();\n        Arrays.sort(sorted);\n        int length = sorted.length;\n        for (int index = 0; index < length; index++) {\n            int papers = length - index;\n            if (sorted[index] >= papers) return papers;\n        }\n        return 0;\n    }\n}",
+    "time_complexity": "O(n log n) — sorting dominates the linear scan.",
+    "space_complexity": "O(n) auxiliary — the input is copied before sorting."
+  },
+  "optimized": {
+    "explanation": "Count papers in buckets 0 through n, placing every citation count greater than n into bucket n. Then accumulate counts from n downward; the first threshold h with at least h papers is the answer.",
+    "correctness_idea": "The h-index cannot exceed the number of papers. Capping larger citation values at n preserves every comparison relevant to a possible h, while the descending cumulative count gives exactly the number of papers with at least h citations.",
+    "language": "java",
+    "code": "class Solution {\n    public int hIndex(int[] citations) {\n        int length = citations.length;\n        int[] buckets = new int[length + 1];\n        for (int citation : citations) {\n            buckets[Math.min(citation, length)]++;\n        }\n        int papersAtLeast = 0;\n        for (int h = length; h >= 0; h--) {\n            papersAtLeast += buckets[h];\n            if (papersAtLeast >= h) return h;\n        }\n        return 0;\n    }\n}",
+    "time_complexity": "O(n) — one pass builds buckets and one pass checks thresholds.",
+    "space_complexity": "O(n) auxiliary — n + 1 citation buckets are used."
+  },
+  "dry_run": {
+    "sample_input": {"citations": [5, 0, 3, 1, 4]},
+    "sample_output": 3,
+    "steps": [
+      {"sequence": 1, "event": "Count citation value 5 from paper 0.", "variables": {"paper": 0, "citation": 5, "bucket": 5}, "condition": "The count equals the number of papers, so it maps to bucket 5.", "action": "Increment bucket 5.", "state_before": {"buckets": [0, 0, 0, 0, 0, 0]}, "state_after": {"buckets": [0, 0, 0, 0, 0, 1]}, "focus": {"array": "citations", "indices": [0]}},
+      {"sequence": 2, "event": "Count citation value 0 from paper 1.", "variables": {"paper": 1, "citation": 0, "bucket": 0}, "condition": "0 is below the cap 5.", "action": "Increment bucket 0.", "state_before": {"buckets": [0, 0, 0, 0, 0, 1]}, "state_after": {"buckets": [1, 0, 0, 0, 0, 1]}, "focus": {"array": "citations", "indices": [1]}},
+      {"sequence": 3, "event": "Count citation value 3 from paper 2.", "variables": {"paper": 2, "citation": 3, "bucket": 3}, "condition": "3 is at most the cap 5.", "action": "Increment bucket 3.", "state_before": {"buckets": [1, 0, 0, 0, 0, 1]}, "state_after": {"buckets": [1, 0, 0, 1, 0, 1]}, "focus": {"array": "citations", "indices": [2]}},
+      {"sequence": 4, "event": "Count citation value 1 from paper 3.", "variables": {"paper": 3, "citation": 1, "bucket": 1}, "condition": "1 is at most the cap 5.", "action": "Increment bucket 1.", "state_before": {"buckets": [1, 0, 0, 1, 0, 1]}, "state_after": {"buckets": [1, 1, 0, 1, 0, 1]}, "focus": {"array": "citations", "indices": [3]}},
+      {"sequence": 5, "event": "Count citation value 4 from paper 4.", "variables": {"paper": 4, "citation": 4, "bucket": 4}, "condition": "4 is at most the cap 5.", "action": "Increment bucket 4; bucket counts are complete.", "state_before": {"buckets": [1, 1, 0, 1, 0, 1]}, "state_after": {"buckets": [1, 1, 0, 1, 1, 1]}, "focus": {"array": "citations", "indices": [4]}},
+      {"sequence": 6, "event": "Test h = 5.", "variables": {"h": 5, "papersAtLeast": 1}, "condition": "1 < 5.", "action": "No qualifying h yet; continue downward.", "state_before": {"buckets": [1, 1, 0, 1, 1, 1], "papersAtLeast": 0}, "state_after": {"buckets": [1, 1, 0, 1, 1, 1], "papersAtLeast": 1}},
+      {"sequence": 7, "event": "Test h = 4.", "variables": {"h": 4, "papersAtLeast": 2}, "condition": "1 + bucket[4] = 2, which is less than 4.", "action": "No qualifying h yet; continue downward.", "state_before": {"buckets": [1, 1, 0, 1, 1, 1], "papersAtLeast": 1}, "state_after": {"buckets": [1, 1, 0, 1, 1, 1], "papersAtLeast": 2}},
+      {"sequence": 8, "event": "Test h = 3.", "variables": {"h": 3, "papersAtLeast": 3}, "condition": "2 + bucket[3] = 3, which is at least 3.", "action": "Return h = 3.", "state_before": {"buckets": [1, 1, 0, 1, 1, 1], "papersAtLeast": 2}, "state_after": {"buckets": [1, 1, 0, 1, 1, 1], "papersAtLeast": 3}}
+    ],
+    "final_result": 3
+  },
+  "edge_cases": [
+    {"case": "All citation counts are zero", "handling": "No positive h has enough papers, so zero is returned."},
+    {"case": "Every paper has at least n citations", "handling": "The capped bucket n contains all papers, yielding h = n."},
+    {"case": "More citations than papers", "handling": "Those counts are capped at n because h cannot exceed the number of papers."}
+  ]
+}

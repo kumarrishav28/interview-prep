@@ -1,0 +1,36 @@
+{
+  "metadata": {"problem_number": 226, "title": "Invert Binary Tree", "url": "https://leetcode.com/problems/invert-binary-tree/", "difficulty": "Easy", "category": "Binary Tree General"},
+  "problem_summary": {"summary": "Swap the left and right subtrees at every node and return the original root.", "input_output": "Input: a binary-tree root. Return the root of the in-place inverted tree.", "constraints": ["0 <= number of nodes <= 100", "-100 <= Node.val <= 100"]},
+  "brute_force": {
+    "explanation": "Build a new tree recursively, assigning each source right child to the new left side and each source left child to the new right side.",
+    "correctness_idea": "At every source node the constructed node keeps its value and recursively swaps the complete child subtrees, which is the definition of inversion.",
+    "language": "java",
+    "code": "class Solution {\n    public TreeNode invertTree(TreeNode root) {\n        if (root == null) {\n            return null;\n        }\n        TreeNode copy = new TreeNode(root.val);\n        copy.left = invertTree(root.right);\n        copy.right = invertTree(root.left);\n        return copy;\n    }\n}",
+    "time_complexity": "O(n) — each node is copied once.",
+    "space_complexity": "O(n) for the output tree, plus O(h) recursion stack."
+  },
+  "optimized": {
+    "explanation": "Traverse the existing tree and swap the two child references at each node.",
+    "correctness_idea": "Each node's children are exchanged exactly once, so every original left path becomes the corresponding right path and vice versa, without changing node values.",
+    "language": "java",
+    "code": "class Solution {\n    public TreeNode invertTree(TreeNode root) {\n        if (root == null) {\n            return null;\n        }\n        TreeNode temporary = root.left;\n        root.left = root.right;\n        root.right = temporary;\n        invertTree(root.left);\n        invertTree(root.right);\n        return root;\n    }\n}",
+    "time_complexity": "O(n) — every node is visited once.",
+    "space_complexity": "O(h) auxiliary recursion stack, with no new tree nodes."
+  },
+  "dry_run": {
+    "sample_input": {"root_level_order": [6, 2, 9, 1, 4]},
+    "sample_output": [6, 9, 2, null, null, 4, 1],
+    "steps": [
+      {"sequence": 1, "event": "Invert root 6.", "variables": {"node": 6, "left": 2, "right": 9}, "condition": "Both children exist.", "action": "Swap child links; recurse into new left child 9.", "state_before": {"childrenOf6": [2, 9]}, "state_after": {"childrenOf6": [9, 2]}},
+      {"sequence": 2, "event": "Invert node 9 and its descendants.", "variables": {"node": 9, "left": null, "right": null}, "condition": "Node 9 is a leaf.", "action": "Leave its links unchanged; return to node 6.", "state_before": {"childrenOf9": [null, null]}, "state_after": {"childrenOf9": [null, null]}},
+      {"sequence": 3, "event": "Invert node 2 and its descendants.", "variables": {"node": 2, "left": 1, "right": 4}, "condition": "Both children exist.", "action": "Swap links, producing left 4 and right 1.", "state_before": {"childrenOf2": [1, 4]}, "state_after": {"childrenOf2": [4, 1]}},
+      {"sequence": 4, "event": "Finish the remaining leaves.", "variables": {"nodes": [4, 1]}, "condition": "Both are leaves.", "action": "Return the root 6 with all links inverted.", "state_before": {"childrenOf6": [9, 2], "childrenOf2": [4, 1]}, "state_after": {"levelOrder": [6, 9, 2, null, null, 4, 1]}}
+    ],
+    "final_result": [6, 9, 2, null, null, 4, 1]
+  },
+  "edge_cases": [
+    {"case": "Empty tree", "handling": "Returns null without changes."},
+    {"case": "Single node", "handling": "Both child links are already null and the root is returned."},
+    {"case": "One-sided child", "handling": "The existing child is moved to the opposite side."}
+  ]
+}

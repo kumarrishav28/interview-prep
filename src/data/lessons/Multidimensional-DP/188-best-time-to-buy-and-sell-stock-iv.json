@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "problem_number": 188,
+    "title": "Best Time to Buy and Sell Stock IV",
+    "url": "https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iv/",
+    "difficulty": "Hard",
+    "category": "Multidimensional DP"
+  },
+  "problem_summary": {
+    "summary": "Maximize profit from at most k complete buy-then-sell transactions, never holding more than one share at a time.",
+    "input_output": "Input: integer k and daily prices. Return the greatest total profit using no more than k transactions.",
+    "constraints": ["1 <= k <= 100", "1 <= prices.length <= 1000", "0 <= prices[i] <= 1000"]
+  },
+  "brute_force": {
+    "explanation": "For each day recursively consider skipping, buying when flat, or selling when holding and below the transaction limit. A completed sale increments the transaction count. This enumerates schedules and is intended only for small inputs.",
+    "correctness_idea": "Every legal schedule makes exactly one of the allowed daily decisions. The recursion evaluates each such schedule, rejects unfinished holdings at the end, and returns the maximum realized profit.",
+    "language": "java",
+    "code": "class Solution {\n    public int maxProfit(int k, int[] prices) {\n        return search(prices, k, 0, 0, false);\n    }\n\n    private int search(int[] prices, int limit, int day, int completed, boolean holding) {\n        if (day == prices.length) {\n            return holding ? Integer.MIN_VALUE / 4 : 0;\n        }\n        int best = search(prices, limit, day + 1, completed, holding);\n        if (!holding && completed < limit) {\n            best = Math.max(best, -prices[day]\n                    + search(prices, limit, day + 1, completed, true));\n        } else if (holding && completed < limit) {\n            best = Math.max(best, prices[day]\n                    + search(prices, limit, day + 1, completed + 1, false));\n        }\n        return best;\n    }\n}",
+    "time_complexity": "O(3^n) as a loose upper bound on the branching schedule search, where n is prices.length.",
+    "space_complexity": "O(n) auxiliary recursion stack space."
+  },
+  "optimized": {
+    "explanation": "Maintain cash[t], the best profit while flat after at most t sales, and hold[t], the best balance while holding after beginning a transaction within limit t. For each day, derive new arrays only from the previous day's states so a buy cannot use a sale from the same day.",
+    "correctness_idea": "For each transaction allowance, the only choices are to keep yesterday's state, buy today from yesterday's flat state with one fewer sale, or sell today from yesterday's holding state. Taking the maximum over these choices preserves the optimal value for every state.",
+    "language": "java",
+    "code": "class Solution {\n    public int maxProfit(int k, int[] prices) {\n        int[] cash = new int[k + 1];\n        int[] hold = new int[k + 1];\n        Arrays.fill(hold, Integer.MIN_VALUE / 4);\n        for (int price : prices) {\n            int[] nextCash = cash.clone();\n            int[] nextHold = hold.clone();\n            for (int transactions = 1; transactions <= k; transactions++) {\n                nextHold[transactions] = Math.max(hold[transactions],\n                        cash[transactions - 1] - price);\n                nextCash[transactions] = Math.max(cash[transactions],\n                        hold[transactions] + price);\n            }\n            cash = nextCash;\n            hold = nextHold;\n        }\n        return cash[k];\n    }\n}",
+    "time_complexity": "O(nk), where n is the number of days; each day updates k transaction states.",
+    "space_complexity": "O(k) auxiliary space for the current and next day state arrays."
+  },
+  "dry_run": {
+    "sample_input": {"k": 2, "prices": [1, 3, 2, 4]},
+    "sample_output": 4,
+    "steps": [
+      {"sequence": 1, "event": "Initialize before any days.", "variables": {"cash": [0, 0, 0], "hold": ["-inf", "-inf", "-inf"]}, "condition": "No sale has happened; holding states are impossible.", "action": "Start with zero cash profits and negative-infinity holding balances.", "state_before": {"cash": null, "hold": null}, "state_after": {"cash": [0, 0, 0], "hold": ["-inf", "-inf", "-inf"]}},
+      {"sequence": 2, "event": "Process price 1 using previous-day states.", "variables": {"price": 1, "cash": [0, 0, 0], "hold": ["-inf", -1, -1]}, "condition": "Buying from cash[0] gives balances -1 for either at-most allowance.", "action": "Set next hold states to [-inf,-1,-1]; cash remains zero.", "state_before": {"cash": [0, 0, 0], "hold": ["-inf", "-inf", "-inf"]}, "state_after": {"cash": [0, 0, 0], "hold": ["-inf", -1, -1]}},
+      {"sequence": 3, "event": "Process price 3.", "variables": {"price": 3, "cash": [0, 2, 2], "hold": ["-inf", -1, -1]}, "condition": "Selling yesterday's -1 holding yields 2 profit; no better buy occurs.", "action": "Set cash[1] and cash[2] to 2.", "state_before": {"cash": [0, 0, 0], "hold": ["-inf", -1, -1]}, "state_after": {"cash": [0, 2, 2], "hold": ["-inf", -1, -1]}},
+      {"sequence": 4, "event": "Process price 2.", "variables": {"price": 2, "cash": [0, 2, 2], "hold": ["-inf", -1, 0]}, "condition": "A second buy based on yesterday's cash[1]=2 yields balance 0.", "action": "Update hold[2] to 0; retain first-transaction states.", "state_before": {"cash": [0, 2, 2], "hold": ["-inf", -1, -1]}, "state_after": {"cash": [0, 2, 2], "hold": ["-inf", -1, 0]}},
+      {"sequence": 5, "event": "Process price 4 and return.", "variables": {"price": 4, "cash": [0, 3, 4], "hold": ["-inf", -1, 0], "result": 4}, "condition": "The second holding balance 0 can be sold for total profit 4.", "action": "Update cash states and return cash[k].", "state_before": {"cash": [0, 2, 2], "hold": ["-inf", -1, 0]}, "state_after": {"cash": [0, 3, 4], "hold": ["-inf", -1, 0], "result": 4}}
+    ],
+    "final_result": 4
+  },
+  "edge_cases": [
+    {"case": "One price only", "handling": "No sale is possible, so the initialized cash profit zero is returned."},
+    {"case": "Prices never rise", "handling": "All cash states remain at zero because no sale improves profit."},
+    {"case": "k exceeds the number of possible transactions", "handling": "The at-most states permit fewer than k sales and retain the best feasible profit."},
+    {"case": "k equals one", "handling": "The state transitions reduce to the single-transaction buy/sell recurrence."}
+  ]
+}

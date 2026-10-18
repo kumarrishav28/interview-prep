@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "problem_number": 13,
+    "title": "Roman to Integer",
+    "url": "https://leetcode.com/problems/roman-to-integer/",
+    "difficulty": "Easy",
+    "category": "Array / String"
+  },
+  "problem_summary": {
+    "summary": "Convert a valid Roman numeral to its integer value, accounting for the standard subtractive pairs.",
+    "input_output": "Input: a Roman numeral string s. Return its integer value.",
+    "constraints": ["1 <= s.length <= 15", "s contains only I, V, X, L, C, D, and M", "s is valid and represents a value from 1 through 3999"]
+  },
+  "brute_force": {
+    "explanation": "Map each symbol to its value and first add every symbol. In a second pass, subtract twice the value of each symbol that is smaller than the following symbol; its initial addition must be changed into subtraction.",
+    "correctness_idea": "Ordinary symbols contribute positively. In a valid subtractive pair, adding the smaller symbol and later subtracting twice it changes its net contribution to negative, yielding larger minus smaller.",
+    "language": "java",
+    "code": "class Solution {\n    public int romanToInt(String s) {\n        int total = 0;\n        for (int index = 0; index < s.length(); index++) {\n            total += value(s.charAt(index));\n        }\n        for (int index = 0; index + 1 < s.length(); index++) {\n            if (value(s.charAt(index)) < value(s.charAt(index + 1))) {\n                total -= 2 * value(s.charAt(index));\n            }\n        }\n        return total;\n    }\n\n    private int value(char symbol) {\n        switch (symbol) {\n            case 'I': return 1;\n            case 'V': return 5;\n            case 'X': return 10;\n            case 'L': return 50;\n            case 'C': return 100;\n            case 'D': return 500;\n            default: return 1000;\n        }\n    }\n}",
+    "time_complexity": "O(n) — two passes over the string.",
+    "space_complexity": "O(1) auxiliary space."
+  },
+  "optimized": {
+    "explanation": "Scan left to right. Add a symbol's value unless its next symbol is larger, in which case subtract it. Valid Roman numerals only use the six specified subtractive pairs.",
+    "correctness_idea": "A symbol before a larger symbol is exactly the smaller term in a subtractive pair and must contribute negatively. Every other symbol contributes positively, so summing these signed values implements the numeral's value.",
+    "language": "java",
+    "code": "class Solution {\n    public int romanToInt(String s) {\n        int total = 0;\n        for (int index = 0; index < s.length(); index++) {\n            int current = value(s.charAt(index));\n            if (index + 1 < s.length() && current < value(s.charAt(index + 1))) {\n                total -= current;\n            } else {\n                total += current;\n            }\n        }\n        return total;\n    }\n\n    private int value(char symbol) {\n        switch (symbol) {\n            case 'I': return 1;\n            case 'V': return 5;\n            case 'X': return 10;\n            case 'L': return 50;\n            case 'C': return 100;\n            case 'D': return 500;\n            default: return 1000;\n        }\n    }\n}",
+    "time_complexity": "O(n) — one pass over the string.",
+    "space_complexity": "O(1) auxiliary space."
+  },
+  "dry_run": {
+    "sample_input": {"s": "XIV"},
+    "sample_output": 14,
+    "steps": [
+        {"sequence": 1, "event": "Read X at index 0.", "variables": {"index": 0, "current": 10, "next": 1, "total": 10}, "condition": "10 < 1 is false.", "action": "Add 10.", "state_before": {"total": 0}, "state_after": {"total": 10}},
+      {"sequence": 2, "event": "Read I at index 1.", "variables": {"index": 1, "current": 1, "next": 5, "total": 9}, "condition": "1 < 5 is true.", "action": "Subtract 1 for the IV pair.", "state_before": {"total": 10}, "state_after": {"total": 9}},
+      {"sequence": 3, "event": "Read V at index 2.", "variables": {"index": 2, "current": 5, "total": 14}, "condition": "There is no following symbol.", "action": "Add 5 and return 14.", "state_before": {"total": 9}, "state_after": {"total": 14}}
+    ],
+    "final_result": 14
+  },
+  "edge_cases": [
+    {"case": "Single symbol", "handling": "Its mapped value is added directly."},
+    {"case": "Subtractive pair such as IX or CM", "handling": "The smaller symbol is subtracted and the larger one is added."},
+    {"case": "No subtractive pairs", "handling": "Every symbol contributes positively."}
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "problem_number": 167,
+    "title": "Two Sum II - Input Array Is Sorted",
+    "url": "https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/",
+    "difficulty": "Medium",
+    "category": "Two Pointers"
+  },
+  "problem_summary": {
+    "summary": "Find the unique pair in a sorted integer array whose values add to target and return their 1-based positions.",
+    "input_output": "Input: non-decreasing numbers and target. Return [index1, index2] with index1 < index2; the same element cannot be used twice.",
+    "constraints": ["2 <= numbers.length <= 3 * 10^4", "-1000 <= numbers[i] <= 1000", "numbers is sorted in non-decreasing order", "-1000 <= target <= 1000", "Exactly one solution exists", "Use constant extra space"]
+  },
+  "brute_force": {
+    "explanation": "Try each pair of distinct positions and return the first pair whose values sum to target.",
+    "correctness_idea": "The loops enumerate every pair with the first index smaller than the second, so the unique valid pair must be checked and returned.",
+    "language": "java",
+    "code": "class Solution {\n    public int[] twoSum(int[] numbers, int target) {\n        for (int first = 0; first < numbers.length; first++) {\n            for (int second = first + 1; second < numbers.length; second++) {\n                if (numbers[first] + numbers[second] == target) {\n                    return new int[] {first + 1, second + 1};\n                }\n            }\n        }\n        return new int[0];\n    }\n}",
+    "time_complexity": "O(n^2) worst case — all distinct-position pairs may be checked.",
+    "space_complexity": "O(1) auxiliary, excluding the two-element returned array."
+  },
+  "optimized": {
+    "explanation": "Start one pointer at each end. If their sum is too small, move the left pointer right; if too large, move the right pointer left.",
+    "correctness_idea": "Because numbers is sorted, when a sum is too small, keeping the current left value while decreasing the right value cannot help, so that left position is excluded. The symmetric argument excludes the right position when the sum is too large. The unique pair remains until found.",
+    "language": "java",
+    "code": "class Solution {\n    public int[] twoSum(int[] numbers, int target) {\n        int left = 0;\n        int right = numbers.length - 1;\n        while (left < right) {\n            int sum = numbers[left] + numbers[right];\n            if (sum == target) {\n                return new int[] {left + 1, right + 1};\n            } else if (sum < target) {\n                left++;\n            } else {\n                right--;\n            }\n        }\n        return new int[0];\n    }\n}",
+    "time_complexity": "O(n) — on each iteration one pointer moves inward.",
+    "space_complexity": "O(1) auxiliary, excluding the two-element returned array."
+  },
+  "dry_run": {
+    "sample_input": {"numbers": [1, 4, 6, 10], "target": 10},
+    "sample_output": [2, 3],
+    "steps": [
+      {"sequence": 1, "event": "Check the two endpoints.", "variables": {"left": 0, "right": 3, "values": [1, 10], "sum": 11}, "condition": "11 is greater than target 10.", "action": "Move right leftward to seek a smaller sum.", "state_before": {"left": 0, "right": 3}, "state_after": {"left": 0, "right": 2}, "focus": {"array": "numbers", "indices": [0, 3]}},
+      {"sequence": 2, "event": "Check the updated pair.", "variables": {"left": 0, "right": 2, "values": [1, 6], "sum": 7}, "condition": "7 is less than target 10.", "action": "Move left rightward to seek a larger sum.", "state_before": {"left": 0, "right": 2}, "state_after": {"left": 1, "right": 2}, "focus": {"array": "numbers", "indices": [0, 2]}},
+      {"sequence": 3, "event": "Check the remaining pair.", "variables": {"left": 1, "right": 2, "values": [4, 6], "sum": 10}, "condition": "The sum equals target.", "action": "Return 1-based positions [2, 3].", "state_before": {"left": 1, "right": 2}, "state_after": {"result": [2, 3]}, "focus": {"array": "numbers", "indices": [1, 2]}}
+    ],
+    "final_result": [2, 3]
+  },
+  "edge_cases": [
+    {"case": "Two-element input", "handling": "The sole possible pair is checked directly."},
+    {"case": "Negative values", "handling": "The same sum comparisons work for negative and positive integers."},
+    {"case": "Repeated values", "handling": "Distinct positions are required; the left < right condition prevents reusing one element."}
+  ]
+}

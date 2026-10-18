@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 228,
+    "title": "Summary Ranges",
+    "url": "https://leetcode.com/problems/summary-ranges/",
+    "difficulty": "Easy",
+    "category": "Intervals"
+  },
+  "problem_summary": {
+    "summary": "Compress a sorted, unique integer array into the smallest list of consecutive ranges that cover exactly its values.",
+    "input_output": "Input: nums, sorted ascending with no duplicates. Return strings formatted as a single integer or start->end.",
+    "constraints": ["0 <= nums.length <= 20", "-2^31 <= nums[i] <= 2^31 - 1", "nums is sorted and contains unique values"]
+  },
+  "brute_force": {
+    "explanation": "For each range start, walk forward while each next number is exactly one larger. Store all numbers in that run temporarily, then format its first and last values.",
+    "correctness_idea": "A run ends precisely at the first missing integer. Since the input is sorted and unique, each maximal run is disjoint from the next and together the runs contain every input value exactly once.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass Solution {\n    public List<String> summaryRanges(int[] nums) {\n        List<String> result = new ArrayList<>();\n        int index = 0;\n        while (index < nums.length) {\n            List<Integer> run = new ArrayList<>();\n            run.add(nums[index]);\n            int end = index;\n            while (end + 1 < nums.length\n                    && (long) nums[end + 1] == (long) nums[end] + 1) {\n                end++;\n                run.add(nums[end]);\n            }\n            int first = run.get(0);\n            int last = run.get(run.size() - 1);\n            result.add(first == last ? String.valueOf(first) : first + \"->\" + last);\n            index = end + 1;\n        }\n        return result;\n    }\n}",
+    "time_complexity": "O(n) time, where n is nums.length; each value is visited once.",
+    "space_complexity": "O(n) auxiliary space for the temporary run, excluding the returned strings."
+  },
+  "optimized": {
+    "explanation": "Track only the first and last indices of each consecutive run, then format the endpoints directly without storing the run's values.",
+    "correctness_idea": "The endpoint advances exactly while adjacent input values differ by one. At the first gap, those endpoints describe one maximal range; continuing at the next index covers the remaining disjoint runs.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass Solution {\n    public List<String> summaryRanges(int[] nums) {\n        List<String> result = new ArrayList<>();\n        int start = 0;\n        while (start < nums.length) {\n            int end = start;\n            while (end + 1 < nums.length\n                    && (long) nums[end + 1] == (long) nums[end] + 1) {\n                end++;\n            }\n            if (start == end) {\n                result.add(String.valueOf(nums[start]));\n            } else {\n                result.add(nums[start] + \"->\" + nums[end]);\n            }\n            start = end + 1;\n        }\n        return result;\n    }\n}",
+    "time_complexity": "O(n) time; the scan visits each array position once.",
+    "space_complexity": "O(1) auxiliary space beyond the O(r) returned range strings, where r is the number of ranges."
+  },
+  "dry_run": {
+    "sample_input": {"nums": [-3, -2, 0, 1, 2, 5]},
+    "sample_output": ["-3->-2", "0->2", "5"],
+    "steps": [
+      {"sequence": 1, "event": "Begin the first run", "variables": {"start": 0, "end": 0}, "condition": "-2 equals -3 + 1.", "action": "Extend the run to index 1.", "state_before": {"rangeValues": [-3]}, "state_after": {"rangeValues": [-3, -2], "end": 1}},
+      {"sequence": 2, "event": "Check the next value", "variables": {"start": 0, "end": 1, "next": 0}, "condition": "0 is not -2 + 1.", "action": "Close and emit the first range; begin the next run at index 2.", "state_before": {"output": []}, "state_after": {"output": ["-3->-2"], "start": 2, "end": 2}},
+      {"sequence": 3, "event": "Extend the second run", "variables": {"start": 2, "end": 2, "next": 1}, "condition": "1 equals 0 + 1, and 2 equals 1 + 1.", "action": "Advance end to index 4 and emit the complete range.", "state_before": {"rangeValues": [0, 1]}, "state_after": {"rangeValues": [0, 1, 2], "output": ["-3->-2", "0->2"], "start": 5}},
+      {"sequence": 4, "event": "Emit the final singleton", "variables": {"start": 5, "end": 5}, "condition": "No next array value remains.", "action": "Format the equal endpoints as one number.", "state_before": {"output": ["-3->-2", "0->2"]}, "state_after": {"output": ["-3->-2", "0->2", "5"]}}
+    ],
+    "final_result": ["-3->-2", "0->2", "5"]
+  },
+  "edge_cases": [
+    {"case": "Empty input", "handling": "The loop does not run and an empty list is returned."},
+    {"case": "Singleton or isolated values", "handling": "A run with equal start and end is emitted as one integer."},
+    {"case": "Consecutive values near int limits", "handling": "Adjacency is checked after widening to long, avoiding overflow at Integer.MAX_VALUE."}
+  ]
+}

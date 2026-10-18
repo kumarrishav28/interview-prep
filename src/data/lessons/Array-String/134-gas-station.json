@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "problem_number": 134,
+    "title": "Gas Station",
+    "url": "https://leetcode.com/problems/gas-station/",
+    "difficulty": "Medium",
+    "category": "Array / String"
+  },
+  "problem_summary": {
+    "summary": "Find the unique station from which a car with an initially empty tank can complete a circular route, or report that no start works.",
+    "input_output": "Input: equal-length gas and cost arrays. Return a valid starting index, or -1 when the total gas is insufficient.",
+    "constraints": ["1 <= n <= 10^5", "gas.length == cost.length", "0 <= gas[i], cost[i] <= 10^4", "A solution, when one exists, is guaranteed unique"]
+  },
+  "brute_force": {
+    "explanation": "Try each station as a start and simulate up to n legs, abandoning a candidate as soon as the tank becomes negative.",
+    "correctness_idea": "A start is accepted only if the simulation reaches every next station without a negative tank and returns after one full circuit. Testing all starts finds a valid one if it exists.",
+    "language": "java",
+    "code": "class Solution {\n    public int canCompleteCircuit(int[] gas, int[] cost) {\n        int length = gas.length;\n        for (int start = 0; start < length; start++) {\n            int tank = 0;\n            int visited = 0;\n            while (visited < length) {\n                int station = (start + visited) % length;\n                tank += gas[station] - cost[station];\n                if (tank < 0) break;\n                visited++;\n            }\n            if (visited == length) return start;\n        }\n        return -1;\n    }\n}",
+    "time_complexity": "O(n^2) worst case — each candidate may simulate the full route.",
+    "space_complexity": "O(1) auxiliary space."
+  },
+  "optimized": {
+    "explanation": "Track the total net gas and a running tank from the current candidate. Whenever the tank becomes negative, none of the stations since that candidate can start a successful segment, so begin the next candidate at the following station and reset the tank. If total net gas is nonnegative, the final candidate succeeds.",
+    "correctness_idea": "A negative running sum from candidate start through station i means every later start within that segment has a prefix deficit before or at i. Thus skipping the whole failed segment is safe. A nonnegative total guarantees some circular start can complete the route; the surviving candidate is that start.",
+    "language": "java",
+    "code": "class Solution {\n    public int canCompleteCircuit(int[] gas, int[] cost) {\n        int total = 0;\n        int tank = 0;\n        int start = 0;\n        for (int station = 0; station < gas.length; station++) {\n            int net = gas[station] - cost[station];\n            total += net;\n            tank += net;\n            if (tank < 0) {\n                start = station + 1;\n                tank = 0;\n            }\n        }\n        return total >= 0 ? start : -1;\n    }\n}",
+    "time_complexity": "O(n) — one pass over the stations.",
+    "space_complexity": "O(1) auxiliary space."
+  },
+  "dry_run": {
+    "sample_input": {"gas": [1, 2, 3, 4, 5], "cost": [3, 4, 5, 1, 2]},
+    "sample_output": 3,
+    "steps": [
+      {"sequence": 1, "event": "Process station 0.", "variables": {"station": 0, "net": -2, "total": -2, "tank": -2, "start": 0}, "condition": "tank < 0.", "action": "Discard candidate segment through station 0; set start to 1 and reset tank.", "state_before": {"total": 0, "tank": 0, "start": 0}, "state_after": {"total": -2, "tank": 0, "start": 1}},
+      {"sequence": 2, "event": "Process station 1.", "variables": {"station": 1, "net": -2, "total": -4, "tank": -2, "start": 1}, "condition": "tank < 0.", "action": "Set start to 2 and reset tank.", "state_before": {"total": -2, "tank": 0, "start": 1}, "state_after": {"total": -4, "tank": 0, "start": 2}},
+      {"sequence": 3, "event": "Process station 2.", "variables": {"station": 2, "net": -2, "total": -6, "tank": -2, "start": 2}, "condition": "tank < 0.", "action": "Set start to 3 and reset tank.", "state_before": {"total": -4, "tank": 0, "start": 2}, "state_after": {"total": -6, "tank": 0, "start": 3}},
+      {"sequence": 4, "event": "Process station 3.", "variables": {"station": 3, "net": 3, "total": -3, "tank": 3, "start": 3}, "condition": "tank is nonnegative.", "action": "Keep candidate 3 and continue accumulating.", "state_before": {"total": -6, "tank": 0, "start": 3}, "state_after": {"total": -3, "tank": 3, "start": 3}},
+      {"sequence": 5, "event": "Process station 4.", "variables": {"station": 4, "net": 3, "total": 0, "tank": 6, "start": 3}, "condition": "The final total net gas is 0, which is nonnegative.", "action": "Return candidate start 3.", "state_before": {"total": -3, "tank": 3, "start": 3}, "state_after": {"total": 0, "tank": 6, "start": 3}}
+    ],
+    "final_result": 3
+  },
+  "edge_cases": [
+    {"case": "Total gas is less than total cost", "handling": "The total net sum is negative, so the optimized method returns -1."},
+    {"case": "One station", "handling": "Return index 0 if its gas covers its cost; otherwise return -1."},
+    {"case": "A candidate's tank becomes negative", "handling": "The optimized scan skips every start inside the failed segment."}
+  ]
+}

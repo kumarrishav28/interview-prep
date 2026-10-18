@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "problem_number": 380,
+    "title": "Insert Delete GetRandom O(1)",
+    "url": "https://leetcode.com/problems/insert-delete-getrandom-o1/",
+    "difficulty": "Medium",
+    "category": "Array / String"
+  },
+  "problem_summary": {
+    "summary": "Design a set supporting insertion, deletion, and a uniformly random element lookup, each in average constant time.",
+    "input_output": "Input: a sequence of RandomizedSet method calls with integer values. Return each method's boolean result or the selected value from getRandom.",
+    "constraints": ["-2^31 <= val <= 2^31 - 1", "At most 2 * 10^5 calls are made", "getRandom is called only when the set is non-empty"]
+  },
+  "brute_force": {
+    "explanation": "Store values in an ArrayList. Check membership with contains, remove matching values with remove(Object), append new values, and choose a random list index. The list gives constant-time random indexing, but membership and removal scan linearly.",
+    "correctness_idea": "The list contains each present set value exactly once, so checking or removing its value implements set semantics, and choosing a uniformly random valid index gives every stored value equal probability.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.concurrent.ThreadLocalRandom;\n\nclass RandomizedSet {\n    private final ArrayList<Integer> values = new ArrayList<>();\n\n    public RandomizedSet() {\n    }\n\n    public boolean insert(int val) {\n        if (values.contains(val)) return false;\n        values.add(val);\n        return true;\n    }\n\n    public boolean remove(int val) {\n        return values.remove(Integer.valueOf(val));\n    }\n\n    public int getRandom() {\n        return values.get(ThreadLocalRandom.current().nextInt(values.size()));\n    }\n}",
+    "time_complexity": "insert O(n), remove O(n), getRandom O(1), where n is the current set size.",
+    "space_complexity": "O(n) for the stored values."
+  },
+  "optimized": {
+    "explanation": "Keep values in an ArrayList and map each value to its index. For removal, replace the target slot with the last value, update that value's index, then delete the last slot. This avoids shifting elements and retains constant-time random indexing.",
+    "correctness_idea": "The map identifies each value's exact list slot. Swapping in the final value preserves all remaining set members; updating its map entry keeps the two structures synchronized. A random list index is uniform over the set members.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.HashMap;\nimport java.util.concurrent.ThreadLocalRandom;\n\nclass RandomizedSet {\n    private final ArrayList<Integer> values = new ArrayList<>();\n    private final HashMap<Integer, Integer> indices = new HashMap<>();\n\n    public RandomizedSet() {\n    }\n\n    public boolean insert(int val) {\n        if (indices.containsKey(val)) return false;\n        indices.put(val, values.size());\n        values.add(val);\n        return true;\n    }\n\n    public boolean remove(int val) {\n        Integer index = indices.get(val);\n        if (index == null) return false;\n        int lastIndex = values.size() - 1;\n        int lastValue = values.get(lastIndex);\n        values.set(index, lastValue);\n        indices.put(lastValue, index);\n        values.remove(lastIndex);\n        indices.remove(val);\n        return true;\n    }\n\n    public int getRandom() {\n        return values.get(ThreadLocalRandom.current().nextInt(values.size()));\n    }\n}",
+    "time_complexity": "Average O(1) for insert, remove, and getRandom; hash-table operations are average constant time.",
+    "space_complexity": "O(n) for the list and value-to-index map."
+  },
+  "dry_run": {
+    "sample_input": {"operations": ["insert(8)", "insert(3)", "remove(8)", "insert(5)", "getRandom()"], "arguments": [[8], [3], [8], [5], []]},
+    "sample_output": [true, true, true, true, 5],
+    "steps": [
+      {"sequence": 1, "event": "insert(8)", "variables": {"val": 8}, "condition": "8 is absent from indices.", "action": "Append 8 and record its position.", "state_before": {"values": [], "indices": {}}, "state_after": {"values": [8], "indices": {"8": 0}}},
+      {"sequence": 2, "event": "insert(3)", "variables": {"val": 3}, "condition": "3 is absent from indices.", "action": "Append 3 and record its position.", "state_before": {"values": [8], "indices": {"8": 0}}, "state_after": {"values": [8, 3], "indices": {"8": 0, "3": 1}}},
+      {"sequence": 3, "event": "remove(8)", "variables": {"val": 8, "index": 0, "lastIndex": 1, "lastValue": 3}, "condition": "8 is present at index 0.", "action": "Move 3 into index 0, remove the old last slot, and delete 8 from the map.", "state_before": {"values": [8, 3], "indices": {"8": 0, "3": 1}}, "state_after": {"values": [3], "indices": {"3": 0}}},
+      {"sequence": 4, "event": "insert(5)", "variables": {"val": 5}, "condition": "5 is absent from indices.", "action": "Append 5 and record its position.", "state_before": {"values": [3], "indices": {"3": 0}}, "state_after": {"values": [3, 5], "indices": {"3": 0, "5": 1}}},
+      {"sequence": 5, "event": "getRandom()", "variables": {"chosenIndex": 1, "chosenValue": 5}, "condition": "The sample's valid random choice is index 1.", "action": "Return the value at that index.", "state_before": {"values": [3, 5], "indices": {"3": 0, "5": 1}}, "state_after": {"values": [3, 5], "indices": {"3": 0, "5": 1}}}
+    ],
+    "final_result": [true, true, true, true, 5]
+  },
+  "edge_cases": [
+    {"case": "Insert an existing value", "handling": "The map detects it and insert returns false without changing either structure."},
+    {"case": "Remove a missing value", "handling": "The absent map entry returns false without mutation."},
+    {"case": "Remove the final list element", "handling": "The last slot is removed and its map entry is deleted; the replacement assignment is harmless when target and last indices match."},
+    {"case": "Uniform random choice", "handling": "Every current element occupies exactly one list index, and nextInt(size) chooses each index uniformly."}
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 30,
+    "title": "Substring with Concatenation of All Words",
+    "url": "https://leetcode.com/problems/substring-with-concatenation-of-all-words/",
+    "difficulty": "Hard",
+    "category": "Sliding Window"
+  },
+  "problem_summary": {
+    "summary": "Find all starting positions where a substring is exactly a concatenation of every supplied equal-length word, in any order and with matching multiplicities.",
+    "input_output": "Input: lowercase string s and non-empty words array whose strings share a length. Return all valid start indices in any order.",
+    "constraints": ["1 <= s.length <= 10^4", "1 <= words.length <= 5000", "1 <= words[i].length <= 30", "s and words[i] consist of lowercase English letters"]
+  },
+  "brute_force": {
+    "explanation": "At every possible starting position, split the next total-length segment into word-sized chunks, count those chunks, and compare with the required word counts.",
+    "correctness_idea": "A valid substring must occupy exactly words.length consecutive chunks of the common word length. Checking the count map for every possible start accepts exactly those segments containing each required word with its required multiplicity.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.HashMap;\nimport java.util.List;\nimport java.util.Map;\n\nclass Solution {\n    public List<Integer> findSubstring(String s, String[] words) {\n        List<Integer> result = new ArrayList<>();\n        int wordLength = words[0].length();\n        int totalLength = wordLength * words.length;\n        if (totalLength > s.length()) return result;\n        Map<String, Integer> required = new HashMap<>();\n        for (String word : words) required.put(word, required.getOrDefault(word, 0) + 1);\n        for (int start = 0; start + totalLength <= s.length(); start++) {\n            Map<String, Integer> found = new HashMap<>();\n            int count = 0;\n            while (count < words.length) {\n                int offset = start + count * wordLength;\n                String chunk = s.substring(offset, offset + wordLength);\n                if (!required.containsKey(chunk)) break;\n                found.put(chunk, found.getOrDefault(chunk, 0) + 1);\n                if (found.get(chunk) > required.get(chunk)) break;\n                count++;\n            }\n            if (count == words.length) result.add(start);\n        }\n        return result;\n    }\n}",
+    "time_complexity": "O((n - W + 1) * k * L) worst case — for each feasible start, up to k chunks of length L are extracted and checked; n = s.length, k = words.length, W = k * L.",
+    "space_complexity": "O(u * L) auxiliary — the required and per-start count maps store up to u distinct words and their strings."
+  },
+  "optimized": {
+    "explanation": "For each of the wordLength possible alignment offsets, slide a window by whole words. Add recognized chunks, shrink from the left when a chunk is overrepresented, and record a start whenever the window contains exactly all required words.",
+    "correctness_idea": "Every candidate start belongs to exactly one alignment modulo wordLength. Within that alignment, the window contains only whole chunks. Removing an extra occurrence restores all counts to their allowed limits; a window with words.length chunks and no excess must match the required multiset exactly.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.HashMap;\nimport java.util.List;\nimport java.util.Map;\n\nclass Solution {\n    public List<Integer> findSubstring(String s, String[] words) {\n        List<Integer> result = new ArrayList<>();\n        int wordLength = words[0].length();\n        int wordCount = words.length;\n        int totalLength = wordLength * wordCount;\n        if (totalLength > s.length()) return result;\n        Map<String, Integer> required = new HashMap<>();\n        for (String word : words) required.put(word, required.getOrDefault(word, 0) + 1);\n        for (int alignment = 0; alignment < wordLength; alignment++) {\n            int left = alignment;\n            int used = 0;\n            Map<String, Integer> window = new HashMap<>();\n            for (int right = alignment; right + wordLength <= s.length(); right += wordLength) {\n                String chunk = s.substring(right, right + wordLength);\n                if (!required.containsKey(chunk)) {\n                    window.clear();\n                    used = 0;\n                    left = right + wordLength;\n                    continue;\n                }\n                window.put(chunk, window.getOrDefault(chunk, 0) + 1);\n                used++;\n                while (window.get(chunk) > required.get(chunk)) {\n                    String removed = s.substring(left, left + wordLength);\n                    window.put(removed, window.get(removed) - 1);\n                    left += wordLength;\n                    used--;\n                }\n                if (used == wordCount) {\n                    result.add(left);\n                    String removed = s.substring(left, left + wordLength);\n                    window.put(removed, window.get(removed) - 1);\n                    left += wordLength;\n                    used--;\n                }\n            }\n        }\n        return result;\n    }\n}",
+    "time_complexity": "O(n * L) expected — each aligned chunk enters and leaves its window at most once, with substring creation and hashing proportional to word length L.",
+    "space_complexity": "O(u * L) auxiliary — required and active count maps store distinct word strings; the returned indices are output space."
+  },
+  "dry_run": {
+    "sample_input": {"s": "catdogcat", "words": ["cat", "dog"]},
+    "sample_output": [0, 3],
+    "steps": [
+      {"sequence": 1, "event": "Use alignment 0 and read chunk cat at index 0.", "variables": {"left": 0, "right": 0, "chunk": "cat", "used": 1, "window": {"cat": 1}}, "condition": "cat is required and its count does not exceed the allowed count 1.", "action": "Keep cat in the active window and advance right by one word.", "state_before": {"left": 0, "used": 0, "window": {}}, "state_after": {"left": 0, "used": 1, "window": {"cat": 1}}, "focus": {"string": "catdogcat", "indices": [0, 2]}},
+      {"sequence": 2, "event": "Read chunk dog at index 3.", "variables": {"left": 0, "right": 3, "chunk": "dog", "used": 2, "window": {"cat": 1, "dog": 1}}, "condition": "Both required words occur exactly once and used equals wordCount 2.", "action": "Record start 0, then remove the left cat chunk to allow overlapping candidates.", "state_before": {"left": 0, "used": 1, "window": {"cat": 1}}, "state_after": {"left": 3, "used": 1, "window": {"cat": 0, "dog": 1}, "result": [0]}, "focus": {"string": "catdogcat", "indices": [0, 5]}},
+      {"sequence": 3, "event": "Read chunk cat at index 6.", "variables": {"left": 3, "right": 6, "chunk": "cat", "used": 2, "window": {"cat": 1, "dog": 1}}, "condition": "The window again contains one cat and one dog.", "action": "Record start 3, then move left past dog; finish with results [0, 3].", "state_before": {"left": 3, "used": 1, "window": {"cat": 0, "dog": 1}, "result": [0]}, "state_after": {"left": 6, "used": 1, "window": {"cat": 1, "dog": 0}, "result": [0, 3]}, "focus": {"string": "catdogcat", "indices": [3, 8]}}
+    ],
+    "final_result": [0, 3]
+  },
+  "edge_cases": [
+    {"case": "Total concatenation is longer than s", "handling": "The early length check returns an empty list."},
+    {"case": "Repeated words in words", "handling": "The required map stores multiplicity and excess occurrences force the left edge forward."},
+    {"case": "Unknown chunk interrupts a window", "handling": "The active counts reset and the next aligned word begins a fresh window."},
+    {"case": "Overlapping valid matches", "handling": "After a match, one leftmost word is removed so a later overlapping window can still be found."}
+  ]
+}

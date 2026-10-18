@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "problem_number": 148,
+    "title": "Sort List",
+    "url": "https://leetcode.com/problems/sort-list/",
+    "difficulty": "Medium",
+    "category": "Divide & Conquer"
+  },
+  "problem_summary": {
+    "summary": "Return the input singly linked list sorted in ascending order.",
+    "input_output": "Input: the head of a singly linked list. Return its sorted head; ListNode is provided by the judge.",
+    "constraints": ["0 <= number of nodes <= 5 * 10^4", "-10^5 <= Node.val <= 10^5", "Follow-up: O(n log n) time and O(1) auxiliary memory"]
+  },
+  "brute_force": {
+    "explanation": "Copy node values into an array, sort the array with the standard library, then write the sorted values back into the existing nodes. This provides a simple baseline but uses linear extra storage.",
+    "correctness_idea": "The array contains every list value exactly once. Sorting it orders that complete multiset, and writing values back in list order yields the required ascending sequence without changing the list length.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.Collections;\nimport java.util.List;\n\nclass Solution {\n    public ListNode sortList(ListNode head) {\n        List<Integer> values = new ArrayList<>();\n        for (ListNode node = head; node != null; node = node.next) {\n            values.add(node.val);\n        }\n        Collections.sort(values);\n        ListNode node = head;\n        for (int value : values) {\n            node.val = value;\n            node = node.next;\n        }\n        return head;\n    }\n}",
+    "time_complexity": "O(n log n) for sorting the collected values, with O(n) traversal and rewrite work.",
+    "space_complexity": "O(n) auxiliary space for the copied values; existing list nodes are reused."
+  },
+  "optimized": {
+    "explanation": "Use bottom-up merge sort on linked-list runs of widths 1, 2, 4, and so on. Each pass splits adjacent runs, merges them by relinking nodes, and avoids both value storage and recursive call-stack space.",
+    "correctness_idea": "A merge of two sorted runs is sorted and contains exactly their nodes. Each pass merges adjacent runs of equal width, producing sorted runs twice as long; once the width covers the list, the entire list is sorted.",
+    "language": "java",
+    "code": "class Solution {\n    public ListNode sortList(ListNode head) {\n        if (head == null || head.next == null) {\n            return head;\n        }\n        int length = 0;\n        for (ListNode node = head; node != null; node = node.next) {\n            length++;\n        }\n        ListNode dummy = new ListNode(0);\n        dummy.next = head;\n        for (int width = 1; width < length; width *= 2) {\n            ListNode previous = dummy;\n            ListNode current = dummy.next;\n            while (current != null) {\n                ListNode left = current;\n                ListNode right = split(left, width);\n                current = split(right, width);\n                ListNode mergedHead = null;\n                ListNode mergedTail = null;\n                while (left != null || right != null) {\n                    ListNode selected;\n                    if (right == null || (left != null && left.val <= right.val)) {\n                        selected = left;\n                        left = left.next;\n                    } else {\n                        selected = right;\n                        right = right.next;\n                    }\n                    if (mergedHead == null) {\n                        mergedHead = selected;\n                    } else {\n                        mergedTail.next = selected;\n                    }\n                    mergedTail = selected;\n                }\n                previous.next = mergedHead;\n                mergedTail.next = current;\n                previous = mergedTail;\n            }\n        }\n        return dummy.next;\n    }\n\n    private ListNode split(ListNode head, int width) {\n        if (head == null) {\n            return null;\n        }\n        for (int count = 1; count < width && head.next != null; count++) {\n            head = head.next;\n        }\n        ListNode remainder = head.next;\n        head.next = null;\n        return remainder;\n    }\n}",
+    "time_complexity": "O(n log n) — each bottom-up pass processes every node once and there are O(log n) passes.",
+    "space_complexity": "O(1) auxiliary space apart from a fixed number of pointers and one dummy node; the algorithm is iterative and relinks the input nodes."
+  },
+  "dry_run": {
+    "sample_input": {"list": [4, 1, 3, 2]},
+    "sample_output": [1, 2, 3, 4],
+    "steps": [
+      {"sequence": 1, "event": "First pass with run width 1.", "variables": {"width": 1, "leftRun": [4], "rightRun": [1]}, "condition": "Both runs contain at most one node and are individually sorted.", "action": "Relink the merged pair as [1,4], then merge [3] and [2] as [2,3].", "state_before": {"list": [4, 1, 3, 2], "sortedRunWidth": 1}, "state_after": {"list": [1, 4, 2, 3], "sortedRunWidth": 2}},
+      {"sequence": 2, "event": "Second pass with run width 2.", "variables": {"width": 2, "leftRun": [1, 4], "rightRun": [2, 3]}, "condition": "Both adjacent runs are sorted.", "action": "Repeatedly choose the smaller head and relink nodes in order 1, 2, 3, 4.", "state_before": {"list": [1, 4, 2, 3], "sortedRunWidth": 2}, "state_after": {"list": [1, 2, 3, 4], "sortedRunWidth": 4}},
+      {"sequence": 3, "event": "Stop after the width-4 pass.", "variables": {"width": 4, "length": 4}, "condition": "width is no longer less than length.", "action": "Return the dummy head's next node.", "state_before": {"list": [1, 2, 3, 4]}, "state_after": {"returned_list": [1, 2, 3, 4]}}
+    ],
+    "final_result": [1, 2, 3, 4]
+  },
+  "edge_cases": [
+    {"case": "Empty or one-node list", "handling": "Returned immediately because it is already sorted."},
+    {"case": "Uneven final run", "handling": "split returns null or a shorter run, and merging accepts either run ending first."},
+    {"case": "Repeated values", "handling": "The <= comparison consistently takes from the left run first, preserving all values and stable order."}
+  ]
+}

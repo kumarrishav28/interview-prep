@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 66,
+    "title": "Plus One",
+    "url": "https://leetcode.com/problems/plus-one/",
+    "difficulty": "Easy",
+    "category": "Math"
+  },
+  "problem_summary": {
+    "summary": "Increment by one a non-negative integer stored as its decimal digits from most significant to least significant.",
+    "input_output": "Input: a nonempty digit array with no leading zero. Return the resulting digit array.",
+    "constraints": ["1 <= digits.length <= 100", "0 <= digits[i] <= 9", "digits has no leading zero"]
+  },
+  "brute_force": {
+    "explanation": "Convert the digit sequence to a BigInteger, add one, and convert the result back to digits. This simple numeric formulation handles values longer than any primitive type, but allocates large integer and string representations.",
+    "correctness_idea": "The digit array represents the exact nonnegative integer. BigInteger addition computes that integer plus one without overflow, and converting its decimal representation back preserves the required encoding.",
+    "language": "java",
+    "code": "import java.math.BigInteger;\n\nclass Solution {\n    public int[] plusOne(int[] digits) {\n        StringBuilder text = new StringBuilder();\n        for (int digit : digits) {\n            text.append(digit);\n        }\n        String incremented = new BigInteger(text.toString()).add(BigInteger.ONE).toString();\n        int[] result = new int[incremented.length()];\n        for (int index = 0; index < incremented.length(); index++) {\n            result[index] = incremented.charAt(index) - '0';\n        }\n        return result;\n    }\n}",
+    "time_complexity": "O(n) digit work, excluding the implementation-dependent cost of BigInteger arithmetic; n is digits.length.",
+    "space_complexity": "O(n) auxiliary for the BigInteger and temporary decimal strings, in addition to the returned array."
+  },
+  "optimized": {
+    "explanation": "Walk from the least significant digit leftward. Turn each trailing 9 into 0; at the first non-9 digit, increment it and return. If every digit was 9, create a new array one digit longer with leading 1.",
+    "correctness_idea": "Decimal addition by one propagates a carry through exactly the trailing 9s. The first non-9 absorbs the carry and ends propagation; if none exists, the carry becomes a new leading digit.",
+    "language": "java",
+    "code": "class Solution {\n    public int[] plusOne(int[] digits) {\n        for (int index = digits.length - 1; index >= 0; index--) {\n            if (digits[index] < 9) {\n                digits[index]++;\n                return digits;\n            }\n            digits[index] = 0;\n        }\n        int[] result = new int[digits.length + 1];\n        result[0] = 1;\n        return result;\n    }\n}",
+    "time_complexity": "O(n) worst case; the scan may pass through every digit and the all-9 case allocates a result array.",
+    "space_complexity": "O(1) auxiliary when a digit absorbs the carry; O(n) for the new output array when all digits are 9."
+  },
+  "dry_run": {
+    "sample_input": {"digits": [2, 9, 9]},
+    "sample_output": [3, 0, 0],
+    "steps": [
+      {"sequence": 1, "event": "Inspect the least significant digit at index 2.", "variables": {"index": 2, "digit": 9}, "condition": "The current digit is 9, so adding one leaves a carry.", "action": "Set digits[2] to 0 and continue left.", "state_before": {"digits": [2, 9, 9]}, "state_after": {"digits": [2, 9, 0]}},
+      {"sequence": 2, "event": "Inspect index 1 after carrying.", "variables": {"index": 1, "digit": 9}, "condition": "This digit is also 9, so the carry continues.", "action": "Set digits[1] to 0 and continue left.", "state_before": {"digits": [2, 9, 0]}, "state_after": {"digits": [2, 0, 0]}},
+      {"sequence": 3, "event": "Inspect index 0.", "variables": {"index": 0, "digit": 2}, "condition": "2 is less than 9 and can absorb the carry.", "action": "Increment it to 3 and return the same array.", "state_before": {"digits": [2, 0, 0]}, "state_after": {"digits": [3, 0, 0]}}
+    ],
+    "final_result": [3, 0, 0]
+  },
+  "edge_cases": [
+    {"case": "A single digit below 9", "handling": "The optimized method increments it in place and returns the one-element array."},
+    {"case": "One or more trailing 9s", "handling": "Each 9 becomes 0 until a digit can take the carry."},
+    {"case": "Every digit is 9", "handling": "The method returns a new array containing a leading 1 followed by zeros."},
+    {"case": "Up to 100 digits", "handling": "The baseline uses BigInteger rather than a fixed-width primitive; the optimized method works directly on the array."}
+  ]
+}

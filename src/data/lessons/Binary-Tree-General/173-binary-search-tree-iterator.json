@@ -1,0 +1,36 @@
+{
+  "metadata": {"problem_number": 173, "title": "Binary Search Tree Iterator", "url": "https://leetcode.com/problems/binary-search-tree-iterator/", "difficulty": "Medium", "category": "Binary Tree General"},
+  "problem_summary": {"summary": "Implement an iterator that returns BST values in ascending in-order order.", "input_output": "Input: a BST root at construction. BSTIterator supports boolean hasNext() and int next(); next calls are guaranteed valid.", "constraints": ["1 <= number of nodes <= 10^5", "0 <= Node.val <= 10^6", "At most 10^5 calls to hasNext and next", "Follow-up: average O(1) operation time and O(h) memory"]},
+  "brute_force": {
+    "explanation": "Materialize the entire in-order traversal at construction, then advance an array index for each next call.",
+    "correctness_idea": "In-order traversal of a BST lists its values in sorted order. Sequentially returning that list therefore matches the required iterator order.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.ArrayList;\nimport java.util.Deque;\nimport java.util.List;\n\nclass BSTIterator {\n    private final List<Integer> values = new ArrayList<>();\n    private int index;\n\n    public BSTIterator(TreeNode root) {\n        Deque<TreeNode> stack = new ArrayDeque<>();\n        TreeNode current = root;\n        while (current != null || !stack.isEmpty()) {\n            while (current != null) {\n                stack.push(current);\n                current = current.left;\n            }\n            current = stack.pop();\n            values.add(current.val);\n            current = current.right;\n        }\n    }\n\n    public int next() {\n        return values.get(index++);\n    }\n\n    public boolean hasNext() {\n        return index < values.size();\n    }\n}",
+    "time_complexity": "O(n) constructor time; O(1) per next and hasNext call.",
+    "space_complexity": "O(n) auxiliary for all stored values and the iterative traversal stack."
+  },
+  "optimized": {
+    "explanation": "Keep a stack of the path to the next smallest unvisited node. Initially push the root's left spine; after popping a node, push the left spine of its right subtree.",
+    "correctness_idea": "The stack top is the next node in in-order traversal: it is the smallest unvisited node on the current search path. Pushing the right child's left spine schedules exactly the nodes that follow the popped node.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.Deque;\n\nclass BSTIterator {\n    private final Deque<TreeNode> stack = new ArrayDeque<>();\n\n    public BSTIterator(TreeNode root) {\n        pushLeft(root);\n    }\n\n    private void pushLeft(TreeNode node) {\n        while (node != null) {\n            stack.push(node);\n            node = node.left;\n        }\n    }\n\n    public int next() {\n        TreeNode node = stack.pop();\n        pushLeft(node.right);\n        return node.val;\n    }\n\n    public boolean hasNext() {\n        return !stack.isEmpty();\n    }\n}",
+    "time_complexity": "O(1) amortized per next call because each node is pushed and popped once; O(1) per hasNext.",
+    "space_complexity": "O(h) auxiliary for the active root-to-leaf path."
+  },
+  "dry_run": {
+    "sample_input": {"bst_level_order": [8, 4, 12, 2, 6, 10, 14], "operations": ["next", "next", "hasNext", "next"]},
+    "sample_output": [2, 4, true, 6],
+    "steps": [
+      {"sequence": 1, "event": "Initialize by pushing the left spine.", "variables": {"visited": []}, "condition": "Starting from 8, descend through 4 to 2.", "action": "Push nodes 8, 4, 2; top is 2.", "state_before": {"stack": []}, "state_after": {"stackTopFirst": [2, 4, 8]}},
+      {"sequence": 2, "event": "Call next().", "variables": {"popped": 2, "rightChild": null}, "condition": "2 has no right subtree.", "action": "Return 2; stack top is now 4.", "state_before": {"stackTopFirst": [2, 4, 8]}, "state_after": {"stackTopFirst": [4, 8], "returned": 2}},
+      {"sequence": 3, "event": "Call next() again.", "variables": {"popped": 4, "rightChild": 6}, "condition": "The right subtree's left spine is just node 6.", "action": "Push 6 and return 4.", "state_before": {"stackTopFirst": [4, 8]}, "state_after": {"stackTopFirst": [6, 8], "returned": 4}},
+      {"sequence": 4, "event": "Call hasNext(), then next().", "variables": {"stackTop": 6}, "condition": "The stack is nonempty.", "action": "Return true, then pop and return 6.", "state_before": {"stackTopFirst": [6, 8]}, "state_after": {"stackTopFirst": [8], "returned": [true, 6]}}
+    ],
+    "final_result": [2, 4, true, 6]
+  },
+  "edge_cases": [
+    {"case": "Single-node BST", "handling": "The node is pushed and returned once, after which hasNext is false."},
+    {"case": "Highly skewed BST", "handling": "The stack may contain O(n) nodes, which is O(h) for this shape."},
+    {"case": "A popped node has a right subtree", "handling": "Its left spine is pushed before the next call, preserving sorted order."}
+  ]
+}

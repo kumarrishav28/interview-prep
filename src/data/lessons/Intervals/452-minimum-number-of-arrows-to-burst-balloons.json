@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "problem_number": 452,
+    "title": "Minimum Number of Arrows to Burst Balloons",
+    "url": "https://leetcode.com/problems/minimum-number-of-arrows-to-burst-balloons/",
+    "difficulty": "Medium",
+    "category": "Intervals"
+  },
+  "problem_summary": {
+    "summary": "Choose the fewest horizontal coordinates for vertical arrows so every balloon interval contains at least one chosen coordinate.",
+    "input_output": "Input: points, where each [start, end] is a closed horizontal interval. Return the minimum arrow count.",
+    "constraints": ["1 <= points.length <= 10^5", "points[i].length == 2", "-2^31 <= start < end <= 2^31 - 1"]
+  },
+  "brute_force": {
+    "explanation": "Repeatedly find the unburst balloon with the earliest end, shoot at that end, and scan all balloons to mark every interval containing the arrow coordinate.",
+    "correctness_idea": "For the earliest-ending remaining balloon, any feasible solution must choose a point no later than its end and inside it. Moving that solution's first arrow to this balloon's end cannot lose coverage of any interval it previously hit that also remains; this is the standard earliest-finish greedy choice. The repeated full scans are only an inefficient way to find and remove covered intervals.",
+    "language": "java",
+    "code": "class Solution {\n    public int findMinArrowShots(int[][] points) {\n        int count = 0;\n        boolean[] burst = new boolean[points.length];\n        int remaining = points.length;\n        while (remaining > 0) {\n            int earliest = -1;\n            for (int index = 0; index < points.length; index++) {\n                if (!burst[index] && (earliest == -1 || points[index][1] < points[earliest][1])) {\n                    earliest = index;\n                }\n            }\n            int arrow = points[earliest][1];\n            count++;\n            for (int index = 0; index < points.length; index++) {\n                if (!burst[index] && points[index][0] <= arrow && arrow <= points[index][1]) {\n                    burst[index] = true;\n                    remaining--;\n                }\n            }\n        }\n        return count;\n    }\n}",
+    "time_complexity": "O(n^2) in the worst case: each arrow selection scans all balloons, and there can be n arrows.",
+    "space_complexity": "O(n) for the burst markers."
+  },
+  "optimized": {
+    "explanation": "Sort balloons by ending coordinate. Shoot the first arrow at the earliest end; every later balloon whose start is greater than the last arrow needs a new arrow at its end.",
+    "correctness_idea": "A balloon starting at or before the chosen arrow is covered because its end is at least as late as the current sorted end. If its start is later, no previous arrow can hit it, so another arrow is necessary; choosing its own end maximizes the chance of covering following balloons.",
+    "language": "java",
+    "code": "import java.util.Arrays;\n\nclass Solution {\n    public int findMinArrowShots(int[][] points) {\n        Arrays.sort(points, (first, second) -> Integer.compare(first[1], second[1]));\n        int arrows = 1;\n        int arrowPosition = points[0][1];\n        for (int index = 1; index < points.length; index++) {\n            if (points[index][0] > arrowPosition) {\n                arrows++;\n                arrowPosition = points[index][1];\n            }\n        }\n        return arrows;\n    }\n}",
+    "time_complexity": "O(n log n) for sorting and O(n) for the scan.",
+    "space_complexity": "O(1) auxiliary space beyond the sort implementation's temporary storage."
+  },
+  "dry_run": {
+    "sample_input": {"points": [[1, 5], [2, 4], [4, 7], [8, 10]]},
+    "sample_output": 2,
+    "steps": [
+      {"sequence": 1, "event": "Sort by end coordinate", "variables": {"points": [[2, 4], [1, 5], [4, 7], [8, 10]]}, "condition": "The earliest finishing interval is [2,4].", "action": "Shoot the first arrow at 4.", "state_before": {"arrows": 0}, "state_after": {"arrows": 1, "arrowPosition": 4}},
+      {"sequence": 2, "event": "Check [1,5]", "variables": {"interval": [1, 5], "arrowPosition": 4}, "condition": "1 <= 4.", "action": "The existing arrow bursts this balloon.", "state_before": {"arrows": 1, "arrowPosition": 4}, "state_after": {"arrows": 1, "arrowPosition": 4}},
+      {"sequence": 3, "event": "Check [4,7]", "variables": {"interval": [4, 7], "arrowPosition": 4}, "condition": "4 is not greater than 4; endpoint contact counts.", "action": "Keep the current arrow.", "state_before": {"arrows": 1, "arrowPosition": 4}, "state_after": {"arrows": 1, "arrowPosition": 4}},
+      {"sequence": 4, "event": "Check [8,10]", "variables": {"interval": [8, 10], "arrowPosition": 4}, "condition": "8 > 4.", "action": "Shoot a second arrow at this interval's end, 10.", "state_before": {"arrows": 1, "arrowPosition": 4}, "state_after": {"arrows": 2, "arrowPosition": 10}}
+    ],
+    "final_result": 2
+  },
+  "edge_cases": [
+    {"case": "One balloon", "handling": "Exactly one arrow is placed at its end."},
+    {"case": "Intervals share an endpoint", "handling": "One arrow at that coordinate bursts both closed intervals."},
+    {"case": "Disjoint intervals", "handling": "Each separated interval requires a distinct arrow."},
+    {"case": "Coordinates near integer limits", "handling": "The comparator uses Integer.compare rather than subtraction, avoiding overflow."}
+  ]
+}

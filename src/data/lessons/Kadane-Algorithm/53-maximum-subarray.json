@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "problem_number": 53,
+    "title": "Maximum Subarray",
+    "url": "https://leetcode.com/problems/maximum-subarray/",
+    "difficulty": "Medium",
+    "category": "Kadane's Algorithm"
+  },
+  "problem_summary": {
+    "summary": "Find the largest sum among all non-empty contiguous subarrays of an integer array.",
+    "input_output": "Input: a non-empty integer array nums. Return the maximum sum of any non-empty contiguous subarray.",
+    "constraints": ["1 <= nums.length <= 10^5", "-10^4 <= nums[i] <= 10^4"]
+  },
+  "brute_force": {
+    "explanation": "Choose every possible start index, extend the subarray one element at a time while maintaining its sum, and keep the largest sum seen. This is a useful direct baseline because it enumerates every candidate subarray without recomputing its sum from scratch.",
+    "correctness_idea": "Every non-empty contiguous subarray has a unique start and end. The nested loops visit each such pair and compare its sum with the current maximum, so the maximum candidate is returned.",
+    "language": "java",
+    "code": "class Solution {\n    public int maxSubArray(int[] nums) {\n        int best = Integer.MIN_VALUE;\n        for (int start = 0; start < nums.length; start++) {\n            int sum = 0;\n            for (int end = start; end < nums.length; end++) {\n                sum += nums[end];\n                best = Math.max(best, sum);\n            }\n        }\n        return best;\n    }\n}",
+    "time_complexity": "O(n^2) — there are n possible starts and up to n extensions for each start.",
+    "space_complexity": "O(1) auxiliary — only indices, a running sum, and the best sum are stored."
+  },
+  "optimized": {
+    "explanation": "Scan once, maintaining the best subarray sum that must end at the current index. Either extend the previous ending subarray or start fresh at the current value; update the global best after each choice.",
+    "correctness_idea": "Any maximum subarray ending at the current value either includes the best subarray ending immediately before it, or starts at the current value. These are the only possibilities. Considering the larger one at each index and retaining the best over all endpoints finds the global maximum, including when every value is negative.",
+    "language": "java",
+    "code": "class Solution {\n    public int maxSubArray(int[] nums) {\n        int current = nums[0];\n        int best = nums[0];\n        for (int index = 1; index < nums.length; index++) {\n            current = Math.max(nums[index], current + nums[index]);\n            best = Math.max(best, current);\n        }\n        return best;\n    }\n}",
+    "time_complexity": "O(n) — each element is processed once.",
+    "space_complexity": "O(1) auxiliary — only the current-ending sum and global best are maintained."
+  },
+  "dry_run": {
+    "sample_input": {"nums": [-2, 3, -1, 4, -5, 2]},
+    "sample_output": 6,
+    "steps": [
+      {"sequence": 1, "event": "Initialize from nums[0] = -2.", "variables": {"index": 0, "value": -2, "current": -2, "best": -2}, "condition": "The first element is the only subarray ending at index 0.", "action": "Set both current and best to -2.", "state_before": {"current": null, "best": null}, "state_after": {"current": -2, "best": -2}, "focus": {"array": "nums", "indices": [0]}},
+      {"sequence": 2, "event": "Process index 1, value 3.", "variables": {"index": 1, "value": 3, "extend": 1, "current": 3, "best": 3}, "condition": "Starting fresh at 3 is better than extending -2, which gives 1.", "action": "Set current to 3 and update best to 3.", "state_before": {"current": -2, "best": -2}, "state_after": {"current": 3, "best": 3}, "focus": {"array": "nums", "indices": [0, 1]}},
+      {"sequence": 3, "event": "Process index 2, value -1.", "variables": {"index": 2, "value": -1, "extend": 2, "current": 2, "best": 3}, "condition": "Extending gives 3 + (-1) = 2, which is better than starting at -1.", "action": "Keep current at 2; best remains 3.", "state_before": {"current": 3, "best": 3}, "state_after": {"current": 2, "best": 3}, "focus": {"array": "nums", "indices": [1, 2]}},
+      {"sequence": 4, "event": "Process index 3, value 4.", "variables": {"index": 3, "value": 4, "extend": 6, "current": 6, "best": 6}, "condition": "Extending gives 2 + 4 = 6, which is better than starting at 4.", "action": "Set current and best to 6; this subarray is [3, -1, 4].", "state_before": {"current": 2, "best": 3}, "state_after": {"current": 6, "best": 6}, "focus": {"array": "nums", "indices": [1, 3]}},
+      {"sequence": 5, "event": "Process index 4, value -5.", "variables": {"index": 4, "value": -5, "extend": 1, "current": 1, "best": 6}, "condition": "Extending gives 6 + (-5) = 1, better than starting at -5.", "action": "Keep current at 1; best remains 6.", "state_before": {"current": 6, "best": 6}, "state_after": {"current": 1, "best": 6}, "focus": {"array": "nums", "indices": [3, 4]}},
+      {"sequence": 6, "event": "Process index 5, value 2.", "variables": {"index": 5, "value": 2, "extend": 3, "current": 3, "best": 6}, "condition": "Extending gives 1 + 2 = 3, better than starting at 2.", "action": "Keep current at 3 and return the global best 6.", "state_before": {"current": 1, "best": 6}, "state_after": {"current": 3, "best": 6}, "focus": {"array": "nums", "indices": [4, 5]}}
+    ],
+    "final_result": 6
+  },
+  "edge_cases": [
+    {"case": "All values are negative", "handling": "Initializing from nums[0] rather than zero ensures the result is the largest actual element, not an empty-subarray sum."},
+    {"case": "One element", "handling": "Both running values initialize to that element and it is returned."},
+    {"case": "A negative prefix precedes the best run", "handling": "When extending would be worse than starting at the current element, Kadane's recurrence resets the running sum there."}
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 172,
+    "title": "Factorial Trailing Zeroes",
+    "url": "https://leetcode.com/problems/factorial-trailing-zeroes/",
+    "difficulty": "Medium",
+    "category": "Math"
+  },
+  "problem_summary": {
+    "summary": "Count the decimal zeroes at the end of n factorial.",
+    "input_output": "Input: a nonnegative integer n. Return the number of trailing zeroes in n!.",
+    "constraints": ["0 <= n <= 10^4"]
+  },
+  "brute_force": {
+    "explanation": "For every factor from 1 through n, repeatedly remove factors of 5 and count them. Each factor of 5 can pair with a factor of 2 to form one trailing decimal zero; factorials contain enough factors of 2, so only the fives need counting.",
+    "correctness_idea": "Every trailing zero requires one factor of 10, hence one factor of 5. The nested counting finds every factor of 5 contributed by every integer in the factorial exactly once, including extra factors in multiples such as 25.",
+    "language": "java",
+    "code": "class Solution {\n    public int trailingZeroes(int n) {\n        int count = 0;\n        for (int value = 1; value <= n; value++) {\n            int remaining = value;\n            while (remaining % 5 == 0) {\n                count++;\n                remaining /= 5;\n            }\n        }\n        return count;\n    }\n}",
+    "time_complexity": "O(n log_5 n) worst case, since each value may be divided by 5 once per factor of 5 it contains.",
+    "space_complexity": "O(1) auxiliary."
+  },
+  "optimized": {
+    "explanation": "Repeatedly divide n by 5 and add each quotient. The first quotient counts multiples of 5, the next counts multiples of 25 for their additional factor, and later quotients account for higher powers.",
+    "correctness_idea": "The exponent of 5 in n! is the sum of floor(n / 5^k) for all positive k. Because factors of 2 are more plentiful than factors of 5 in n!, that exponent is exactly the number of trailing zeroes.",
+    "language": "java",
+    "code": "class Solution {\n    public int trailingZeroes(int n) {\n        int count = 0;\n        while (n > 0) {\n            n /= 5;\n            count += n;\n        }\n        return count;\n    }\n}",
+    "time_complexity": "O(log_5 n) for n > 0; O(1) when n is zero.",
+    "space_complexity": "O(1) auxiliary."
+  },
+  "dry_run": {
+    "sample_input": {"n": 30},
+    "sample_output": 7,
+    "steps": [
+      {"sequence": 1, "event": "Count multiples of 5.", "variables": {"nBeforeDivision": 30, "quotient": 6, "count": 6}, "condition": "Each of 5, 10, 15, 20, 25, and 30 contributes at least one factor of 5.", "action": "Divide n by 5 and add 6 to the count.", "state_before": {"n": 30, "count": 0}, "state_after": {"n": 6, "count": 6}},
+      {"sequence": 2, "event": "Count additional factors from multiples of 25.", "variables": {"nBeforeDivision": 6, "quotient": 1, "count": 7}, "condition": "25 contributes one additional factor of 5; 30 and the other values do not.", "action": "Divide n by 5 again and add 1.", "state_before": {"n": 6, "count": 6}, "state_after": {"n": 1, "count": 7}},
+      {"sequence": 3, "event": "Check the next power of 5.", "variables": {"nBeforeDivision": 1, "quotient": 0, "count": 7}, "condition": "No integer from 1 through 30 contributes a factor of 125.", "action": "Divide to zero, add zero, and return 7.", "state_before": {"n": 1, "count": 7}, "state_after": {"n": 0, "count": 7}}
+    ],
+    "final_result": 7
+  },
+  "edge_cases": [
+    {"case": "n is 0 through 4", "handling": "No factor of 5 occurs, so the result is zero."},
+    {"case": "n is a multiple of 5 but not 25", "handling": "The first division counts its one factor of 5."},
+    {"case": "n is at least 25", "handling": "Further divisions add extra factors from powers such as 25 and 125."},
+    {"case": "Large n within the constraints", "handling": "The optimized method avoids constructing n! and runs in logarithmic time."}
+  ]
+}

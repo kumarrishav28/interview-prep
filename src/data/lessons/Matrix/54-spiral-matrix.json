@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "problem_number": 54,
+    "title": "Spiral Matrix",
+    "url": "https://leetcode.com/problems/spiral-matrix/",
+    "difficulty": "Medium",
+    "category": "Matrix"
+  },
+  "problem_summary": {
+    "summary": "Return the entries of a rectangular matrix in clockwise spiral order, moving around the outer boundary before working inward.",
+    "input_output": "Input: an m x n integer matrix. Return a list containing every matrix value exactly once in clockwise spiral order.",
+    "constraints": ["m == matrix.length", "n == matrix[i].length", "1 <= m, n <= 10", "-100 <= matrix[i][j] <= 100"]
+  },
+  "brute_force": {
+    "explanation": "Walk with direction vectors (right, down, left, up), marking each visited cell. When the next position is outside the matrix or already visited, turn clockwise.",
+    "correctness_idea": "The direction changes only at a boundary or previously visited cell, which traces one unbroken clockwise spiral and prevents revisiting positions.",
+    "language": "java",
+    "code": "import java.util.*;\n\nclass Solution {\n    public List<Integer> spiralOrder(int[][] matrix) {\n        int rows = matrix.length;\n        int cols = matrix[0].length;\n        boolean[][] visited = new boolean[rows][cols];\n        int[] rowStep = {0, 1, 0, -1};\n        int[] colStep = {1, 0, -1, 0};\n        List<Integer> order = new ArrayList<>();\n        int row = 0;\n        int col = 0;\n        int direction = 0;\n        for (int count = 0; count < rows * cols; count++) {\n            order.add(matrix[row][col]);\n            visited[row][col] = true;\n            int nextRow = row + rowStep[direction];\n            int nextCol = col + colStep[direction];\n            if (nextRow < 0 || nextRow >= rows || nextCol < 0 || nextCol >= cols || visited[nextRow][nextCol]) {\n                direction = (direction + 1) % 4;\n            }\n            row += rowStep[direction];\n            col += colStep[direction];\n        }\n        return order;\n    }\n}",
+    "time_complexity": "O(mn) — each cell is appended once.",
+    "space_complexity": "O(mn) auxiliary for the visited table, excluding the required output list."
+  },
+  "optimized": {
+    "explanation": "Maintain top, bottom, left, and right boundaries. Traverse the top row, right column, bottom row, and left column, shrinking the corresponding boundary after each pass. Guard the reverse passes because a final single row or column may remain.",
+    "correctness_idea": "Each pass emits one still-unvisited edge of the remaining rectangle and then removes that edge from future consideration. The boundary inequalities stop after every matrix cell has been emitted.",
+    "language": "java",
+    "code": "import java.util.*;\n\nclass Solution {\n    public List<Integer> spiralOrder(int[][] matrix) {\n        List<Integer> order = new ArrayList<>();\n        int top = 0;\n        int bottom = matrix.length - 1;\n        int left = 0;\n        int right = matrix[0].length - 1;\n        while (top <= bottom && left <= right) {\n            for (int col = left; col <= right; col++) order.add(matrix[top][col]);\n            top++;\n            for (int row = top; row <= bottom; row++) order.add(matrix[row][right]);\n            right--;\n            if (top <= bottom) {\n                for (int col = right; col >= left; col--) order.add(matrix[bottom][col]);\n                bottom--;\n            }\n            if (left <= right) {\n                for (int row = bottom; row >= top; row--) order.add(matrix[row][left]);\n                left++;\n            }\n        }\n        return order;\n    }\n}",
+    "time_complexity": "O(mn) — each value is appended exactly once.",
+    "space_complexity": "O(1) auxiliary beyond the required O(mn) output list; only four boundaries and loop variables are used."
+  },
+  "dry_run": {
+    "sample_input": {"matrix": [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]},
+    "sample_output": [1, 2, 3, 4, 8, 12, 11, 10, 9, 5, 6, 7],
+    "steps": [
+      {"sequence": 1, "event": "Traverse the top edge, row 0, columns 0 through 3.", "variables": {"top": 0, "bottom": 2, "left": 0, "right": 3}, "condition": "top <= bottom and left <= right.", "action": "Append [1,2,3,4], then increment top.", "state_before": {"order": [], "boundaries": {"top": 0, "bottom": 2, "left": 0, "right": 3}}, "state_after": {"order": [1, 2, 3, 4], "boundaries": {"top": 1, "bottom": 2, "left": 0, "right": 3}}, "focus": {"matrixCells": [[0, 0], [0, 1], [0, 2], [0, 3]]}},
+      {"sequence": 2, "event": "Traverse the right edge, column 3, rows 1 through 2.", "variables": {"top": 1, "bottom": 2, "left": 0, "right": 3}, "condition": "Rows 1 and 2 remain within the current top and bottom.", "action": "Append [8,12], then decrement right.", "state_before": {"order": [1, 2, 3, 4], "boundaries": {"top": 1, "bottom": 2, "left": 0, "right": 3}}, "state_after": {"order": [1, 2, 3, 4, 8, 12], "boundaries": {"top": 1, "bottom": 2, "left": 0, "right": 2}}, "focus": {"matrixCells": [[1, 3], [2, 3]]}},
+      {"sequence": 3, "event": "Traverse the bottom edge, row 2, columns 2 down through 0.", "variables": {"top": 1, "bottom": 2, "left": 0, "right": 2}, "condition": "top <= bottom, so the bottom edge has not already been consumed.", "action": "Append [11,10,9], then decrement bottom.", "state_before": {"order": [1, 2, 3, 4, 8, 12], "boundaries": {"top": 1, "bottom": 2, "left": 0, "right": 2}}, "state_after": {"order": [1, 2, 3, 4, 8, 12, 11, 10, 9], "boundaries": {"top": 1, "bottom": 1, "left": 0, "right": 2}}, "focus": {"matrixCells": [[2, 2], [2, 1], [2, 0]]}},
+      {"sequence": 4, "event": "Traverse the left edge, column 0, row 1.", "variables": {"top": 1, "bottom": 1, "left": 0, "right": 2}, "condition": "left <= right; row 1 remains between top and bottom.", "action": "Append [5], then increment left.", "state_before": {"order": [1, 2, 3, 4, 8, 12, 11, 10, 9], "boundaries": {"top": 1, "bottom": 1, "left": 0, "right": 2}}, "state_after": {"order": [1, 2, 3, 4, 8, 12, 11, 10, 9, 5], "boundaries": {"top": 1, "bottom": 1, "left": 1, "right": 2}}, "focus": {"matrixCells": [[1, 0]]}},
+      {"sequence": 5, "event": "The remaining rectangle is row 1, columns 1 through 2.", "variables": {"top": 1, "bottom": 1, "left": 1, "right": 2}, "condition": "The outer loop still holds; after the top pass, top becomes 2, so the bottom pass is skipped. The left-edge loop is empty because bottom < top.", "action": "Append [6,7], then finish the remaining boundary updates: top becomes 2, right becomes 1, and left becomes 2. The outer condition is now false.", "state_before": {"order": [1, 2, 3, 4, 8, 12, 11, 10, 9, 5], "boundaries": {"top": 1, "bottom": 1, "left": 1, "right": 2}}, "state_after": {"order": [1, 2, 3, 4, 8, 12, 11, 10, 9, 5, 6, 7], "boundaries": {"top": 2, "bottom": 1, "left": 2, "right": 1}}, "focus": {"matrixCells": [[1, 1], [1, 2]]}}
+    ],
+    "final_result": [1, 2, 3, 4, 8, 12, 11, 10, 9, 5, 6, 7]
+  },
+  "edge_cases": [
+    {"case": "Single row", "handling": "The top pass consumes it; boundary checks skip duplicate reverse traversal."},
+    {"case": "Single column", "handling": "The right pass consumes it; boundary checks prevent revisiting it from the left."},
+    {"case": "One remaining center cell", "handling": "It is appended by the top pass and the now-crossed boundaries end the loop."}
+  ]
+}

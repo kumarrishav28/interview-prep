@@ -1,0 +1,36 @@
+{
+  "metadata": {"problem_number": 207, "title": "Course Schedule", "url": "https://leetcode.com/problems/course-schedule/", "difficulty": "Medium", "category": "Graph General"},
+  "problem_summary": {"summary": "Determine whether all courses can be completed given directed prerequisite requirements.", "input_output": "Input: numCourses and pairs [course, prerequisite]. Return true exactly when the prerequisite graph has no directed cycle.", "constraints": ["1 <= numCourses <= 2000", "0 <= prerequisites.length <= 5000", "Each pair has two course indices in [0, numCourses)", "Prerequisite pairs are unique"]},
+  "brute_force": {
+    "explanation": "Build edges from each prerequisite to the course that depends on it, then use recursive DFS with three states: unvisited, active, and finished. Reaching an active node exposes a cycle.",
+    "correctness_idea": "A directed cycle means each course in that cycle depends transitively on another course in the same cycle, making completion impossible. DFS marks a node active along the current path, so a back-edge to an active node detects exactly such a cycle; finishing all searches proves acyclicity.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass Solution {\n    public boolean canFinish(int numCourses, int[][] prerequisites) {\n        List<List<Integer>> graph = new ArrayList<>();\n        for (int course = 0; course < numCourses; course++) graph.add(new ArrayList<>());\n        for (int[] pair : prerequisites) graph.get(pair[1]).add(pair[0]);\n        int[] state = new int[numCourses];\n        for (int course = 0; course < numCourses; course++) {\n            if (state[course] == 0 && hasCycle(course, graph, state)) return false;\n        }\n        return true;\n    }\n    private boolean hasCycle(int course, List<List<Integer>> graph, int[] state) {\n        if (state[course] == 1) return true;\n        if (state[course] == 2) return false;\n        state[course] = 1;\n        for (int next : graph.get(course)) if (hasCycle(next, graph, state)) return true;\n        state[course] = 2;\n        return false;\n    }\n}",
+    "time_complexity": "O(V + E), where V is numCourses and E is the number of prerequisites.",
+    "space_complexity": "O(V + E) for the graph and state array, plus O(V) worst-case recursion stack."
+  },
+  "optimized": {
+    "explanation": "Use Kahn's topological-sort algorithm: count incoming prerequisite edges for each course, enqueue every course with indegree zero, and remove its outgoing edges as it is completed. All courses are finishable exactly when all are removed.",
+    "correctness_idea": "An indegree-zero course has no remaining prerequisite and is safe to complete next. Removing completed courses preserves the remaining dependency graph. A directed cycle leaves every course in that cycle with positive indegree, so the queue cannot process all courses.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.ArrayList;\nimport java.util.List;\nimport java.util.Queue;\n\nclass Solution {\n    public boolean canFinish(int numCourses, int[][] prerequisites) {\n        List<List<Integer>> graph = new ArrayList<>();\n        int[] indegree = new int[numCourses];\n        for (int course = 0; course < numCourses; course++) graph.add(new ArrayList<>());\n        for (int[] pair : prerequisites) { graph.get(pair[1]).add(pair[0]); indegree[pair[0]]++; }\n        Queue<Integer> ready = new ArrayDeque<>();\n        for (int course = 0; course < numCourses; course++) if (indegree[course] == 0) ready.offer(course);\n        int completed = 0;\n        while (!ready.isEmpty()) {\n            int course = ready.poll();\n            completed++;\n            for (int next : graph.get(course)) if (--indegree[next] == 0) ready.offer(next);\n        }\n        return completed == numCourses;\n    }\n}",
+    "time_complexity": "O(V + E), processing each course and prerequisite edge once.",
+    "space_complexity": "O(V + E) for the adjacency lists, indegrees, and queue."
+  },
+  "dry_run": {
+    "sample_input": {"numCourses": 3, "prerequisites": [[1, 0], [2, 1]]},
+    "sample_output": true,
+    "steps": [
+      {"sequence": 1, "event": "Build directed prerequisite edges and indegrees.", "variables": {"edges": [[0, 1], [1, 2]], "indegree": [0, 1, 1]}, "condition": "Each pair [course, prerequisite] creates prerequisite -> course.", "action": "Queue course 0, the only course with indegree zero.", "state_before": {"ready": [], "completed": 0}, "state_after": {"ready": [0], "completed": 0}},
+      {"sequence": 2, "event": "Complete course 0.", "variables": {"course": 0, "indegreeAfterRelease": [0, 0, 1]}, "condition": "Removing 0 -> 1 reduces course 1 indegree to zero.", "action": "Add course 1 to the queue.", "state_before": {"ready": [0], "completed": 0}, "state_after": {"ready": [1], "completed": 1}},
+      {"sequence": 3, "event": "Complete course 1, then course 2.", "variables": {"courseOrder": [0, 1, 2], "completed": 3}, "condition": "Each released course becomes indegree zero.", "action": "The queue empties after all three courses are processed; return true.", "state_before": {"ready": [1], "completed": 1}, "state_after": {"ready": [], "completed": 3}}
+    ],
+    "final_result": true
+  },
+  "edge_cases": [
+    {"case": "No prerequisites", "handling": "Every course begins with indegree zero, so all can be completed."},
+    {"case": "A self-dependency", "handling": "It forms a cycle; however, the stated constraints forbid identical course and prerequisite indices."},
+    {"case": "Cycle among only part of the courses", "handling": "The acyclic courses may be removed, but the cycle prevents completed from reaching numCourses."},
+    {"case": "Several independent prerequisite chains", "handling": "All initially ready courses enter the queue and are processed independently."}
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "metadata": {
+    "problem_number": 80,
+    "title": "Remove Duplicates from Sorted Array II",
+    "url": "https://leetcode.com/problems/remove-duplicates-from-sorted-array-ii/",
+    "difficulty": "Medium",
+    "category": "Array / String"
+  },
+  "problem_summary": {
+    "summary": "Compact a sorted integer array in place, allowing each value to appear no more than twice while preserving order.",
+    "input_output": "Input: non-decreasing nums. Return k and store the allowed values in nums[0..k-1]; values beyond that prefix do not matter.",
+    "constraints": ["1 <= nums.length <= 3 * 10^4", "-10^4 <= nums[i] <= 10^4", "nums is sorted in non-decreasing order"]
+  },
+  "brute_force": {
+    "explanation": "Scan the sorted input while counting each run, copy at most its first two values to a temporary array, then copy the kept prefix back.",
+    "correctness_idea": "Each value forms one contiguous run; limiting each run to two copies implements the required multiplicity while retaining the input order.",
+    "language": "java",
+    "code": "class Solution {\n    public int removeDuplicates(int[] nums) {\n        int[] kept = new int[nums.length];\n        int size = 0;\n        int runLength = 0;\n        int previous = 0;\n        for (int index = 0; index < nums.length; index++) {\n            if (index == 0 || nums[index] != previous) {\n                previous = nums[index];\n                runLength = 1;\n            } else {\n                runLength++;\n            }\n            if (runLength <= 2) kept[size++] = nums[index];\n        }\n        System.arraycopy(kept, 0, nums, 0, size);\n        return size;\n    }\n}",
+    "time_complexity": "O(n) — one scan and one prefix copy.",
+    "space_complexity": "O(n) auxiliary — a temporary array holds the compacted result."
+  },
+  "optimized": {
+    "explanation": "Maintain a write length. A sorted value can be written if fewer than two values have been written or it differs from the value two positions behind the write pointer.",
+    "correctness_idea": "The first two values are always allowed. Thereafter, matching nums[write - 2] would create a third copy, while differing from it keeps the new run count at no more than two.",
+    "language": "java",
+    "code": "class Solution {\n    public int removeDuplicates(int[] nums) {\n        int write = 0;\n        for (int read = 0; read < nums.length; read++) {\n            if (write < 2 || nums[read] != nums[write - 2]) {\n                nums[write] = nums[read];\n                write++;\n            }\n        }\n        return write;\n    }\n}",
+    "time_complexity": "O(n) — each element is tested once.",
+    "space_complexity": "O(1) auxiliary — only indices are used."
+  },
+  "dry_run": {
+    "sample_input": {"nums": [1, 1, 1, 2, 2, 3, 3, 3]},
+    "sample_output": {"k": 6, "prefix": [1, 1, 2, 2, 3, 3]},
+    "steps": [
+      {"sequence": 1, "event": "Read index 0, value 1.", "variables": {"read": 0, "write": 0}, "condition": "write < 2.", "action": "Keep the first 1 at index 0; write becomes 1.", "state_before": {"nums": [1, 1, 1, 2, 2, 3, 3, 3], "write": 0}, "state_after": {"nums": [1, 1, 1, 2, 2, 3, 3, 3], "write": 1}, "focus": {"array": "nums", "indices": [0]}},
+      {"sequence": 2, "event": "Read index 1, value 1.", "variables": {"read": 1, "write": 1}, "condition": "write < 2.", "action": "Keep the second 1 at index 1; write becomes 2.", "state_before": {"nums": [1, 1, 1, 2, 2, 3, 3, 3], "write": 1}, "state_after": {"nums": [1, 1, 1, 2, 2, 3, 3, 3], "write": 2}, "focus": {"array": "nums", "indices": [1]}},
+      {"sequence": 3, "event": "Read index 2, value 1.", "variables": {"read": 2, "write": 2, "limitValue": 1}, "condition": "nums[read] equals nums[write - 2], so accepting it would make a third copy.", "action": "Skip this 1; write remains 2.", "state_before": {"nums": [1, 1, 1, 2, 2, 3, 3, 3], "write": 2}, "state_after": {"nums": [1, 1, 1, 2, 2, 3, 3, 3], "write": 2}, "focus": {"array": "nums", "indices": [0, 2]}},
+      {"sequence": 4, "event": "Read index 3, value 2.", "variables": {"read": 3, "write": 2, "limitValue": 1}, "condition": "2 differs from nums[0].", "action": "Write 2 at index 2; write becomes 3.", "state_before": {"nums": [1, 1, 1, 2, 2, 3, 3, 3], "write": 2}, "state_after": {"nums": [1, 1, 2, 2, 2, 3, 3, 3], "write": 3}, "focus": {"array": "nums", "indices": [0, 2, 3]}},
+      {"sequence": 5, "event": "Read index 4, value 2.", "variables": {"read": 4, "write": 3, "limitValue": 1}, "condition": "2 differs from nums[1].", "action": "Write the second 2 at index 3; write becomes 4.", "state_before": {"nums": [1, 1, 2, 2, 2, 3, 3, 3], "write": 3}, "state_after": {"nums": [1, 1, 2, 2, 2, 3, 3, 3], "write": 4}, "focus": {"array": "nums", "indices": [1, 3, 4]}},
+      {"sequence": 6, "event": "Read index 5, value 3.", "variables": {"read": 5, "write": 4, "limitValue": 2}, "condition": "3 differs from nums[2].", "action": "Write 3 at index 4; write becomes 5.", "state_before": {"nums": [1, 1, 2, 2, 2, 3, 3, 3], "write": 4}, "state_after": {"nums": [1, 1, 2, 2, 3, 3, 3, 3], "write": 5}, "focus": {"array": "nums", "indices": [2, 4, 5]}},
+      {"sequence": 7, "event": "Read index 6, value 3.", "variables": {"read": 6, "write": 5, "limitValue": 2}, "condition": "3 differs from nums[3].", "action": "Write the second 3 at index 5; write becomes 6.", "state_before": {"nums": [1, 1, 2, 2, 3, 3, 3, 3], "write": 5}, "state_after": {"nums": [1, 1, 2, 2, 3, 3, 3, 3], "write": 6}, "focus": {"array": "nums", "indices": [3, 5, 6]}},
+      {"sequence": 8, "event": "Read index 7, value 3.", "variables": {"read": 7, "write": 6, "limitValue": 3}, "condition": "nums[7] equals nums[4], so it would be a third 3.", "action": "Skip it and return write = 6.", "state_before": {"nums": [1, 1, 2, 2, 3, 3, 3, 3], "write": 6}, "state_after": {"nums": [1, 1, 2, 2, 3, 3, 3, 3], "write": 6}, "focus": {"array": "nums", "indices": [4, 7]}}
+    ],
+    "final_result": {"k": 6, "prefix": [1, 1, 2, 2, 3, 3]}
+  },
+  "edge_cases": [
+    {"case": "Fewer than two values", "handling": "Every value passes the initial write < 2 allowance."},
+    {"case": "A value appears once or twice", "handling": "All its occurrences are retained."},
+    {"case": "A long duplicate run", "handling": "Only its first two values enter the output prefix."}
+  ]
+}

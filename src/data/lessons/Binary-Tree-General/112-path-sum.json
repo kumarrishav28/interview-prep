@@ -1,0 +1,36 @@
+{
+  "metadata": {"problem_number": 112, "title": "Path Sum", "url": "https://leetcode.com/problems/path-sum/", "difficulty": "Easy", "category": "Binary Tree General"},
+  "problem_summary": {"summary": "Check whether a root-to-leaf path has values summing to the target; a path must end at a leaf.", "input_output": "Input: root and integer targetSum. Return a boolean.", "constraints": ["0 <= number of nodes <= 5000", "-1000 <= Node.val <= 1000", "-1000 <= targetSum <= 1000"]},
+  "brute_force": {
+    "explanation": "Enumerate every root-to-leaf sum with an explicit stack, store the sums, and search the resulting list for targetSum.",
+    "correctness_idea": "Every leaf is reached from the root by exactly one traversal path. The list therefore contains the sum of every valid candidate path, and membership matches the requirement.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.ArrayList;\nimport java.util.Deque;\nimport java.util.List;\n\nclass Solution {\n    private static class State {\n        TreeNode node;\n        int sum;\n        State(TreeNode node, int sum) { this.node = node; this.sum = sum; }\n    }\n\n    public boolean hasPathSum(TreeNode root, int targetSum) {\n        if (root == null) {\n            return false;\n        }\n        List<Integer> leafSums = new ArrayList<>();\n        Deque<State> stack = new ArrayDeque<>();\n        stack.push(new State(root, root.val));\n        while (!stack.isEmpty()) {\n            State state = stack.pop();\n            TreeNode node = state.node;\n            if (node.left == null && node.right == null) {\n                leafSums.add(state.sum);\n            } else {\n                if (node.right != null) {\n                    stack.push(new State(node.right, state.sum + node.right.val));\n                }\n                if (node.left != null) {\n                    stack.push(new State(node.left, state.sum + node.left.val));\n                }\n            }\n        }\n        return leafSums.contains(targetSum);\n    }\n}",
+    "time_complexity": "O(n) expected, including checking at most O(n) leaf sums after traversal.",
+    "space_complexity": "O(n) for leaf sums and the explicit traversal stack."
+  },
+  "optimized": {
+    "explanation": "Search iteratively with a stack of node and remaining target values. At a leaf, succeed only if its value consumes the exact remainder; stop as soon as a match is found.",
+    "correctness_idea": "For each stack entry, remaining is targetSum minus the values strictly above that node. A leaf matches exactly when subtracting its value leaves zero, which is equivalent to the full root-to-leaf sum equaling targetSum.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.Deque;\n\nclass Solution {\n    private static class State {\n        TreeNode node;\n        int remaining;\n        State(TreeNode node, int remaining) { this.node = node; this.remaining = remaining; }\n    }\n\n    public boolean hasPathSum(TreeNode root, int targetSum) {\n        if (root == null) {\n            return false;\n        }\n        Deque<State> stack = new ArrayDeque<>();\n        stack.push(new State(root, targetSum));\n        while (!stack.isEmpty()) {\n            State state = stack.pop();\n            TreeNode node = state.node;\n            int remaining = state.remaining - node.val;\n            if (node.left == null && node.right == null && remaining == 0) {\n                return true;\n            }\n            if (node.right != null) {\n                stack.push(new State(node.right, remaining));\n            }\n            if (node.left != null) {\n                stack.push(new State(node.left, remaining));\n            }\n        }\n        return false;\n    }\n}",
+    "time_complexity": "O(n) worst case, with early termination when a matching leaf is reached.",
+    "space_complexity": "O(h) to O(n) auxiliary for the explicit DFS stack, depending on tree shape."
+  },
+  "dry_run": {
+    "sample_input": {"root_level_order": [5, 4, 8, 11, null, 13, 4, 7, 2, null, null, null, 1], "targetSum": 22},
+    "sample_output": true,
+    "steps": [
+      {"sequence": 1, "event": "Visit root 5.", "variables": {"node": 5, "remainingBefore": 22, "remainingAfter": 17}, "condition": "Node 5 is not a leaf.", "action": "Push children 8 and 4 with remaining 17.", "state_before": {"stack": [[5, 22]]}, "state_after": {"stackTopFirst": [[4, 17], [8, 17]]}},
+      {"sequence": 2, "event": "Follow the left branch through 4 and 11.", "variables": {"path": [5, 4, 11], "remainingAt11": 13}, "condition": "11 has children 7 and 2.", "action": "Push both children with remaining 2.", "state_before": {"stackTopFirst": [[11, 13], [8, 17]]}, "state_after": {"stackTopFirst": [[7, 2], [2, 2], [8, 17]]}},
+      {"sequence": 3, "event": "Reach leaf 7.", "variables": {"path": [5, 4, 11, 7], "remainingBefore": 2, "remainingAfter": -5}, "condition": "Leaf remainder is not zero.", "action": "Discard this path and inspect the next leaf.", "state_before": {"stackTopFirst": [[7, 2], [2, 2], [8, 17]]}, "state_after": {"stackTopFirst": [[2, 2], [8, 17]]}},
+      {"sequence": 4, "event": "Reach leaf 2.", "variables": {"path": [5, 4, 11, 2], "remainingBefore": 2, "remainingAfter": 0}, "condition": "This node is a leaf and the remainder is zero.", "action": "Return true immediately.", "state_before": {"stackTopFirst": [[2, 2], [8, 17]]}, "state_after": {"result": true}}
+    ],
+    "final_result": true
+  },
+  "edge_cases": [
+    {"case": "Empty tree", "handling": "Returns false because no root-to-leaf path exists."},
+    {"case": "Root is itself a leaf", "handling": "The single node value must equal targetSum."},
+    {"case": "Negative values", "handling": "Remainder arithmetic does not rely on sums being monotonic."}
+  ]
+}

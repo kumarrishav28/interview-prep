@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "problem_number": 72,
+    "title": "Edit Distance",
+    "url": "https://leetcode.com/problems/edit-distance/",
+    "difficulty": "Medium",
+    "category": "Multidimensional DP"
+  },
+  "problem_summary": {
+    "summary": "Find the fewest single-character insertions, deletions, and replacements needed to change one string into another.",
+    "input_output": "Input: strings word1 and word2. Return the minimum number of permitted edits to convert word1 into word2.",
+    "constraints": ["0 <= word1.length, word2.length <= 500", "word1 and word2 contain lowercase English letters"]
+  },
+  "brute_force": {
+    "explanation": "Recursively compare the remaining suffixes. Matching characters need no edit; otherwise try insertion, deletion, and replacement, then choose the least costly branch. This direct recurrence repeats the same suffix pairs many times.",
+    "correctness_idea": "An optimal conversion either aligns equal leading characters at no cost or begins with one of the three allowed edits. Recursing over all such possibilities and taking the minimum cannot miss an optimal edit sequence.",
+    "language": "java",
+    "code": "class Solution {\n    public int minDistance(String word1, String word2) {\n        return distance(word1, word2, 0, 0);\n    }\n\n    private int distance(String first, String second, int i, int j) {\n        if (i == first.length()) return second.length() - j;\n        if (j == second.length()) return first.length() - i;\n        if (first.charAt(i) == second.charAt(j)) {\n            return distance(first, second, i + 1, j + 1);\n        }\n        int insert = distance(first, second, i, j + 1);\n        int delete = distance(first, second, i + 1, j);\n        int replace = distance(first, second, i + 1, j + 1);\n        return 1 + Math.min(insert, Math.min(delete, replace));\n    }\n}",
+    "time_complexity": "O(3^(m+n)) as a loose upper bound for the branching recursion, where m and n are the string lengths.",
+    "space_complexity": "O(m+n) auxiliary recursion stack space."
+  },
+  "optimized": {
+    "explanation": "Fill a prefix DP table. dp[i][j] is the minimum edits to convert the first i characters of word1 to the first j of word2. Empty prefixes cost their lengths. Matching final characters copy the diagonal; otherwise one plus the minimum of insert, delete, and replace predecessors is used.",
+    "correctness_idea": "The final operation is an insertion, deletion, or replacement unless the final characters already match. Each operation reduces to exactly one of the stated predecessor prefix pairs, so the minimum recurrence computes the optimal conversion cost for every prefix pair.",
+    "language": "java",
+    "code": "class Solution {\n    public int minDistance(String word1, String word2) {\n        int firstLength = word1.length();\n        int secondLength = word2.length();\n        int[][] dp = new int[firstLength + 1][secondLength + 1];\n        for (int i = 0; i <= firstLength; i++) dp[i][0] = i;\n        for (int j = 0; j <= secondLength; j++) dp[0][j] = j;\n        for (int i = 1; i <= firstLength; i++) {\n            for (int j = 1; j <= secondLength; j++) {\n                if (word1.charAt(i - 1) == word2.charAt(j - 1)) {\n                    dp[i][j] = dp[i - 1][j - 1];\n                } else {\n                    dp[i][j] = 1 + Math.min(dp[i - 1][j - 1],\n                            Math.min(dp[i - 1][j], dp[i][j - 1]));\n                }\n            }\n        }\n        return dp[firstLength][secondLength];\n    }\n}",
+    "time_complexity": "O(mn), filling each prefix-pair state once.",
+    "space_complexity": "O(mn) auxiliary space for the DP table."
+  },
+  "dry_run": {
+    "sample_input": {"word1": "ab", "word2": "ac"},
+    "sample_output": 1,
+    "steps": [
+      {"sequence": 1, "event": "Initialize empty-prefix costs.", "variables": {"dp": [[0, 1, 2], [1, 0, 0], [2, 0, 0]]}, "condition": "Converting an empty prefix requires inserting every target character; converting to empty requires deleting every source character.", "action": "Set first row and column to their prefix lengths.", "state_before": {"boundaries": null}, "state_after": {"dp[0]": [0, 1, 2], "dpColumn0": [0, 1, 2]}},
+      {"sequence": 2, "event": "Compare prefixes ending in 'a' and 'a'.", "variables": {"i": 1, "j": 1, "characters": ["a", "a"]}, "condition": "The characters match.", "action": "Copy the diagonal cost dp[0][0] to dp[1][1].", "state_before": {"dp[0][0]": 0}, "state_after": {"dp[1][1]": 0}},
+      {"sequence": 3, "event": "Compare prefixes 'ab' and 'ac'.", "variables": {"i": 2, "j": 2, "characters": ["b", "c"], "insertCost": 2, "deleteCost": 2, "replaceCost": 0}, "condition": "The final characters differ, so choose one plus the cheapest edit predecessor.", "action": "Set dp[2][2] to 1 + min(2,2,0) = 1.", "state_before": {"dp[2][2]": 0}, "state_after": {"dp[2][2]": 1}},
+      {"sequence": 4, "event": "Return the complete-string state.", "variables": {"result": 1}, "condition": "dp[2][2] contains the minimum edits for both full strings.", "action": "Return dp[2][2].", "state_before": {"dp[2][2]": 1}, "state_after": {"result": 1}}
+    ],
+    "final_result": 1
+  },
+  "edge_cases": [
+    {"case": "Both strings empty", "handling": "The boundary state dp[0][0] returns zero."},
+    {"case": "One string empty", "handling": "The boundary row or column returns the number of insertions or deletions required."},
+    {"case": "Strings equal", "handling": "Matching characters copy zero-cost diagonal states, giving zero."},
+    {"case": "No characters match", "handling": "Each differing prefix pair chooses its least costly edit predecessor."}
+  ]
+}

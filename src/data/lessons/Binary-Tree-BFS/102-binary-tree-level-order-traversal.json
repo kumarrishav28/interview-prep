@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "problem_number": 102,
+    "title": "Binary Tree Level Order Traversal",
+    "url": "https://leetcode.com/problems/binary-tree-level-order-traversal/",
+    "difficulty": "Medium",
+    "category": "Binary Tree BFS"
+  },
+  "problem_summary": {
+    "summary": "Return the values of a binary tree grouped by level, with each level ordered from left to right.",
+    "input_output": "Input: the root of a binary tree. Return a list of integer lists, one for each level; an empty tree returns an empty list.",
+    "constraints": ["0 <= number of nodes <= 2000", "-1000 <= Node.val <= 1000"]
+  },
+  "brute_force": {
+    "explanation": "Perform a depth-first traversal with an explicit stack of nodes and depths. Push right before left so nodes are appended to each depth's list in left-to-right order.",
+    "correctness_idea": "Every node is assigned to its actual depth. The stack's right-before-left push order makes left children pop first, preserving left-to-right order among nodes at the same depth.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.ArrayList;\nimport java.util.Deque;\nimport java.util.List;\n\nclass Solution {\n    public List<List<Integer>> levelOrder(TreeNode root) {\n        List<List<Integer>> levels = new ArrayList<>();\n        if (root == null) return levels;\n        Deque<TreeNode> nodes = new ArrayDeque<>();\n        Deque<Integer> depths = new ArrayDeque<>();\n        nodes.push(root);\n        depths.push(0);\n        while (!nodes.isEmpty()) {\n            TreeNode node = nodes.pop();\n            int depth = depths.pop();\n            if (depth == levels.size()) levels.add(new ArrayList<>());\n            levels.get(depth).add(node.val);\n            if (node.right != null) {\n                nodes.push(node.right);\n                depths.push(depth + 1);\n            }\n            if (node.left != null) {\n                nodes.push(node.left);\n                depths.push(depth + 1);\n            }\n        }\n        return levels;\n    }\n}",
+    "time_complexity": "O(n) — each node is visited once.",
+    "space_complexity": "O(n) auxiliary in the worst case for the explicit traversal stack; the returned level lists contain O(n) values."
+  },
+  "optimized": {
+    "explanation": "Use a queue and process its fixed size at the start of each iteration as one complete level.",
+    "correctness_idea": "The queue is maintained in breadth-first, left-to-right order. Capturing its size ensures children added during a level are deferred until the next level, so each output list contains exactly one level in the required order.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.ArrayList;\nimport java.util.List;\nimport java.util.Queue;\n\nclass Solution {\n    public List<List<Integer>> levelOrder(TreeNode root) {\n        List<List<Integer>> levels = new ArrayList<>();\n        if (root == null) return levels;\n        Queue<TreeNode> queue = new ArrayDeque<>();\n        queue.offer(root);\n        while (!queue.isEmpty()) {\n            int levelSize = queue.size();\n            List<Integer> level = new ArrayList<>(levelSize);\n            for (int index = 0; index < levelSize; index++) {\n                TreeNode node = queue.poll();\n                level.add(node.val);\n                if (node.left != null) queue.offer(node.left);\n                if (node.right != null) queue.offer(node.right);\n            }\n            levels.add(level);\n        }\n        return levels;\n    }\n}",
+    "time_complexity": "O(n) — each node enters and leaves the queue once.",
+    "space_complexity": "O(w) auxiliary for the queue, where w is the maximum level width; output storage is O(n)."
+  },
+  "dry_run": {
+    "sample_input": {"root": [4, 2, 6, 1, 3, 5, 7]},
+    "sample_output": [[4], [2, 6], [1, 3, 5, 7]],
+    "steps": [
+      {"sequence": 1, "event": "Process level 0.", "variables": {"levelSize": 1, "level": [4], "queueAfterLevel": [2, 6]}, "condition": "The queue initially contains only the root.", "action": "Append 4 to the current level and enqueue its children left to right.", "state_before": {"queue": [4], "levels": []}, "state_after": {"queue": [2, 6], "levels": [[4]]}},
+      {"sequence": 2, "event": "Process level 1.", "variables": {"levelSize": 2, "level": [2, 6], "queueAfterLevel": [1, 3, 5, 7]}, "condition": "The two queue entries at the start of this step are exactly level 1.", "action": "Append 2 then 6; enqueue their children in left-to-right order.", "state_before": {"queue": [2, 6], "levels": [[4]]}, "state_after": {"queue": [1, 3, 5, 7], "levels": [[4], [2, 6]]}},
+      {"sequence": 3, "event": "Process level 2.", "variables": {"levelSize": 4, "level": [1, 3, 5, 7], "queueAfterLevel": []}, "condition": "All four leaves are processed without adding children.", "action": "Append the final level and finish.", "state_before": {"queue": [1, 3, 5, 7], "levels": [[4], [2, 6]]}, "state_after": {"queue": [], "levels": [[4], [2, 6], [1, 3, 5, 7]]}}
+    ],
+    "final_result": [[4], [2, 6], [1, 3, 5, 7]]
+  },
+  "edge_cases": [
+    {"case": "Empty tree", "handling": "Return an empty outer list before starting traversal."},
+    {"case": "Single-node tree", "handling": "Return one level containing the root value."},
+    {"case": "A level has missing children", "handling": "Only existing nodes are queued, preserving the values that actually occur at the next level."}
+  ]
+}

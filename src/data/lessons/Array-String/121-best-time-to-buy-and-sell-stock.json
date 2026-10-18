@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "problem_number": 121,
+    "title": "Best Time to Buy and Sell Stock",
+    "url": "https://leetcode.com/problems/best-time-to-buy-and-sell-stock/",
+    "difficulty": "Easy",
+    "category": "Array / String"
+  },
+  "problem_summary": {
+    "summary": "Choose one day to buy and a later day to sell, maximizing the resulting profit; return zero if no positive trade exists.",
+    "input_output": "Input: daily prices. Return the maximum difference prices[sell] - prices[buy] for buy < sell, or 0.",
+    "constraints": ["1 <= prices.length <= 10^5", "0 <= prices[i] <= 10^4"]
+  },
+  "brute_force": {
+    "explanation": "Try every buy day with every later sell day and retain the largest non-negative profit.",
+    "correctness_idea": "The nested loops enumerate all legal buy-before-sell pairs, so the best feasible transaction is considered.",
+    "language": "java",
+    "code": "class Solution {\n    public int maxProfit(int[] prices) {\n        int best = 0;\n        for (int buy = 0; buy < prices.length; buy++) {\n            for (int sell = buy + 1; sell < prices.length; sell++) {\n                best = Math.max(best, prices[sell] - prices[buy]);\n            }\n        }\n        return best;\n    }\n}",
+    "time_complexity": "O(n^2) — every ordered pair of days is checked.",
+    "space_complexity": "O(1) auxiliary — only scalar indices and the best profit are stored."
+  },
+  "optimized": {
+    "explanation": "Scan prices from left to right, tracking the lowest price seen so far and the best profit from selling at the current price.",
+    "correctness_idea": "For a sale on the current day, the cheapest legal buy day is the minimum earlier price; considering this sale each day covers every possible optimal sell day.",
+    "language": "java",
+    "code": "class Solution {\n    public int maxProfit(int[] prices) {\n        int minimumPrice = prices[0];\n        int bestProfit = 0;\n        for (int day = 1; day < prices.length; day++) {\n            bestProfit = Math.max(bestProfit, prices[day] - minimumPrice);\n            minimumPrice = Math.min(minimumPrice, prices[day]);\n        }\n        return bestProfit;\n    }\n}",
+    "time_complexity": "O(n) — one pass through the days.",
+    "space_complexity": "O(1) auxiliary — two scalar values are maintained."
+  },
+  "dry_run": {
+    "sample_input": {"prices": [8, 3, 6, 1, 7]},
+    "sample_output": 6,
+    "steps": [
+      {"sequence": 1, "event": "Start at day 0 with price 8.", "variables": {"day": 0, "price": 8, "minimumPrice": 8, "bestProfit": 0}, "condition": "No earlier sell day exists.", "action": "Initialize the lowest buy price to 8.", "state_before": {"minimumPrice": null, "bestProfit": 0}, "state_after": {"minimumPrice": 8, "bestProfit": 0}, "focus": {"array": "prices", "indices": [0]}},
+      {"sequence": 2, "event": "Inspect day 1, price 3.", "variables": {"day": 1, "price": 3, "minimumPrice": 3, "bestProfit": 0}, "condition": "Selling at 3 gives -5; 3 is also a new minimum.", "action": "Keep best profit at 0 and lower minimumPrice to 3.", "state_before": {"minimumPrice": 8, "bestProfit": 0}, "state_after": {"minimumPrice": 3, "bestProfit": 0}, "focus": {"array": "prices", "indices": [0, 1]}},
+      {"sequence": 3, "event": "Inspect day 2, price 6.", "variables": {"day": 2, "price": 6, "minimumPrice": 3, "bestProfit": 3}, "condition": "6 - 3 = 3 exceeds the current best.", "action": "Update bestProfit to 3; minimumPrice remains 3.", "state_before": {"minimumPrice": 3, "bestProfit": 0}, "state_after": {"minimumPrice": 3, "bestProfit": 3}, "focus": {"array": "prices", "indices": [1, 2]}},
+      {"sequence": 4, "event": "Inspect day 3, price 1.", "variables": {"day": 3, "price": 1, "minimumPrice": 1, "bestProfit": 3}, "condition": "Selling gives -2; price 1 is a new minimum.", "action": "Keep bestProfit at 3 and update minimumPrice to 1.", "state_before": {"minimumPrice": 3, "bestProfit": 3}, "state_after": {"minimumPrice": 1, "bestProfit": 3}, "focus": {"array": "prices", "indices": [2, 3]}},
+      {"sequence": 5, "event": "Inspect day 4, price 7.", "variables": {"day": 4, "price": 7, "minimumPrice": 1, "bestProfit": 6}, "condition": "7 - 1 = 6 exceeds the current best.", "action": "Update bestProfit to 6 and return it.", "state_before": {"minimumPrice": 1, "bestProfit": 3}, "state_after": {"minimumPrice": 1, "bestProfit": 6}, "focus": {"array": "prices", "indices": [3, 4]}}
+    ],
+    "final_result": 6
+  },
+  "edge_cases": [
+    {"case": "Prices always fall", "handling": "No sale improves the initial zero profit, so zero is returned."},
+    {"case": "One day", "handling": "There is no legal buy/sell pair and the method returns zero."},
+    {"case": "Repeated minimum prices", "handling": "Either minimum gives the same best possible difference."}
+  ]
+}

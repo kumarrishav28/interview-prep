@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 20,
+    "title": "Valid Parentheses",
+    "url": "https://leetcode.com/problems/valid-parentheses/",
+    "difficulty": "Easy",
+    "category": "Stack"
+  },
+  "problem_summary": {
+    "summary": "Decide whether every opening bracket is closed by the same type in the correct nested order.",
+    "input_output": "Input: a string containing only (), {}, and []. Return true exactly when all brackets match and the string is fully balanced.",
+    "constraints": ["1 <= s.length <= 10^4", "s contains only the six bracket characters ()[]{}"]
+  },
+  "brute_force": {
+    "explanation": "Repeatedly remove adjacent matching bracket pairs from a working string. When no pair remains, the input is valid exactly if the working string is empty.",
+    "correctness_idea": "Every valid bracket string contains an innermost adjacent matching pair. Removing such a pair preserves validity; conversely, repeated removal to empty certifies that all brackets were paired in properly nested order.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean isValid(String s) {\n        String remaining = s;\n        boolean removed;\n        do {\n            removed = false;\n            StringBuilder next = new StringBuilder();\n            int index = 0;\n            while (index < remaining.length()) {\n                if (index + 1 < remaining.length()\n                        && matches(remaining.charAt(index), remaining.charAt(index + 1))) {\n                    index += 2;\n                    removed = true;\n                } else {\n                    next.append(remaining.charAt(index));\n                    index++;\n                }\n            }\n            remaining = next.toString();\n        } while (removed);\n        return remaining.isEmpty();\n    }\n\n    private boolean matches(char open, char close) {\n        return (open == '(' && close == ')')\n                || (open == '[' && close == ']')\n                || (open == '{' && close == '}');\n    }\n}",
+    "time_complexity": "O(n^2) in the worst case because several full passes may be needed as inner pairs are removed.",
+    "space_complexity": "O(n) for the current and next strings."
+  },
+  "optimized": {
+    "explanation": "Push each opening bracket. For a closing bracket, require the stack top to be its matching opener and pop it; any mismatch fails immediately.",
+    "correctness_idea": "The most recently opened unmatched bracket must close first. Therefore, the stack top is the only valid match for each closing bracket; an empty stack at the end means every opener was matched.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean isValid(String s) {\n        char[] open = new char[s.length()];\n        int size = 0;\n        for (int index = 0; index < s.length(); index++) {\n            char current = s.charAt(index);\n            if (current == '(' || current == '[' || current == '{') {\n                open[size++] = current;\n            } else {\n                if (size == 0) {\n                    return false;\n                }\n                char previous = open[--size];\n                if ((current == ')' && previous != '(')\n                        || (current == ']' && previous != '[')\n                        || (current == '}' && previous != '{')) {\n                    return false;\n                }\n            }\n        }\n        return size == 0;\n    }\n}",
+    "time_complexity": "O(n), with one pass over the string.",
+    "space_complexity": "O(n) for the stack of unmatched opening brackets."
+  },
+  "dry_run": {
+    "sample_input": {"s": "{[()]}"},
+    "sample_output": true,
+    "steps": [
+      {"sequence": 1, "event": "Read {", "variables": {"current": "{", "stack": []}, "condition": "Opening bracket.", "action": "Push it.", "state_before": {"stack": []}, "state_after": {"stack": ["{"]}},
+      {"sequence": 2, "event": "Read [ and (", "variables": {"current": ["[", "("], "stack": ["{"]}, "condition": "Both characters are openers.", "action": "Push each in input order.", "state_before": {"stack": ["{"]}, "state_after": {"stack": ["{", "[", "("]}},
+      {"sequence": 3, "event": "Read ) then ]", "variables": {"current": [")", "]"], "stackBeforeEachPop": [["{", "[", "("], ["{", "["]]}, "condition": "Each closer matches the current stack top.", "action": "Pop ( for ), then [ for ].", "state_before": {"stack": ["{", "[", "("]}, "state_after": {"stack": ["{"]}},
+      {"sequence": 4, "event": "Read }", "variables": {"current": "}", "stack": ["{"]}, "condition": "} matches the top opener.", "action": "Pop; input is exhausted.", "state_before": {"stack": ["{"]}, "state_after": {"stack": []}}
+    ],
+    "final_result": true
+  },
+  "edge_cases": [
+    {"case": "A closer appears before any opener", "handling": "The optimized implementation returns false when the stack is empty."},
+    {"case": "Correct characters but wrong nesting, such as ([)]", "handling": "The most recent opener does not match the closer, so validation fails."},
+    {"case": "Openers remain at the end", "handling": "A nonempty stack makes the final result false."}
+  ]
+}

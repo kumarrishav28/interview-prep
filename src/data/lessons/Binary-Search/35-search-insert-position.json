@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 35,
+    "title": "Search Insert Position",
+    "url": "https://leetcode.com/problems/search-insert-position/",
+    "difficulty": "Easy",
+    "category": "Binary Search"
+  },
+  "problem_summary": {
+    "summary": "In a sorted array of distinct integers, return the target's index or the index where it belongs to preserve sorted order.",
+    "input_output": "Input: a sorted integer array nums and an integer target. Return the matching index, or the insertion index if absent.",
+    "constraints": ["1 <= nums.length <= 10^4", "-10^4 <= nums[i], target <= 10^4", "nums is strictly increasing"]
+  },
+  "brute_force": {
+    "explanation": "Scan from left to right and return the first index whose value is at least target. If no such value exists, the insertion point is the array length.",
+    "correctness_idea": "Because nums is sorted, the first value at least target is exactly the first position where target can be inserted without changing order. If there is no such value, target belongs after every element.",
+    "language": "java",
+    "code": "class Solution {\n    public int searchInsert(int[] nums, int target) {\n        for (int index = 0; index < nums.length; index++) {\n            if (nums[index] >= target) return index;\n        }\n        return nums.length;\n    }\n}",
+    "time_complexity": "O(n), where n is nums.length; in the worst case every element is inspected.",
+    "space_complexity": "O(1) auxiliary space."
+  },
+  "optimized": {
+    "explanation": "Use a half-open binary-search interval [left, right) to find the lower bound: the first index whose value is at least target. When nums[mid] is too small, discard mid and everything before it; otherwise keep mid as a possible answer.",
+    "correctness_idea": "The interval always contains the first qualifying index, or is empty when that index is nums.length. Each comparison removes half the candidates while preserving the lower-bound position, so left is the insertion index when the interval closes.",
+    "language": "java",
+    "code": "class Solution {\n    public int searchInsert(int[] nums, int target) {\n        int left = 0;\n        int right = nums.length;\n        while (left < right) {\n            int mid = left + (right - left) / 2;\n            if (nums[mid] < target) {\n                left = mid + 1;\n            } else {\n                right = mid;\n            }\n        }\n        return left;\n    }\n}",
+    "time_complexity": "O(log n), where n is nums.length.",
+    "space_complexity": "O(1) auxiliary space."
+  },
+  "dry_run": {
+    "sample_input": {"nums": [2, 5, 7], "target": 6},
+    "sample_output": 2,
+    "steps": [
+      {"sequence": 1, "event": "Search the half-open interval [0, 3).", "variables": {"left": 0, "right": 3, "mid": 1, "numsMid": 5}, "condition": "5 < 6, so indices 0 and 1 cannot be the insertion point.", "action": "Set left to mid + 1.", "state_before": {"interval": [0, 3]}, "state_after": {"interval": [2, 3]}},
+      {"sequence": 2, "event": "Search the remaining interval [2, 3).", "variables": {"left": 2, "right": 3, "mid": 2, "numsMid": 7}, "condition": "7 >= 6, so index 2 remains a possible lower bound.", "action": "Set right to mid.", "state_before": {"interval": [2, 3]}, "state_after": {"interval": [2, 2]}},
+      {"sequence": 3, "event": "The interval is empty.", "variables": {"left": 2, "right": 2}, "condition": "left == right.", "action": "Return left, the first index at which target can be inserted.", "state_before": {"interval": [2, 2]}, "state_after": {"result": 2}}
+    ],
+    "final_result": 2
+  },
+  "edge_cases": [
+    {"case": "Target is smaller than every value", "handling": "The lower bound is index 0."},
+    {"case": "Target is larger than every value", "handling": "The search returns nums.length."},
+    {"case": "Target already exists", "handling": "The lower bound is its existing index."},
+    {"case": "One-element array", "handling": "The search returns either 0 or 1 according to the target's position."}
+  ]
+}

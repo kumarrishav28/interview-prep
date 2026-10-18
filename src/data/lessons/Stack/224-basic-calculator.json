@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "problem_number": 224,
+    "title": "Basic Calculator",
+    "url": "https://leetcode.com/problems/basic-calculator/",
+    "difficulty": "Hard",
+    "category": "Stack"
+  },
+  "problem_summary": {
+    "summary": "Evaluate a valid expression containing nonnegative integer literals, addition, subtraction, unary minus, parentheses, and spaces.",
+    "input_output": "Input: expression string s. Return its integer value without using an expression-evaluation library.",
+    "constraints": ["1 <= s.length <= 3 * 10^5", "s contains digits, +, -, parentheses, and spaces", "The expression is valid; unary minus is allowed but unary plus is not", "No two consecutive operators occur", "Every number and running result fits in signed 32-bit range"]
+  },
+  "brute_force": {
+    "explanation": "Evaluate in one pass with explicit frames. Each open parenthesis saves the outer subtotal and sign; closing it finishes the inner subtotal and combines it with that saved context.",
+    "correctness_idea": "Within a parenthesized group, only addition and subtraction remain, so scanning left to right while applying the current sign gives that group's value. A frame preserves the exact outer subtotal and sign until the group closes; nesting is handled by the frame stacks.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.Deque;\n\nclass Solution {\n    public int calculate(String s) {\n        Deque<Integer> outerSums = new ArrayDeque<>();\n        Deque<Integer> outerSigns = new ArrayDeque<>();\n        int sum = 0;\n        int sign = 1;\n        int number = 0;\n        for (int index = 0; index < s.length(); index++) {\n            char current = s.charAt(index);\n            if (Character.isDigit(current)) {\n                number = number * 10 + current - '0';\n            } else if (current == '+') {\n                sum += sign * number;\n                number = 0;\n                sign = 1;\n            } else if (current == '-') {\n                sum += sign * number;\n                number = 0;\n                sign = -1;\n            } else if (current == '(') {\n                outerSums.push(sum);\n                outerSigns.push(sign);\n                sum = 0;\n                sign = 1;\n                number = 0;\n            } else if (current == ')') {\n                sum += sign * number;\n                number = 0;\n                sum = outerSums.pop() + outerSigns.pop() * sum;\n                sign = 1;\n            }\n        }\n        return sum + sign * number;\n    }\n}",
+    "time_complexity": "O(n), where n is the expression length; each character is processed once.",
+    "space_complexity": "O(d) for saved parenthesis frames, where d is the maximum nesting depth."
+  },
+  "optimized": {
+    "explanation": "Accumulate signed numbers directly into one global result. A stack stores the effective sign inherited by each parenthesis level, so no separate subtotal is needed for each nested expression.",
+    "correctness_idea": "Addition or subtraction assigns the next number the current level's sign multiplied by the operator sign. Opening a group saves that effective sign; closing restores the enclosing sign. Thus every number contributes exactly its algebraic sign to the total, including nested and unary-negative groups.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.Deque;\n\nclass Solution {\n    public int calculate(String s) {\n        Deque<Integer> signContext = new ArrayDeque<>();\n        signContext.push(1);\n        int result = 0;\n        int sign = 1;\n        int number = 0;\n        for (int index = 0; index < s.length(); index++) {\n            char current = s.charAt(index);\n            if (Character.isDigit(current)) {\n                number = number * 10 + current - '0';\n            } else if (current == '+' || current == '-') {\n                result += sign * number;\n                number = 0;\n                sign = signContext.peek() * (current == '+' ? 1 : -1);\n            } else if (current == '(') {\n                signContext.push(sign);\n            } else if (current == ')') {\n                result += sign * number;\n                number = 0;\n                signContext.pop();\n                sign = signContext.peek();\n            }\n        }\n        return result + sign * number;\n    }\n}",
+    "time_complexity": "O(n), with one pass over the expression.",
+    "space_complexity": "O(d) for the sign context stack, where d is the maximum parenthesis nesting depth."
+  },
+  "dry_run": {
+    "sample_input": {"s": "-(12-(3+4))+5"},
+    "sample_output": 0,
+    "steps": [
+      {"sequence": 1, "event": "Read unary minus and open outer group", "variables": {"sign": -1, "signContext": [1]}, "condition": "The group follows subtraction from zero.", "action": "Push the group's effective sign -1.", "state_before": {"result": 0, "signContext": [1]}, "state_after": {"result": 0, "signContext": [1, -1]}},
+      {"sequence": 2, "event": "Read 12 then minus", "variables": {"number": 12, "effectiveSign": -1}, "condition": "Minus commits 12 under the outer negative sign.", "action": "Add -12 to result; set the next term sign to +1 within the outer negative context.", "state_before": {"result": 0, "sign": -1}, "state_after": {"result": -12, "sign": 1, "signContext": [1, -1]}},
+      {"sequence": 3, "event": "Evaluate inner (3+4)", "variables": {"outerContext": -1, "innerContext": 1}, "condition": "The plus inside the inner group has positive effective sign; closing restores -1.", "action": "Commit 3 and 4, giving accumulated result -5, then restore the outer context.", "state_before": {"result": -12, "signContext": [1, -1]}, "state_after": {"result": -5, "signContext": [1, -1], "sign": -1}},
+      {"sequence": 4, "event": "Close outer group, then add 5", "variables": {"resultBeforeFinalTerm": -5, "signContext": [1]}, "condition": "Closing removes the outer -1 context; the following + uses root sign +1.", "action": "Commit the group result, add 5, and return 0.", "state_before": {"result": -5, "sign": -1}, "state_after": {"result": 0, "sign": 1, "finalValue": 0}}
+    ],
+    "final_result": 0
+  },
+  "edge_cases": [
+    {"case": "Multi-digit integers and spaces", "handling": "Digits accumulate into one number; spaces are ignored without changing state."},
+    {"case": "Unary minus before a number or parenthesized expression", "handling": "The sign state applies -1 to the term or is saved as the nested context."},
+    {"case": "Deeply nested parentheses", "handling": "Both implementations use explicit deques rather than recursive calls, avoiding call-stack overflow."},
+    {"case": "A closing parenthesis", "handling": "The current number is committed before restoring the enclosing sign context."}
+  ]
+}

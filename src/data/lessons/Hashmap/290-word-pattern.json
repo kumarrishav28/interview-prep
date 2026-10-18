@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 290,
+    "title": "Word Pattern",
+    "url": "https://leetcode.com/problems/word-pattern/",
+    "difficulty": "Easy",
+    "category": "Hashmap"
+  },
+  "problem_summary": {
+    "summary": "Determine whether the words in a space-separated string match a pattern through a one-to-one mapping from letters to words.",
+    "input_output": "Input: lowercase pattern and a string of lowercase words separated by single spaces. Return true only if the word count matches and the mapping is bijective.",
+    "constraints": ["1 <= pattern.length <= 300", "pattern contains lowercase English letters", "1 <= s.length <= 3000", "s contains lowercase English letters and single separating spaces, with no leading or trailing spaces"]
+  },
+  "brute_force": {
+    "explanation": "Split s into words, then compare every pair of positions. A pair must repeat the same pattern character exactly when it repeats the same word.",
+    "correctness_idea": "A bijection preserves equality and inequality for every pair of positions. The pairwise test captures both mapping directions, and the initial length check ensures every pattern position has a word.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean wordPattern(String pattern, String s) {\n        String[] words = s.split(\" \");\n        if (words.length != pattern.length()) return false;\n        for (int i = 0; i < words.length; i++) {\n            for (int j = i + 1; j < words.length; j++) {\n                boolean sameLetter = pattern.charAt(i) == pattern.charAt(j);\n                boolean sameWord = words[i].equals(words[j]);\n                if (sameLetter != sameWord) return false;\n            }\n        }\n        return true;\n    }\n}",
+    "time_complexity": "O(n^2 * L) worst case, where n is the word count and L bounds the cost of comparing words.",
+    "space_complexity": "O(total input size) for the split word array."
+  },
+  "optimized": {
+    "explanation": "Split into words and maintain maps in both directions: letter to word and word to letter. Reject a conflicting existing mapping; otherwise store both mappings.",
+    "correctness_idea": "The forward map enforces one word per letter, while the reverse map prevents two letters from sharing a word. Checking both at every aligned position is sufficient for a bijection.",
+    "language": "java",
+    "code": "import java.util.HashMap;\nimport java.util.Map;\n\nclass Solution {\n    public boolean wordPattern(String pattern, String s) {\n        String[] words = s.split(\" \");\n        if (words.length != pattern.length()) return false;\n        Map<Character, String> letterToWord = new HashMap<>();\n        Map<String, Character> wordToLetter = new HashMap<>();\n        for (int i = 0; i < pattern.length(); i++) {\n            char letter = pattern.charAt(i);\n            String word = words[i];\n            if (letterToWord.containsKey(letter) && !letterToWord.get(letter).equals(word)) return false;\n            if (wordToLetter.containsKey(word) && wordToLetter.get(word) != letter) return false;\n            letterToWord.put(letter, word);\n            wordToLetter.put(word, letter);\n        }\n        return true;\n    }\n}",
+    "time_complexity": "O(n + |s|) expected, including splitting and expected constant-time map operations.",
+    "space_complexity": "O(n + |s|) auxiliary for the split words and distinct mappings."
+  },
+  "dry_run": {
+    "sample_input": {"pattern": "aba", "s": "sun moon sun"},
+    "sample_output": true,
+    "steps": [
+      {"sequence": 1, "event": "Split the input string.", "variables": {"words": ["sun", "moon", "sun"], "patternLength": 3, "wordCount": 3}, "condition": "The number of words equals the number of pattern letters.", "action": "Initialize empty forward and reverse maps.", "state_before": {"letterToWord": {}, "wordToLetter": {}}, "state_after": {"letterToWord": {}, "wordToLetter": {}}},
+      {"sequence": 2, "event": "Process index 0.", "variables": {"i": 0, "letter": "a", "word": "sun"}, "condition": "Neither mapping conflicts; both are absent.", "action": "Store a to sun and sun to a.", "state_before": {"letterToWord": {}, "wordToLetter": {}}, "state_after": {"letterToWord": {"a": "sun"}, "wordToLetter": {"sun": "a"}}},
+      {"sequence": 3, "event": "Process index 1.", "variables": {"i": 1, "letter": "b", "word": "moon"}, "condition": "Neither mapping conflicts; both are absent.", "action": "Store b to moon and moon to b.", "state_before": {"letterToWord": {"a": "sun"}, "wordToLetter": {"sun": "a"}}, "state_after": {"letterToWord": {"a": "sun", "b": "moon"}, "wordToLetter": {"sun": "a", "moon": "b"}}},
+      {"sequence": 4, "event": "Process index 2.", "variables": {"i": 2, "letter": "a", "word": "sun"}, "condition": "Existing forward and reverse mappings match this pair.", "action": "Keep both mappings; finish and return true.", "state_before": {"letterToWord": {"a": "sun", "b": "moon"}, "wordToLetter": {"sun": "a", "moon": "b"}}, "state_after": {"letterToWord": {"a": "sun", "b": "moon"}, "wordToLetter": {"sun": "a", "moon": "b"}}}
+    ],
+    "final_result": true
+  },
+  "edge_cases": [
+    {"case": "Pattern and word counts differ", "handling": "The length check returns false before mapping."},
+    {"case": "One letter is paired with two words", "handling": "The forward map detects the mismatch."},
+    {"case": "Two letters are paired with one word", "handling": "The reverse map detects the collision."}
+  ]
+}

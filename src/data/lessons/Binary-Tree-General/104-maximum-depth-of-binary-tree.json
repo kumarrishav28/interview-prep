@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "problem_number": 104,
+    "title": "Maximum Depth of Binary Tree",
+    "url": "https://leetcode.com/problems/maximum-depth-of-binary-tree/",
+    "difficulty": "Easy",
+    "category": "Binary Tree General"
+  },
+  "problem_summary": {
+    "summary": "Return the number of nodes on the longest root-to-leaf path, or zero for an empty tree.",
+    "input_output": "Input: the root of a binary tree. Return its maximum depth as an integer.",
+    "constraints": ["0 <= number of nodes <= 10^4", "-100 <= Node.val <= 100"]
+  },
+  "brute_force": {
+    "explanation": "For every node, independently traverse its subtree to measure its height, then return the largest height found. Re-traversal makes this a deliberately simple but slower baseline.",
+    "correctness_idea": "The root is among the visited nodes, and its measured height is the maximum depth of the whole tree. Taking the maximum over all subtree heights therefore includes the correct answer.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.ArrayList;\nimport java.util.Deque;\nimport java.util.List;\n\nclass Solution {\n    private static class State {\n        TreeNode node;\n        int depth;\n        State(TreeNode node, int depth) { this.node = node; this.depth = depth; }\n    }\n\n    public int maxDepth(TreeNode root) {\n        if (root == null) return 0;\n        List<TreeNode> nodes = new ArrayList<>();\n        Deque<TreeNode> pending = new ArrayDeque<>();\n        pending.push(root);\n        while (!pending.isEmpty()) {\n            TreeNode node = pending.pop();\n            nodes.add(node);\n            if (node.left != null) pending.push(node.left);\n            if (node.right != null) pending.push(node.right);\n        }\n        int best = 0;\n        for (TreeNode start : nodes) {\n            Deque<State> stack = new ArrayDeque<>();\n            stack.push(new State(start, 1));\n            while (!stack.isEmpty()) {\n                State state = stack.pop();\n                best = Math.max(best, state.depth);\n                if (state.node.left != null) stack.push(new State(state.node.left, state.depth + 1));\n                if (state.node.right != null) stack.push(new State(state.node.right, state.depth + 1));\n            }\n        }\n        return best;\n    }\n}",
+    "time_complexity": "O(n^2) worst case for a skewed tree, because subtree heights are recomputed at each node.",
+    "space_complexity": "O(n) auxiliary for the node list and explicit traversal stack; no call-stack depth risk."
+  },
+  "optimized": {
+    "explanation": "Use breadth-first traversal and count levels. Each queue layer corresponds to one additional node on every root-to-node path reaching that level.",
+    "correctness_idea": "BFS visits nodes in nondecreasing depth. Counting each complete level counts exactly the number of nodes on the deepest root-to-leaf path.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.Queue;\n\nclass Solution {\n    public int maxDepth(TreeNode root) {\n        if (root == null) {\n            return 0;\n        }\n        Queue<TreeNode> queue = new ArrayDeque<>();\n        queue.offer(root);\n        int depth = 0;\n        while (!queue.isEmpty()) {\n            int levelSize = queue.size();\n            depth++;\n            for (int index = 0; index < levelSize; index++) {\n                TreeNode node = queue.poll();\n                if (node.left != null) {\n                    queue.offer(node.left);\n                }\n                if (node.right != null) {\n                    queue.offer(node.right);\n                }\n            }\n        }\n        return depth;\n    }\n}",
+    "time_complexity": "O(n) — each node is enqueued and removed once.",
+    "space_complexity": "O(w) auxiliary for the queue, where w is the maximum number of nodes at any level."
+  },
+  "dry_run": {
+    "sample_input": {"root_level_order": [8, 3, 10, null, 6, null, 14]},
+    "sample_output": 3,
+    "steps": [
+      {"sequence": 1, "event": "Process level 1.", "variables": {"depth": 1, "levelSize": 1}, "condition": "Queue contains the root 8.", "action": "Visit 8 and enqueue its children 3 and 10.", "state_before": {"queue": [8], "depth": 0}, "state_after": {"queue": [3, 10], "depth": 1}},
+      {"sequence": 2, "event": "Process level 2.", "variables": {"depth": 2, "levelSize": 2}, "condition": "The two nodes currently queued form one complete level.", "action": "Visit 3 and 10; enqueue 6 from 3 and 14 from 10.", "state_before": {"queue": [3, 10], "depth": 1}, "state_after": {"queue": [6, 14], "depth": 2}},
+      {"sequence": 3, "event": "Process level 3.", "variables": {"depth": 3, "levelSize": 2}, "condition": "Both queued nodes are leaves.", "action": "Visit 6 and 14; no children are added.", "state_before": {"queue": [6, 14], "depth": 2}, "state_after": {"queue": [], "depth": 3}}
+    ],
+    "final_result": 3
+  },
+  "edge_cases": [
+    {"case": "Empty tree", "handling": "The optimized method returns zero before starting BFS."},
+    {"case": "Single node", "handling": "The root is one level, so the returned depth is one."},
+    {"case": "Highly skewed tree", "handling": "BFS counts every level; its queue remains small even when the height is n."}
+  ]
+}

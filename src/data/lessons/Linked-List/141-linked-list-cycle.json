@@ -1,0 +1,39 @@
+{
+  "metadata": {"problem_number": 141, "title": "Linked List Cycle", "url": "https://leetcode.com/problems/linked-list-cycle/", "difficulty": "Easy", "category": "Linked List"},
+  "problem_summary": {
+    "summary": "Determine whether following next pointers from a singly linked list head eventually revisits a node.",
+    "input_output": "Input: head, which may be null. Return a boolean. The judge supplies a ListNode with int val and ListNode next; its pos cycle-construction detail is not an argument.",
+    "constraints": ["0 <= number of nodes <= 10^4", "-10^5 <= Node.val <= 10^5", "pos is -1 or a valid node index"]
+  },
+  "brute_force": {
+    "explanation": "Walk through the list while recording node identities in a HashSet. Encountering an already-seen object proves a cycle; reaching null proves termination.",
+    "correctness_idea": "A cycle makes some node identity appear twice along traversal, while an acyclic next chain visits each node at most once and ends at null.",
+    "language": "java",
+    "code": "import java.util.HashSet;\nimport java.util.Set;\n\nclass Solution {\n    public boolean hasCycle(ListNode head) {\n        Set<ListNode> visited = new HashSet<>();\n        ListNode current = head;\n        while (current != null) {\n            if (!visited.add(current)) return true;\n            current = current.next;\n        }\n        return false;\n    }\n}",
+    "time_complexity": "O(n) expected, where n is the number of distinct nodes reachable before termination or repetition.",
+    "space_complexity": "O(n) auxiliary for the set of visited node references."
+  },
+  "optimized": {
+    "explanation": "Move slow by one link and fast by two. If a cycle exists, fast eventually laps slow; if fast reaches null, the list is acyclic.",
+    "correctness_idea": "Inside a cycle, the gap between fast and slow changes by one node per iteration modulo the cycle length, so it must become zero. In a finite acyclic chain, the faster pointer reaches the end.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean hasCycle(ListNode head) {\n        ListNode slow = head;\n        ListNode fast = head;\n        while (fast != null && fast.next != null) {\n            slow = slow.next;\n            fast = fast.next.next;\n            if (slow == fast) return true;\n        }\n        return false;\n    }\n}",
+    "time_complexity": "O(n) — each pointer advances at most linearly before meeting or reaching null.",
+    "space_complexity": "O(1) auxiliary."
+  },
+  "dry_run": {
+    "sample_input": {"values_by_index": [4, 7, 9, 2], "tail_next_index": 1},
+    "sample_output": true,
+    "steps": [
+      {"sequence": 1, "event": "Advance through the acyclic prefix.", "variables": {"slowIndex": 1, "fastIndex": 2}, "condition": "Both fast and fast.next are non-null.", "action": "Slow advances one node and fast advances two.", "state_before": {"slowIndex": 0, "fastIndex": 0}, "state_after": {"slowIndex": 1, "fastIndex": 2}},
+      {"sequence": 2, "event": "Advance within the cycle.", "variables": {"slowIndex": 2, "fastIndex": 1}, "condition": "Fast remains able to advance two links; index 3 links back to index 1.", "action": "Advance both pointers at their respective speeds.", "state_before": {"slowIndex": 1, "fastIndex": 2}, "state_after": {"slowIndex": 2, "fastIndex": 1}},
+      {"sequence": 3, "event": "Pointers meet.", "variables": {"slowIndex": 3, "fastIndex": 3}, "condition": "slow and fast reference the same node object.", "action": "Return true.", "state_before": {"slowIndex": 2, "fastIndex": 1}, "state_after": {"slowIndex": 3, "fastIndex": 3}}
+    ],
+    "final_result": true
+  },
+  "edge_cases": [
+    {"case": "Null head or one node with next == null", "handling": "Fast cannot advance two links, so the method returns false."},
+    {"case": "Self-loop", "handling": "Slow and fast meet on the first advancement."},
+    {"case": "Cycle begins after a prefix", "handling": "The pointers eventually meet after entering the cycle."}
+  ]
+}

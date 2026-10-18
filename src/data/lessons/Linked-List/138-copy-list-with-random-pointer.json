@@ -1,0 +1,39 @@
+{
+  "metadata": {"problem_number": 138, "title": "Copy List with Random Pointer", "url": "https://leetcode.com/problems/copy-list-with-random-pointer/", "difficulty": "Medium", "category": "Linked List"},
+  "problem_summary": {
+    "summary": "Deep-copy a next-linked list whose random pointer may target any node in that same list or null.",
+    "input_output": "Input: possibly-null Node head. Return the copied Node head. The judge supplies Node { int val; Node next; Node random; }.",
+    "constraints": ["0 <= number of nodes <= 1000", "-10^4 <= Node.val <= 10^4", "Each random pointer is null or points to a node in the input list"]
+  },
+  "brute_force": {
+    "explanation": "Create a copy node for every original node and store the identity mapping in a HashMap. A second traversal assigns each copy's next and random links through that map.",
+    "correctness_idea": "The map creates exactly one distinct copy per original identity. Translating every original edge through the map preserves both pointer relationships without linking into the original list.",
+    "language": "java",
+    "code": "import java.util.HashMap;\nimport java.util.Map;\n\nclass Solution {\n    public Node copyRandomList(Node head) {\n        Map<Node, Node> copies = new HashMap<>();\n        for (Node current = head; current != null; current = current.next) {\n            copies.put(current, new Node(current.val));\n        }\n        for (Node current = head; current != null; current = current.next) {\n            Node copy = copies.get(current);\n            copy.next = copies.get(current.next);\n            copy.random = copies.get(current.random);\n        }\n        return copies.get(head);\n    }\n}",
+    "time_complexity": "O(n) expected — two traversals and expected constant-time map operations.",
+    "space_complexity": "O(n) auxiliary for the identity map, excluding the n copied nodes."
+  },
+  "optimized": {
+    "explanation": "Interleave each new copy immediately after its original. Set each copy's random link to original.random.next, then separate the interwoven chains and restore the original links.",
+    "correctness_idea": "During the interleaved phase, every original node's copy is its next node. Therefore any non-null random target's copy is target.next. Splitting alternating nodes recovers both lists with all copied edges pointing to copies.",
+    "language": "java",
+    "code": "class Solution {\n    public Node copyRandomList(Node head) {\n        if (head == null) return null;\n        for (Node current = head; current != null; ) {\n            Node copy = new Node(current.val);\n            copy.next = current.next;\n            current.next = copy;\n            current = copy.next;\n        }\n        for (Node current = head; current != null; current = current.next.next) {\n            if (current.random != null) current.next.random = current.random.next;\n        }\n        Node copyHead = head.next;\n        for (Node current = head; current != null; ) {\n            Node copy = current.next;\n            current.next = copy.next;\n            copy.next = copy.next == null ? null : copy.next.next;\n            current = current.next;\n        }\n        return copyHead;\n    }\n}",
+    "time_complexity": "O(n) — three linear passes over the nodes.",
+    "space_complexity": "O(1) auxiliary, excluding the O(n) copied output nodes."
+  },
+  "dry_run": {
+    "sample_input": {"nodes": [{"id": "A", "val": 5, "random": "B"}, {"id": "B", "val": 8, "random": "B"}]},
+    "sample_output": [{"val": 5, "random_index": 1}, {"val": 8, "random_index": 1}],
+    "steps": [
+      {"sequence": 1, "event": "Interleave copies after originals.", "variables": {"original": "A", "copy": "A'"}, "condition": "Each original is visited once.", "action": "Insert each copy between its original and former successor.", "state_before": {"chain": "A -> B"}, "state_after": {"chain": "A -> A' -> B -> B'"}},
+      {"sequence": 2, "event": "Translate random links.", "variables": {"A.random": "B", "B.random": "B"}, "condition": "The target is non-null, and its immediate next node is the corresponding copy.", "action": "Set A'.random = B' and B'.random = B'.", "state_before": {"copyRandom": {"A'": null, "B'": null}}, "state_after": {"copyRandom": {"A'": "B'", "B'": "B'"}}},
+      {"sequence": 3, "event": "Separate the two lists.", "variables": {"original": "A -> B", "copy": "A' -> B'"}, "condition": "Every other link belongs to the same chain.", "action": "Restore A.next = B and link A'.next = B'.", "state_before": {"chain": "A -> A' -> B -> B'"}, "state_after": {"original": "A -> B", "copy": "A' -> B'"}}
+    ],
+    "final_result": [{"val": 5, "random_index": 1}, {"val": 8, "random_index": 1}]
+  },
+  "edge_cases": [
+    {"case": "Null head", "handling": "The optimized method returns null; the map method's lookup also returns null."},
+    {"case": "Random pointer is null", "handling": "The corresponding copied random pointer remains null."},
+    {"case": "Multiple nodes point to the same target or a node points to itself", "handling": "The identity mapping or interleaved adjacency resolves each target to its single copied node."}
+  ]
+}

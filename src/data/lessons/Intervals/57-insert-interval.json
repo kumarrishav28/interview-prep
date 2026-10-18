@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "problem_number": 57,
+    "title": "Insert Interval",
+    "url": "https://leetcode.com/problems/insert-interval/",
+    "difficulty": "Medium",
+    "category": "Intervals"
+  },
+  "problem_summary": {
+    "summary": "Insert one interval into an already sorted list of disjoint closed intervals, merging any overlaps while preserving order.",
+    "input_output": "Input: sorted, non-overlapping intervals and newInterval. Return the resulting interval array; modifying the input is not required.",
+    "constraints": ["0 <= intervals.length <= 10^4", "intervals[i].length == 2", "0 <= start <= end <= 10^5", "intervals is sorted by start and contains no overlaps"]
+  },
+  "brute_force": {
+    "explanation": "Copy the existing intervals plus the new one into a combined array, sort by start, and apply the standard merge scan.",
+    "correctness_idea": "Sorting restores the same ordering used by interval merging. Merging every closed interval whose start is at most the current end produces exactly the union while retaining sorted, disjoint output.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.Arrays;\nimport java.util.List;\n\nclass Solution {\n    public int[][] insert(int[][] intervals, int[] newInterval) {\n        int[][] all = Arrays.copyOf(intervals, intervals.length + 1);\n        all[intervals.length] = newInterval;\n        Arrays.sort(all, (first, second) -> Integer.compare(first[0], second[0]));\n        List<int[]> result = new ArrayList<>();\n        for (int[] interval : all) {\n            if (result.isEmpty() || result.get(result.size() - 1)[1] < interval[0]) {\n                result.add(new int[] {interval[0], interval[1]});\n            } else {\n                int[] last = result.get(result.size() - 1);\n                last[1] = Math.max(last[1], interval[1]);\n            }\n        }\n        return result.toArray(new int[result.size()][]);\n    }\n}",
+    "time_complexity": "O(n log n) for sorting n + 1 intervals, followed by an O(n) merge scan.",
+    "space_complexity": "O(n) for the combined input and returned output."
+  },
+  "optimized": {
+    "explanation": "Append intervals strictly before the new one, absorb every interval that overlaps its growing bounds, then append all intervals strictly after it.",
+    "correctness_idea": "The input order means no sorting is needed. Before the first overlap, intervals cannot be affected; while starts are at most the growing end they join the merged interval; afterward all remaining intervals are disjoint and already ordered.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass Solution {\n    public int[][] insert(int[][] intervals, int[] newInterval) {\n        List<int[]> result = new ArrayList<>();\n        int index = 0;\n        while (index < intervals.length && intervals[index][1] < newInterval[0]) {\n            result.add(intervals[index++]);\n        }\n        int start = newInterval[0];\n        int end = newInterval[1];\n        while (index < intervals.length && intervals[index][0] <= end) {\n            start = Math.min(start, intervals[index][0]);\n            end = Math.max(end, intervals[index][1]);\n            index++;\n        }\n        result.add(new int[] {start, end});\n        while (index < intervals.length) {\n            result.add(intervals[index++]);\n        }\n        return result.toArray(new int[result.size()][]);\n    }\n}",
+    "time_complexity": "O(n), since each existing interval is inspected or copied once.",
+    "space_complexity": "O(n) for the returned interval list; no sorting buffer is needed."
+  },
+  "dry_run": {
+    "sample_input": {"intervals": [[1, 2], [5, 7], [9, 12]], "newInterval": [6, 10]},
+    "sample_output": [[1, 2], [5, 12]],
+    "steps": [
+      {"sequence": 1, "event": "Copy intervals before the insertion", "variables": {"index": 0, "newInterval": [6, 10]}, "condition": "[1,2] ends before 6.", "action": "Append [1,2] unchanged and advance.", "state_before": {"result": []}, "state_after": {"result": [[1, 2]], "index": 1}},
+      {"sequence": 2, "event": "Merge the overlapping intervals", "variables": {"index": 1, "start": 6, "end": 10, "current": [5, 7]}, "condition": "5 <= 10, then [9,12] also starts <= the expanded end 10.", "action": "Expand bounds first to [5,10], then to [5,12].", "state_before": {"result": [[1, 2]], "bounds": [6, 10]}, "state_after": {"result": [[1, 2]], "bounds": [5, 12], "index": 3}},
+      {"sequence": 3, "event": "Append merged interval", "variables": {"start": 5, "end": 12, "index": 3}, "condition": "No input intervals remain.", "action": "Append the combined interval.", "state_before": {"result": [[1, 2]]}, "state_after": {"result": [[1, 2], [5, 12]]}}
+    ],
+    "final_result": [[1, 2], [5, 12]]
+  },
+  "edge_cases": [
+    {"case": "Empty intervals list", "handling": "The new interval is returned as the only interval."},
+    {"case": "New interval falls between existing intervals", "handling": "The prefix and suffix remain unchanged around the inserted interval."},
+    {"case": "Endpoint equality", "handling": "Intervals touching the new interval are merged because overlap is inclusive."}
+  ]
+}

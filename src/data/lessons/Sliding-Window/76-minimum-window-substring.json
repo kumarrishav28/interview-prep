@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 76,
+    "title": "Minimum Window Substring",
+    "url": "https://leetcode.com/problems/minimum-window-substring/",
+    "difficulty": "Hard",
+    "category": "Sliding Window"
+  },
+  "problem_summary": {
+    "summary": "Return the shortest substring of s containing every character required by t, including repeated occurrences; return an empty string if none exists.",
+    "input_output": "Input: strings s and non-empty t using uppercase and lowercase English letters. Return the unique minimum covering substring or an empty string.",
+    "constraints": ["m == s.length", "n == t.length", "1 <= m, n <= 10^5", "s and t consist of uppercase and lowercase English letters", "The answer is unique when it exists"]
+  },
+  "brute_force": {
+    "explanation": "For each start index, extend right while counting characters. Stop at the first endpoint that covers all characters of t, and keep the shortest such window.",
+    "correctness_idea": "For a fixed start, endpoints are considered in increasing order; the first covering endpoint is the shortest valid window from that start. Taking the best across all starts finds the globally shortest covering substring.",
+    "language": "java",
+    "code": "class Solution {\n    public String minWindow(String s, String t) {\n        int[] required = new int[128];\n        for (int index = 0; index < t.length(); index++) required[t.charAt(index)]++;\n        int bestStart = 0;\n        int bestLength = Integer.MAX_VALUE;\n        for (int start = 0; start < s.length(); start++) {\n            int[] found = new int[128];\n            int matched = 0;\n            for (int end = start; end < s.length(); end++) {\n                char value = s.charAt(end);\n                if (found[value] < required[value]) matched++;\n                found[value]++;\n                if (matched == t.length()) {\n                    int length = end - start + 1;\n                    if (length < bestLength) {\n                        bestLength = length;\n                        bestStart = start;\n                    }\n                    break;\n                }\n            }\n        }\n        return bestLength == Integer.MAX_VALUE ? s.substring(0, 0) : s.substring(bestStart, bestStart + bestLength);\n    }\n}",
+    "time_complexity": "O(m^2 + 128m) worst case — all starts may scan the remaining string, with fixed-size character-count arrays initialized per start.",
+    "space_complexity": "O(1) auxiliary — each active start uses arrays of fixed size 128, independent of input length."
+  },
+  "optimized": {
+    "explanation": "Keep a frequency array of still-needed characters and a count of missing character occurrences. Expand right until all are covered, then contract left as far as possible while recording the shortest valid window.",
+    "correctness_idea": "The missing count decreases only when a newly included character satisfies a still-needed occurrence. When it reaches zero, the window covers t with multiplicity. Contracting left preserves validity until it removes a required occurrence, producing the shortest valid window for that right endpoint. Scanning all right endpoints finds the global minimum.",
+    "language": "java",
+    "code": "class Solution {\n    public String minWindow(String s, String t) {\n        int[] need = new int[128];\n        for (int index = 0; index < t.length(); index++) need[t.charAt(index)]++;\n        int missing = t.length();\n        int left = 0;\n        int bestStart = 0;\n        int bestLength = Integer.MAX_VALUE;\n        for (int right = 0; right < s.length(); right++) {\n            char added = s.charAt(right);\n            if (need[added] > 0) missing--;\n            need[added]--;\n            while (missing == 0) {\n                int length = right - left + 1;\n                if (length < bestLength) {\n                    bestLength = length;\n                    bestStart = left;\n                }\n                char removed = s.charAt(left);\n                need[removed]++;\n                left++;\n                if (need[removed] > 0) missing++;\n            }\n        }\n        return bestLength == Integer.MAX_VALUE ? s.substring(0, 0) : s.substring(bestStart, bestStart + bestLength);\n    }\n}",
+    "time_complexity": "O(m + n + 128) — t initializes the frequency table and both window pointers advance at most m times; the fixed alphabet table has 128 entries.",
+    "space_complexity": "O(1) auxiliary — the frequency table has fixed size 128, excluding the returned substring."
+  },
+  "dry_run": {
+    "sample_input": {"s": "aXbc", "t": "ab"},
+    "sample_output": "aXb",
+    "steps": [
+      {"sequence": 1, "event": "Expand through index 0, character a.", "variables": {"left": 0, "right": 0, "missing": 1, "needA": 0, "needB": 1}, "condition": "a satisfies one of the two required occurrences.", "action": "Decrement missing from 2 to 1; the window is not yet valid.", "state_before": {"left": 0, "missing": 2, "needA": 1, "needB": 1}, "state_after": {"left": 0, "missing": 1, "needA": 0, "needB": 1}, "focus": {"string": "aXbc", "indices": [0]}},
+      {"sequence": 2, "event": "Expand through index 2, character b.", "variables": {"left": 0, "right": 2, "missing": 0, "needA": 0, "needB": 0}, "condition": "The window aXb now covers both required characters.", "action": "Record length 3; contract by removing a, which makes the window invalid.", "state_before": {"left": 0, "missing": 1, "needA": 0, "needB": 1}, "state_after": {"left": 1, "missing": 1, "needA": 1, "needB": 0, "best": "aXb"}, "focus": {"string": "aXbc", "indices": [0, 2]}},
+      {"sequence": 3, "event": "Expand to index 3, character c.", "variables": {"left": 1, "right": 3, "missing": 1, "needA": 1, "needB": 0, "needC": -1}, "condition": "c is not required, so the window still lacks a.", "action": "Keep scanning; no later endpoint exists, so aXb remains the shortest valid window.", "state_before": {"left": 1, "missing": 1, "needA": 1, "needB": 0, "best": "aXb"}, "state_after": {"left": 1, "missing": 1, "needA": 1, "needB": 0, "needC": -1, "best": "aXb"}, "focus": {"string": "aXbc", "indices": [3]}}
+    ],
+    "final_result": "aXb"
+  },
+  "edge_cases": [
+    {"case": "No window contains all required characters", "handling": "The best length remains unset and the method returns an empty string."},
+    {"case": "t contains repeated characters", "handling": "The missing count and frequency table track each required occurrence, not just distinct characters."},
+    {"case": "The shortest window is one character", "handling": "The contraction loop records the one-character window before removing its required character."},
+    {"case": "Uppercase and lowercase differ", "handling": "Character counts use exact character codes, so letter case is preserved."}
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 9,
+    "title": "Palindrome Number",
+    "url": "https://leetcode.com/problems/palindrome-number/",
+    "difficulty": "Easy",
+    "category": "Math"
+  },
+  "problem_summary": {
+    "summary": "Determine whether an integer reads the same from left to right and right to left; negative values are not palindromes.",
+    "input_output": "Input: a signed 32-bit integer x. Return whether its decimal representation is palindromic.",
+    "constraints": ["-2^31 <= x <= 2^31 - 1", "A negative integer is not a palindrome"]
+  },
+  "brute_force": {
+    "explanation": "Convert the integer to decimal text and compare it with its reversed text. This is the clearest baseline, though it uses space proportional to the number of digits.",
+    "correctness_idea": "Reversal produces precisely the digits in opposite order, so equality holds exactly when the original representation is palindromic.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean isPalindrome(int x) {\n        String digits = Integer.toString(x);\n        return digits.equals(new StringBuilder(digits).reverse().toString());\n    }\n}",
+    "time_complexity": "O(d), where d is the number of decimal digits.",
+    "space_complexity": "O(d) auxiliary for the string and reversed string."
+  },
+  "optimized": {
+    "explanation": "Reject negatives and nonzero values ending in zero. Reverse only the lower half of the digits; for an even digit count compare the two halves, and for an odd count discard the middle digit of the reversed half.",
+    "correctness_idea": "A palindrome has matching outer digits, so reversing digits from the right until the reversed half reaches the remaining half leaves exactly the necessary equality. Half reversal is sufficient and avoids overflowing a full reversed int.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean isPalindrome(int x) {\n        if (x < 0 || (x % 10 == 0 && x != 0)) {\n            return false;\n        }\n        int remaining = x;\n        int reversedHalf = 0;\n        while (remaining > reversedHalf) {\n            reversedHalf = reversedHalf * 10 + remaining % 10;\n            remaining /= 10;\n        }\n        return remaining == reversedHalf || remaining == reversedHalf / 10;\n    }\n}",
+    "time_complexity": "O(d) — only about half of the digits are processed.",
+    "space_complexity": "O(1) auxiliary."
+  },
+  "dry_run": {
+    "sample_input": {"x": 1221},
+    "sample_output": true,
+    "steps": [
+      {"sequence": 1, "event": "Process the last digit of 1221.", "variables": {"remaining": 122, "reversedHalf": 1, "digit": 1}, "condition": "122 > 0, so another digit is needed for the reversed half.", "action": "Append digit 1 to reversedHalf and remove it from remaining.", "state_before": {"remaining": 1221, "reversedHalf": 0}, "state_after": {"remaining": 122, "reversedHalf": 1}},
+      {"sequence": 2, "event": "Process the next digit.", "variables": {"remaining": 12, "reversedHalf": 12, "digit": 2}, "condition": "122 > 1, so continue; then 12 is no longer greater than 12.", "action": "Append 2 to reversedHalf and stop the loop.", "state_before": {"remaining": 122, "reversedHalf": 1}, "state_after": {"remaining": 12, "reversedHalf": 12}},
+      {"sequence": 3, "event": "Compare the two halves.", "variables": {"remaining": 12, "reversedHalf": 12}, "condition": "The number has an even number of digits, so the halves must match exactly.", "action": "Return true because 12 equals 12.", "state_before": {"remaining": 12, "reversedHalf": 12}, "state_after": {"result": true}}
+    ],
+    "final_result": true
+  },
+  "edge_cases": [
+    {"case": "Negative input", "handling": "The optimized method returns false immediately; the baseline's minus sign also prevents a false match."},
+    {"case": "Zero", "handling": "Zero is allowed through the terminal-zero check and compares equal to its reversed half."},
+    {"case": "Positive number ending in zero", "handling": "It cannot be palindromic without a leading zero, so it is rejected immediately."},
+    {"case": "Odd number of digits", "handling": "The middle digit is ignored by comparing remaining with reversedHalf / 10."}
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "metadata": {
+    "problem_number": 136,
+    "title": "Single Number",
+    "url": "https://leetcode.com/problems/single-number/",
+    "difficulty": "Easy",
+    "category": "Bit Manipulation"
+  },
+  "problem_summary": {
+    "summary": "Find the unique array value when every other value appears exactly twice.",
+    "input_output": "Input: a nonempty integer array nums. Output: the value occurring once.",
+    "constraints": [
+      "1 <= nums.length <= 3 * 10^4",
+      "-3 * 10^4 <= nums[i] <= 3 * 10^4",
+      "Exactly one value occurs once and every other value occurs twice",
+      "The required solution has linear runtime and constant extra space"
+    ]
+  },
+  "brute_force": {
+    "explanation": "Count each value in a hash map, then find the value with frequency one. This direct frequency-based approach is easy to verify but uses extra storage and does not meet the problem's constant-space requirement.",
+    "correctness_idea": "The map stores the exact frequency of every value; by the input guarantee, the unique value is the only key whose count is one.",
+    "language": "java",
+    "code": "import java.util.HashMap;\nimport java.util.Map;\n\nclass Solution {\n    public int singleNumber(int[] nums) {\n        Map<Integer, Integer> frequency = new HashMap<>();\n        for (int value : nums) {\n            frequency.put(value, frequency.getOrDefault(value, 0) + 1);\n        }\n        for (int value : nums) {\n            if (frequency.get(value) == 1) {\n                return value;\n            }\n        }\n        return 0;\n    }\n}",
+    "time_complexity": "O(n) expected with hash map operations, where n = nums.length.",
+    "space_complexity": "O(u), where u is the number of distinct values; this is not constant extra space."
+  },
+  "optimized": {
+    "explanation": "XOR every array value into one accumulator. Equal values cancel because x ^ x is zero, and zero is the identity for XOR.",
+    "correctness_idea": "XOR is associative and commutative, so the paired copies can be grouped as zero regardless of order. Only the single unpaired value remains.",
+    "language": "java",
+    "code": "class Solution {\n    public int singleNumber(int[] nums) {\n        int unique = 0;\n        for (int value : nums) {\n            unique ^= value;\n        }\n        return unique;\n    }\n}",
+    "time_complexity": "O(n), one pass through the array.",
+    "space_complexity": "O(1) auxiliary space, using one fixed-width accumulator."
+  },
+  "dry_run": {
+    "sample_input": {"nums": [6, 3, 6, 8, 3]},
+    "sample_output": 8,
+    "steps": [
+      {"sequence": 1, "event": "XOR the first value.", "variables": {"value": 6, "uniqueBefore": 0}, "condition": "The accumulator starts at the XOR identity 0.", "action": "Compute 0 ^ 6.", "state_before": {"unique": 0}, "state_after": {"unique": 6}},
+      {"sequence": 2, "event": "XOR the first paired value.", "variables": {"value": 3, "uniqueBefore": 6}, "condition": "All values are processed in array order.", "action": "Compute 6 ^ 3.", "state_before": {"unique": 6}, "state_after": {"unique": 5}},
+      {"sequence": 3, "event": "Cancel the second copy of 6.", "variables": {"value": 6, "uniqueBefore": 5}, "condition": "The two 6 values contribute 6 ^ 6 = 0.", "action": "Compute 5 ^ 6.", "state_before": {"unique": 5}, "state_after": {"unique": 3}},
+      {"sequence": 4, "event": "Include the unpaired value.", "variables": {"value": 8, "uniqueBefore": 3}, "condition": "8 has no second copy.", "action": "Compute 3 ^ 8.", "state_before": {"unique": 3}, "state_after": {"unique": 11}},
+      {"sequence": 5, "event": "Cancel the second copy of 3.", "variables": {"value": 3, "uniqueBefore": 11}, "condition": "The two 3 values cancel under XOR.", "action": "Compute 11 ^ 3; the paired values disappear, leaving 8.", "state_before": {"unique": 11}, "state_after": {"unique": 8}}
+    ],
+    "final_result": 8
+  },
+  "edge_cases": [
+    {"case": "The array contains one value", "handling": "The accumulator XORs zero with that value and returns it."},
+    {"case": "The unique value is negative", "handling": "Java XOR works on the full two's-complement int representation and still cancels identical pairs."},
+    {"case": "Paired values appear in any order", "handling": "XOR's associativity and commutativity make ordering irrelevant."}
+  ]
+}

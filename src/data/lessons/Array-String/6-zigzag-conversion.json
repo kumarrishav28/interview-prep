@@ -1,0 +1,281 @@
+{
+  "metadata": {
+    "problem_number": 6,
+    "title": "Zigzag Conversion",
+    "url": "https://leetcode.com/problems/zigzag-conversion/",
+    "difficulty": "Medium",
+    "category": "Array / String"
+  },
+  "problem_summary": {
+    "summary": "Write the characters of a string by traveling down and diagonally up across a requested number of rows, then concatenate the rows from top to bottom.",
+    "input_output": "Input: a string s and an integer numRows. Return the row-by-row reading of s after the zigzag placement.",
+    "constraints": [
+      "1 <= s.length <= 1000",
+      "1 <= numRows <= 1000",
+      "s contains English letters, commas, and periods."
+    ]
+  },
+  "brute_force": {
+    "explanation": "Allocate a character grid with one row per reachable zigzag row and one column per input character. Simulate the down-and-up path, then scan the grid row by row, skipping empty cells. This explicit layout is useful for visualizing the pattern, though it reserves many unused cells.",
+    "correctness_idea": "The simulation visits exactly the cells prescribed by the zigzag path in input order. Scanning the occupied cells by row therefore reads the original characters in the required row-by-row order.",
+    "language": "java",
+    "code": "class Solution {\n    public String convert(String s, int numRows) {\n        if (numRows == 1) {\n            return s;\n        }\n\n        int rowCount = Math.min(numRows, s.length());\n        char[][] grid = new char[rowCount][s.length()];\n        int row = 0;\n        int column = 0;\n        boolean movingDown = true;\n\n        for (int index = 0; index < s.length(); index++) {\n            grid[row][column] = s.charAt(index);\n            if (row == rowCount - 1) {\n                movingDown = false;\n            } else if (row == 0) {\n                movingDown = true;\n            }\n\n            if (movingDown) {\n                row++;\n            } else {\n                row--;\n                column++;\n            }\n        }\n\n        StringBuilder result = new StringBuilder(s.length());\n        for (int currentRow = 0; currentRow < rowCount; currentRow++) {\n            for (int currentColumn = 0; currentColumn < s.length(); currentColumn++) {\n                if (grid[currentRow][currentColumn] != '\\0') {\n                    result.append(grid[currentRow][currentColumn]);\n                }\n            }\n        }\n        return result.toString();\n    }\n}",
+    "time_complexity": "O(n * r) where n is s.length() and r = min(numRows, n): the grid scan may inspect every reserved cell.",
+    "space_complexity": "O(n * r) auxiliary for the grid, plus O(n) for the returned string."
+  },
+  "optimized": {
+    "explanation": "Simulate the same row movement, but append each character directly to its row's StringBuilder. Concatenating the row builders avoids scanning the empty grid cells.",
+    "correctness_idea": "Each character is appended to the row it occupies during the zigzag traversal, and the traversal changes direction only at the first and last rows. Concatenating row buffers in order yields exactly the required reading.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass Solution {\n    public String convert(String s, int numRows) {\n        if (numRows == 1) {\n            return s;\n        }\n\n        int rowCount = Math.min(numRows, s.length());\n        List<StringBuilder> rows = new ArrayList<>();\n        for (int row = 0; row < rowCount; row++) {\n            rows.add(new StringBuilder());\n        }\n\n        int currentRow = 0;\n        boolean movingDown = true;\n        for (int index = 0; index < s.length(); index++) {\n            rows.get(currentRow).append(s.charAt(index));\n            if (currentRow == rowCount - 1) {\n                movingDown = false;\n            } else if (currentRow == 0) {\n                movingDown = true;\n            }\n            currentRow += movingDown ? 1 : -1;\n        }\n\n        StringBuilder result = new StringBuilder(s.length());\n        for (StringBuilder row : rows) {\n            result.append(row);\n        }\n        return result.toString();\n    }\n}",
+    "time_complexity": "O(n) — each character is appended to a row once and copied into the result once.",
+    "space_complexity": "O(n + r) including the row buffers and returned string, where r = min(numRows, n)."
+  },
+  "dry_run": {
+    "sample_input": {
+      "s": "TIDALWAVES",
+      "numRows": 4
+    },
+    "sample_output": "TAIWVDLEAS",
+    "steps": [
+      {
+        "sequence": 1,
+        "event": "Place character at index 0.",
+        "variables": {
+          "index": 0,
+          "character": "T",
+          "row": 0,
+          "movingDown": true
+        },
+        "condition": "The current row is the top row, so continue downward.",
+        "action": "Append T to row 0, then advance to row 1.",
+        "state_before": {
+          "rows": ["", "", "", ""],
+          "nextRow": 0
+        },
+        "state_after": {
+          "rows": ["T", "", "", ""],
+          "nextRow": 1
+        }
+      },
+      {
+        "sequence": 2,
+        "event": "Place character at index 1.",
+        "variables": {
+          "index": 1,
+          "character": "I",
+          "row": 1,
+          "movingDown": true
+        },
+        "condition": "Row 1 is between the endpoints.",
+        "action": "Append I to row 1, then advance to row 2.",
+        "state_before": {
+          "rows": ["T", "", "", ""],
+          "nextRow": 1
+        },
+        "state_after": {
+          "rows": ["T", "I", "", ""],
+          "nextRow": 2
+        }
+      },
+      {
+        "sequence": 3,
+        "event": "Place character at index 2.",
+        "variables": {
+          "index": 2,
+          "character": "D",
+          "row": 2,
+          "movingDown": true
+        },
+        "condition": "Row 2 is between the endpoints.",
+        "action": "Append D to row 2, then advance to row 3.",
+        "state_before": {
+          "rows": ["T", "I", "", ""],
+          "nextRow": 2
+        },
+        "state_after": {
+          "rows": ["T", "I", "D", ""],
+          "nextRow": 3
+        }
+      },
+      {
+        "sequence": 4,
+        "event": "Place character at index 3.",
+        "variables": {
+          "index": 3,
+          "character": "A",
+          "row": 3,
+          "movingDown": true
+        },
+        "condition": "Row 3 is the bottom row.",
+        "action": "Append A to row 3, reverse direction, and move to row 2.",
+        "state_before": {
+          "rows": ["T", "I", "D", ""],
+          "nextRow": 3,
+          "movingDown": true
+        },
+        "state_after": {
+          "rows": ["T", "I", "D", "A"],
+          "nextRow": 2,
+          "movingDown": false
+        }
+      },
+      {
+        "sequence": 5,
+        "event": "Place character at index 4.",
+        "variables": {
+          "index": 4,
+          "character": "L",
+          "row": 2,
+          "movingDown": false
+        },
+        "condition": "This is a diagonal upward step.",
+        "action": "Append L to row 2, then move to row 1.",
+        "state_before": {
+          "rows": ["T", "I", "D", "A"],
+          "nextRow": 2
+        },
+        "state_after": {
+          "rows": ["T", "I", "DL", "A"],
+          "nextRow": 1
+        }
+      },
+      {
+        "sequence": 6,
+        "event": "Place character at index 5.",
+        "variables": {
+          "index": 5,
+          "character": "W",
+          "row": 1,
+          "movingDown": false
+        },
+        "condition": "This is the last diagonal step before the top row.",
+        "action": "Append W to row 1 and move to row 0; the direction flag changes when row 0 is processed next.",
+        "state_before": {
+          "rows": ["T", "I", "DL", "A"],
+          "nextRow": 1,
+          "movingDown": false
+        },
+        "state_after": {
+          "rows": ["T", "IW", "DL", "A"],
+          "nextRow": 0,
+          "movingDown": false
+        }
+      },
+      {
+        "sequence": 7,
+        "event": "Place character at index 6.",
+        "variables": {
+          "index": 6,
+          "character": "A",
+          "row": 0,
+          "movingDown": false
+        },
+        "condition": "At row 0, the code switches movingDown to true before moving onward.",
+        "action": "Append A to row 0, set movingDown to true, then advance to row 1.",
+        "state_before": {
+          "rows": ["T", "IW", "DL", "A"],
+          "nextRow": 0,
+          "movingDown": false
+        },
+        "state_after": {
+          "rows": ["TA", "IW", "DL", "A"],
+          "nextRow": 1,
+          "movingDown": true
+        }
+      },
+      {
+        "sequence": 8,
+        "event": "Place character at index 7.",
+        "variables": {
+          "index": 7,
+          "character": "V",
+          "row": 1,
+          "movingDown": true
+        },
+        "condition": "Row 1 is between the endpoints.",
+        "action": "Append V to row 1, then advance to row 2.",
+        "state_before": {
+          "rows": ["TA", "IW", "DL", "A"],
+          "nextRow": 1
+        },
+        "state_after": {
+          "rows": ["TA", "IWV", "DL", "A"],
+          "nextRow": 2
+        }
+      },
+      {
+        "sequence": 9,
+        "event": "Place character at index 8.",
+        "variables": {
+          "index": 8,
+          "character": "E",
+          "row": 2,
+          "movingDown": true
+        },
+        "condition": "Row 2 is between the endpoints.",
+        "action": "Append E to row 2, then advance to row 3.",
+        "state_before": {
+          "rows": ["TA", "IWV", "DL", "A"],
+          "nextRow": 2
+        },
+        "state_after": {
+          "rows": ["TA", "IWV", "DLE", "A"],
+          "nextRow": 3
+        }
+      },
+      {
+        "sequence": 10,
+        "event": "Place character at index 9.",
+        "variables": {
+          "index": 9,
+          "character": "S",
+          "row": 3,
+          "movingDown": true
+        },
+        "condition": "Row 3 is the bottom row.",
+        "action": "Append S to row 3; reverse direction for the next input character.",
+        "state_before": {
+          "rows": ["TA", "IWV", "DLE", "A"],
+          "nextRow": 3,
+          "movingDown": true
+        },
+        "state_after": {
+          "rows": ["TA", "IWV", "DLE", "AS"],
+          "nextRow": 2,
+          "movingDown": false
+        }
+      },
+      {
+        "sequence": 11,
+        "event": "Concatenate completed row buffers.",
+        "variables": {
+          "rows": ["TA", "IWV", "DLE", "AS"]
+        },
+        "condition": "All input characters have been placed.",
+        "action": "Join rows from index 0 through 3.",
+        "state_before": {
+          "result": ""
+        },
+        "state_after": {
+          "result": "TAIWVDLEAS"
+        }
+      }
+    ],
+    "final_result": "TAIWVDLEAS"
+  },
+  "edge_cases": [
+    {
+      "case": "One requested row",
+      "handling": "The characters are already in row order, so both methods return s directly."
+    },
+    {
+      "case": "More rows than characters",
+      "handling": "Only min(numRows, s.length()) row buffers or grid rows are needed; each character remains in its own row."
+    },
+    {
+      "case": "Exactly two rows",
+      "handling": "The traversal alternates between the two rows without a diagonal interior row."
+    }
+  ]
+}

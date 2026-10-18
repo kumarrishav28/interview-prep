@@ -1,0 +1,35 @@
+{
+  "metadata": {"problem_number": 572, "title": "Subtree of Another Tree", "url": "https://leetcode.com/problems/subtree-of-another-tree/", "difficulty": "Easy", "category": "Binary Tree General"},
+  "problem_summary": {"summary": "Check whether subRoot matches a node of root together with all of that node's descendants.", "input_output": "Input: roots root and subRoot. Return whether subRoot is structurally and value-identical to a subtree of root.", "constraints": ["1 <= root node count <= 2000", "1 <= subRoot node count <= 1000", "Node values are in [-10^4, 10^4]"]},
+  "brute_force": {
+    "explanation": "Try every node in the main tree as a possible subtree root and compare both trees recursively from that candidate.",
+    "correctness_idea": "Every subtree must be rooted at some node of root. Exact comparison at each candidate checks both its full shape and values, so a successful candidate is precisely a matching subtree.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean isSubtree(TreeNode root, TreeNode subRoot) {\n        if (root == null) return false;\n        return same(root, subRoot)\n            || isSubtree(root.left, subRoot)\n            || isSubtree(root.right, subRoot);\n    }\n\n    private boolean same(TreeNode first, TreeNode second) {\n        if (first == null || second == null) return first == second;\n        return first.val == second.val\n            && same(first.left, second.left)\n            && same(first.right, second.right);\n    }\n}",
+    "time_complexity": "O(nm) worst case, where n and m are the node counts, due to repeated comparisons.",
+    "space_complexity": "O(h + k) recursion stack for main-tree height h and candidate height k."
+  },
+  "optimized": {
+    "explanation": "Serialize both trees in preorder with an explicit null token, then use Knuth-Morris-Pratt pattern matching to find the subRoot token sequence in root's sequence.",
+    "correctness_idea": "Preorder serialization with null markers uniquely encodes tree structure and values. Therefore a complete serialized subRoot sequence occurs in root exactly when it is rooted at a node as a structurally identical subtree; KMP finds that sequence in linear time.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\nclass Solution {\n    private static final int NULL_TOKEN = Integer.MIN_VALUE;\n\n    public boolean isSubtree(TreeNode root, TreeNode subRoot) {\n        List<Integer> text = new ArrayList<>();\n        List<Integer> pattern = new ArrayList<>();\n        serialize(root, text);\n        serialize(subRoot, pattern);\n        int[] prefix = new int[pattern.size()];\n        for (int index = 1, matched = 0; index < pattern.size();) {\n            if (pattern.get(index).equals(pattern.get(matched))) {\n                prefix[index++] = ++matched;\n            } else if (matched > 0) {\n                matched = prefix[matched - 1];\n            } else {\n                index++;\n            }\n        }\n        for (int index = 0, matched = 0; index < text.size();) {\n            if (text.get(index).equals(pattern.get(matched))) {\n                index++;\n                matched++;\n                if (matched == pattern.size()) return true;\n            } else if (matched > 0) {\n                matched = prefix[matched - 1];\n            } else {\n                index++;\n            }\n        }\n        return false;\n    }\n\n    private void serialize(TreeNode node, List<Integer> output) {\n        if (node == null) {\n            output.add(NULL_TOKEN);\n            return;\n        }\n        output.add(node.val);\n        serialize(node.left, output);\n        serialize(node.right, output);\n    }\n}",
+    "time_complexity": "O(n + m) — serialization and KMP scanning are linear in the two tree sizes.",
+    "space_complexity": "O(n + m) auxiliary for serialized tokens and the KMP prefix table."
+  },
+  "dry_run": {
+    "sample_input": {"root_level_order": [7, 3, 9, 1, 5], "subRoot_level_order": [3, 1, 5]},
+    "sample_output": true,
+    "steps": [
+      {"sequence": 1, "event": "Serialize root in preorder with null markers.", "variables": {"tokens": [7, 3, 1, -2147483648, -2147483648, 5, -2147483648, -2147483648, 9, -2147483648, -2147483648]}, "condition": "Each absent child emits the dedicated null token.", "action": "Complete the main-tree token sequence.", "state_before": {"text": []}, "state_after": {"text": [7, 3, 1, -2147483648, -2147483648, 5, -2147483648, -2147483648, 9, -2147483648, -2147483648]}},
+      {"sequence": 2, "event": "Serialize subRoot and build the KMP prefix table.", "variables": {"pattern": [3, 1, -2147483648, -2147483648, 5, -2147483648, -2147483648]}, "condition": "The pattern encodes node 3 and both complete child positions.", "action": "Prepare linear-time token matching.", "state_before": {"pattern": []}, "state_after": {"pattern": [3, 1, -2147483648, -2147483648, 5, -2147483648, -2147483648], "prefix": [0, 0, 0, 0, 0, 0, 0]}},
+      {"sequence": 3, "event": "Scan the main token sequence.", "variables": {"startAt": 1, "matchedTokens": 7}, "condition": "Tokens from index 1 match the entire pattern.", "action": "Return true; the tree rooted at value 3 is identical to subRoot.", "state_before": {"textIndex": 1, "patternIndex": 0}, "state_after": {"matched": true}}
+    ],
+    "final_result": true
+  },
+  "edge_cases": [
+    {"case": "Root itself matches subRoot", "handling": "The serialized pattern matches at the start of the main serialization."},
+    {"case": "Same values but different structure", "handling": "Null markers cause the serialized sequences to differ."},
+    {"case": "Repeated values in the main tree", "handling": "KMP checks full structural token sequences rather than values alone."}
+  ]
+}

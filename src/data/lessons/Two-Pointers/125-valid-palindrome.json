@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "problem_number": 125,
+    "title": "Valid Palindrome",
+    "url": "https://leetcode.com/problems/valid-palindrome/",
+    "difficulty": "Easy",
+    "category": "Two Pointers"
+  },
+  "problem_summary": {
+    "summary": "Check whether a string reads identically in both directions after ignoring non-alphanumeric characters and letter case.",
+    "input_output": "Input: a printable-ASCII string s. Return true if the normalized sequence is a palindrome, otherwise false.",
+    "constraints": ["1 <= s.length <= 2 * 10^5", "s consists only of printable ASCII characters"]
+  },
+  "brute_force": {
+    "explanation": "Build a normalized string containing only lowercase letters and digits, then compare it with its reverse.",
+    "correctness_idea": "Normalization applies exactly the requested filtering and case folding. A sequence is a palindrome precisely when its forward form equals its reversed form.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean isPalindrome(String s) {\n        StringBuilder normalized = new StringBuilder();\n        for (int index = 0; index < s.length(); index++) {\n            char value = s.charAt(index);\n            if (Character.isLetterOrDigit(value)) {\n                normalized.append(Character.toLowerCase(value));\n            }\n        }\n        String forward = normalized.toString();\n        return forward.contentEquals(normalized.reverse());\n    }\n}",
+    "time_complexity": "O(n) — normalization and reversal each scan the string.",
+    "space_complexity": "O(n) auxiliary — the normalized characters are stored separately."
+  },
+  "optimized": {
+    "explanation": "Place pointers at both ends, skip non-alphanumeric characters, and compare lowercase forms while the pointers move inward.",
+    "correctness_idea": "Every compared pair is the next pair of relevant characters from opposite ends of the normalized sequence. Any unequal pair disproves a palindrome; if all pairs match, the sequence is symmetric.",
+    "language": "java",
+    "code": "class Solution {\n    public boolean isPalindrome(String s) {\n        int left = 0;\n        int right = s.length() - 1;\n        while (left < right) {\n            while (left < right && !Character.isLetterOrDigit(s.charAt(left))) left++;\n            while (left < right && !Character.isLetterOrDigit(s.charAt(right))) right--;\n            if (Character.toLowerCase(s.charAt(left)) != Character.toLowerCase(s.charAt(right))) {\n                return false;\n            }\n            left++;\n            right--;\n        }\n        return true;\n    }\n}",
+    "time_complexity": "O(n) — each pointer moves inward across the string at most once.",
+    "space_complexity": "O(1) auxiliary — only two indices and character temporaries are used."
+  },
+  "dry_run": {
+    "sample_input": {"s": "R2, a!2r"},
+    "sample_output": true,
+    "steps": [
+      {"sequence": 1, "event": "Compare the outer relevant characters.", "variables": {"left": 0, "right": 7, "leftChar": "r", "rightChar": "r"}, "condition": "Both endpoint characters are alphanumeric and their lowercase forms match.", "action": "Advance left and decrement right.", "state_before": {"left": 0, "right": 7}, "state_after": {"left": 1, "right": 6}, "focus": {"string": "R2, a!2r", "indices": [0, 7]}},
+      {"sequence": 2, "event": "Compare the matching digits.", "variables": {"left": 1, "right": 6, "leftChar": "2", "rightChar": "2"}, "condition": "The characters match.", "action": "Move both pointers inward.", "state_before": {"left": 1, "right": 6}, "state_after": {"left": 2, "right": 5}, "focus": {"string": "R2, a!2r", "indices": [1, 6]}},
+      {"sequence": 3, "event": "Skip punctuation at both sides and compare the middle letter.", "variables": {"left": 4, "right": 4, "leftChar": "a", "rightChar": "a"}, "condition": "Comma, space, and exclamation mark are skipped; the remaining characters match.", "action": "Advance both pointers; they cross and the scan succeeds.", "state_before": {"left": 2, "right": 5}, "state_after": {"left": 5, "right": 3}, "focus": {"string": "R2, a!2r", "indices": [4, 4]}}
+    ],
+    "final_result": true
+  },
+  "edge_cases": [
+    {"case": "Only punctuation or spaces", "handling": "No relevant characters remain, so the empty normalized sequence is a palindrome."},
+    {"case": "One alphanumeric character", "handling": "The pointers meet without finding a mismatched pair."},
+    {"case": "Digits are part of the comparison", "handling": "Digits are retained and compared like letters."}
+  ]
+}

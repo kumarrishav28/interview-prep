@@ -1,0 +1,39 @@
+{
+  "metadata": {"problem_number": 61, "title": "Rotate List", "url": "https://leetcode.com/problems/rotate-list/", "difficulty": "Medium", "category": "Linked List"},
+  "problem_summary": {
+    "summary": "Rotate a singly linked list to the right by k positions.",
+    "input_output": "Inputs: possibly-null ListNode head and non-negative k. Return the rotated ListNode head. The judge supplies ListNode { int val; ListNode next; }.",
+    "constraints": ["0 <= number of nodes <= 500", "-100 <= Node.val <= 100", "0 <= k <= 2 * 10^9"]
+  },
+  "brute_force": {
+    "explanation": "Count nodes, reduce k modulo the length, then perform that many one-position right rotations by moving the tail to the front each time.",
+    "correctness_idea": "A single operation moves the last node to the head, exactly one right rotation. Repeating the normalized number of rotations yields the requested shift.",
+    "language": "java",
+    "code": "class Solution {\n    public ListNode rotateRight(ListNode head, int k) {\n        if (head == null || head.next == null) return head;\n        int length = 1;\n        ListNode tail = head;\n        while (tail.next != null) { tail = tail.next; length++; }\n        int rotations = k % length;\n        for (int count = 0; count < rotations; count++) {\n            ListNode previous = head;\n            while (previous.next != tail) previous = previous.next;\n            tail.next = head;\n            head = tail;\n            previous.next = null;\n            tail = previous;\n        }\n        return head;\n    }\n}",
+    "time_complexity": "O(n + n*r), where r = k mod n; worst case O(n^2).",
+    "space_complexity": "O(1) auxiliary."
+  },
+  "optimized": {
+    "explanation": "Find the length and tail, connect tail to head to form a ring, then break the ring after node length - (k mod length) steps from the old head.",
+    "correctness_idea": "A right rotation by r makes the node at index n-r the new head. The temporary ring lets the suffix become the prefix; breaking just before that node yields the required list.",
+    "language": "java",
+    "code": "class Solution {\n    public ListNode rotateRight(ListNode head, int k) {\n        if (head == null || head.next == null) return head;\n        int length = 1;\n        ListNode tail = head;\n        while (tail.next != null) { tail = tail.next; length++; }\n        int rotations = k % length;\n        if (rotations == 0) return head;\n        tail.next = head;\n        int stepsToNewTail = length - rotations;\n        ListNode newTail = head;\n        for (int step = 1; step < stepsToNewTail; step++) newTail = newTail.next;\n        ListNode newHead = newTail.next;\n        newTail.next = null;\n        return newHead;\n    }\n}",
+    "time_complexity": "O(n) — one length scan and at most one more linear walk.",
+    "space_complexity": "O(1) auxiliary."
+  },
+  "dry_run": {
+    "sample_input": {"head": [3, 6, 8, 2, 5], "k": 2},
+    "sample_output": [2, 5, 3, 6, 8],
+    "steps": [
+      {"sequence": 1, "event": "Measure the list and reduce the rotation.", "variables": {"length": 5, "k": 2, "rotations": 2}, "condition": "The list has five nodes and k is smaller than length.", "action": "Compute new tail position length - rotations = 3.", "state_before": {"list": [3, 6, 8, 2, 5]}, "state_after": {"newTailIndex": 2, "newHeadIndex": 3}},
+      {"sequence": 2, "event": "Temporarily link the old tail to the old head.", "variables": {"tailValue": 5}, "condition": "rotations is nonzero.", "action": "Make the chain circular and advance to the new tail at index 2.", "state_before": {"tailNext": null}, "state_after": {"tailNext": 3, "newTailValue": 8}},
+      {"sequence": 3, "event": "Break the ring after the new tail.", "variables": {"newTailValue": 8, "newHeadValue": 2}, "condition": "The next node after the new tail starts the rotated prefix.", "action": "Set newTail.next to null and return newHead.", "state_before": {"ring": [3, 6, 8, 2, 5, "back to 3"]}, "state_after": {"list": [2, 5, 3, 6, 8]}}
+    ],
+    "final_result": [2, 5, 3, 6, 8]
+  },
+  "edge_cases": [
+    {"case": "Empty or one-node list", "handling": "The head is returned immediately."},
+    {"case": "k is zero or a multiple of the length", "handling": "The optimized method returns before forming a ring; the baseline performs zero rotations."},
+    {"case": "k is very large", "handling": "Both methods normalize it with modulo before rotating."}
+  ]
+}

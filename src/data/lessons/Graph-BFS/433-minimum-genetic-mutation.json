@@ -1,0 +1,35 @@
+{
+  "metadata": {"problem_number": 433, "title": "Minimum Genetic Mutation", "url": "https://leetcode.com/problems/minimum-genetic-mutation/", "difficulty": "Medium", "category": "Graph BFS"},
+  "problem_summary": {"summary": "Find the fewest one-character changes from startGene to endGene while requiring every gene after the start to appear in the valid bank.", "input_output": "Inputs: two 8-character genes and a bank. Return the minimum mutation count or -1 if no valid sequence exists.", "constraints": ["0 <= bank.length <= 10", "startGene, endGene, and bank entries have length 8", "Characters are A, C, G, or T", "The starting gene is valid even if absent from bank"]},
+  "brute_force": {
+    "explanation": "Treat startGene and bank entries as vertices. Compare every pair to build edges between genes differing in exactly one position, then BFS for the shortest path to endGene.",
+    "correctness_idea": "The graph contains an edge exactly when one legal mutation transforms one valid gene to another. Every valid mutation sequence is therefore a graph path, and BFS finds a path with the fewest edges.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.ArrayList;\nimport java.util.Arrays;\nimport java.util.HashSet;\nimport java.util.List;\nimport java.util.Queue;\nimport java.util.Set;\n\nclass Solution {\n    public int minMutation(String startGene, String endGene, String[] bank) {\n        if (startGene.equals(endGene)) return 0;\n        Set<String> allowed = new HashSet<>(Arrays.asList(bank));\n        if (!allowed.contains(endGene)) return -1;\n        List<String> genes = new ArrayList<>(allowed);\n        if (!allowed.contains(startGene)) genes.add(startGene);\n        List<List<Integer>> graph = new ArrayList<>();\n        for (int index = 0; index < genes.size(); index++) graph.add(new ArrayList<>());\n        for (int first = 0; first < genes.size(); first++) {\n            for (int second = first + 1; second < genes.size(); second++) {\n                if (oneChange(genes.get(first), genes.get(second))) { graph.get(first).add(second); graph.get(second).add(first); }\n            }\n        }\n        int start = genes.indexOf(startGene), target = genes.indexOf(endGene);\n        int[] distance = new int[genes.size()]; Arrays.fill(distance, -1);\n        Queue<Integer> queue = new ArrayDeque<>(); distance[start] = 0; queue.offer(start);\n        while (!queue.isEmpty()) {\n            int current = queue.poll();\n            if (current == target) return distance[current];\n            for (int next : graph.get(current)) if (distance[next] == -1) { distance[next] = distance[current] + 1; queue.offer(next); }\n        }\n        return -1;\n    }\n    private boolean oneChange(String first, String second) {\n        int differences = 0;\n        for (int index = 0; index < first.length(); index++) if (first.charAt(index) != second.charAt(index) && ++differences > 1) return false;\n        return differences == 1;\n    }\n}",
+    "time_complexity": "O(B^2 L) to compare all bank pairs, plus O(B^2) BFS in the explicit graph, where B is bank size and L=8.",
+    "space_complexity": "O(B^2) for the explicit adjacency lists and O(B) for BFS state."
+  },
+  "optimized": {
+    "explanation": "BFS through valid genes, generating neighbors by changing each position to each of the other three DNA letters. Enqueue only candidates in the bank and remove them from the unvisited set immediately.",
+    "correctness_idea": "Every one-step mutation differs at one position, so the generated candidates enumerate all legal neighbors. BFS explores increasing mutation counts, and removing a candidate on enqueue visits it at its shortest distance only once.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.Arrays;\nimport java.util.HashSet;\nimport java.util.Queue;\nimport java.util.Set;\n\nclass Solution {\n    public int minMutation(String startGene, String endGene, String[] bank) {\n        if (startGene.equals(endGene)) return 0;\n        Set<String> unvisited = new HashSet<>(Arrays.asList(bank));\n        if (!unvisited.contains(endGene)) return -1;\n        char[] alphabet = {'A', 'C', 'G', 'T'};\n        Queue<String> queue = new ArrayDeque<>();\n        queue.offer(startGene);\n        int mutations = 0;\n        while (!queue.isEmpty()) {\n            int levelSize = queue.size();\n            for (int count = 0; count < levelSize; count++) {\n                char[] current = queue.poll().toCharArray();\n                for (int index = 0; index < current.length; index++) {\n                    char original = current[index];\n                    for (char replacement : alphabet) {\n                        if (replacement == original) continue;\n                        current[index] = replacement;\n                        String candidate = new String(current);\n                        if (candidate.equals(endGene)) return mutations + 1;\n                        if (unvisited.remove(candidate)) queue.offer(candidate);\n                    }\n                    current[index] = original;\n                }\n            }\n            mutations++;\n        }\n        return -1;\n    }\n}",
+    "time_complexity": "O(B L A L) worst case for generating and hashing candidates, where B is bank size, L=8, and A=4 DNA letters; these lengths are fixed by the problem.",
+    "space_complexity": "O(BL) for the unvisited set and queue, including stored gene strings."
+  },
+  "dry_run": {
+    "sample_input": {"startGene": "AACCGGTT", "endGene": "AAACGGTA", "bank": ["AACCGGTA", "AACCGCTA", "AAACGGTA"]},
+    "sample_output": 2,
+    "steps": [
+      {"sequence": 1, "event": "Expand start gene at mutation level 0.", "variables": {"gene": "AACCGGTT", "mutations": 0}, "condition": "Changing the final T to A creates a bank gene.", "action": "Enqueue AACCGGTA and remove it from unvisited.", "state_before": {"queue": ["AACCGGTT"], "unvisited": ["AACCGGTA", "AACCGCTA", "AAACGGTA"]}, "state_after": {"queue": ["AACCGGTA"], "unvisited": ["AACCGCTA", "AAACGGTA"]}},
+      {"sequence": 2, "event": "Expand AACCGGTA at mutation level 1.", "variables": {"gene": "AACCGGTA", "mutations": 1}, "condition": "Changing position 2 from C to A forms AAACGGTA.", "action": "The candidate equals endGene, so return mutations + 1 = 2.", "state_before": {"queue": ["AACCGGTA"], "unvisited": ["AACCGCTA", "AAACGGTA"]}, "state_after": {"result": 2}}
+    ],
+    "final_result": 2
+  },
+  "edge_cases": [
+    {"case": "Start and end genes are identical", "handling": "No mutation is needed, so return 0."},
+    {"case": "End gene is absent from the bank", "handling": "It cannot be a valid final mutation, so return -1 unless start equals end."},
+    {"case": "Start gene is not in the bank", "handling": "It is still used as the initial BFS state, as permitted by the statement."},
+    {"case": "No valid chain connects start to end", "handling": "BFS exhausts the reachable bank genes and returns -1."}
+  ]
+}

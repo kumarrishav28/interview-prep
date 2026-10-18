@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 215,
+    "title": "Kth Largest Element in an Array",
+    "url": "https://leetcode.com/problems/kth-largest-element-in-an-array/",
+    "difficulty": "Medium",
+    "category": "Heap"
+  },
+  "problem_summary": {
+    "summary": "Return the value at rank k when the array is ordered from largest to smallest; equal values occupy separate ranks.",
+    "input_output": "Input: integer array nums and valid rank k. Return the kth largest value, not the kth distinct value.",
+    "constraints": ["1 <= k <= nums.length <= 10^5", "-10^4 <= nums[i] <= 10^4"]
+  },
+  "brute_force": {
+    "explanation": "Sort a copy in ascending order and select the value at index n - k. This is a direct reference solution, although it orders values that are not needed for a single rank.",
+    "correctness_idea": "In ascending order the largest value is last, so counting k positions backward selects index n - k, including duplicates as separate positions.",
+    "language": "java",
+    "code": "import java.util.Arrays;\n\nclass Solution {\n    public int findKthLargest(int[] nums, int k) {\n        int[] sorted = nums.clone();\n        Arrays.sort(sorted);\n        return sorted[sorted.length - k];\n    }\n}",
+    "time_complexity": "O(n log n) for sorting n values.",
+    "space_complexity": "O(n) auxiliary for the copied array; sorting may use additional implementation-dependent workspace."
+  },
+  "optimized": {
+    "explanation": "Use randomized three-way Quickselect to partition values below, equal to, and above a pivot. The target ascending index is n - k; continue only in the partition containing that index. Three-way partitioning handles duplicate-heavy inputs without repeatedly narrowing by one equal value.",
+    "correctness_idea": "After each partition, every value before the equal range is smaller and every value after it is larger. If target lies in the equal range, that pivot value has exactly the desired sorted rank; otherwise the opposite partition cannot contain the answer.",
+    "language": "java",
+    "code": "import java.util.concurrent.ThreadLocalRandom;\n\nclass Solution {\n    public int findKthLargest(int[] nums, int k) {\n        int target = nums.length - k;\n        int left = 0;\n        int right = nums.length - 1;\n        while (left <= right) {\n            int pivot = nums[ThreadLocalRandom.current().nextInt(left, right + 1)];\n            int less = left;\n            int current = left;\n            int greater = right;\n            while (current <= greater) {\n                if (nums[current] < pivot) {\n                    swap(nums, less++, current++);\n                } else if (nums[current] > pivot) {\n                    swap(nums, current, greater--);\n                } else {\n                    current++;\n                }\n            }\n            if (target < less) {\n                right = less - 1;\n            } else if (target > greater) {\n                left = greater + 1;\n            } else {\n                return pivot;\n            }\n        }\n        return -1;\n    }\n\n    private void swap(int[] nums, int first, int second) {\n        int temporary = nums[first];\n        nums[first] = nums[second];\n        nums[second] = temporary;\n    }\n}",
+    "time_complexity": "O(n) expected with randomized pivots; O(n^2) worst case, though three-way partitioning efficiently removes duplicate blocks.",
+    "space_complexity": "O(1) auxiliary; partitioning is iterative and modifies nums in place."
+  },
+  "dry_run": {
+    "sample_input": {"nums": [9, 1, 7, 4, 7, 2], "k": 3},
+    "sample_output": 7,
+    "steps": [
+      {"sequence": 1, "event": "Set the ascending target index and choose pivot 7.", "variables": {"target": 3, "left": 0, "right": 5, "pivot": 7}, "condition": "target = nums.length - k = 6 - 3 = 3.", "action": "Begin three-way partition of the active range [0,5].", "state_before": {"nums": [9, 1, 7, 4, 7, 2], "less": 0, "current": 0, "greater": 5}, "state_after": {"nums": [9, 1, 7, 4, 7, 2], "less": 0, "current": 0, "greater": 5}},
+      {"sequence": 2, "event": "Move values greater than 7 to the right partition.", "variables": {"value": 9, "current": 0, "greater": 5}, "condition": "nums[current] > pivot.", "action": "Swap positions 0 and 5; decrement greater without advancing current so the incoming value is examined.", "state_before": {"nums": [9, 1, 7, 4, 7, 2], "less": 0, "current": 0, "greater": 5}, "state_after": {"nums": [2, 1, 7, 4, 7, 9], "less": 0, "current": 0, "greater": 4}},
+      {"sequence": 3, "event": "Finish partitioning around 7.", "variables": {"equalRange": [3, 4], "target": 3}, "condition": "Values 2, 1, and 4 are less; values 7 and 7 equal the pivot; 9 is greater.", "action": "Partition becomes [2,1,4 | 7,7 | 9]. Target 3 lies in the equal range, so return 7.", "state_before": {"nums": [2, 1, 7, 4, 7, 9], "less": 0, "current": 0, "greater": 4}, "state_after": {"nums": [2, 1, 4, 7, 7, 9], "less": 3, "current": 5, "greater": 4, "result": 7}}
+    ],
+    "final_result": 7
+  },
+  "edge_cases": [
+    {"case": "k == 1", "handling": "The target is the maximum value; Quickselect narrows to its rank."},
+    {"case": "k == nums.length", "handling": "The target is index zero, the minimum value."},
+    {"case": "All values are equal", "handling": "The equal partition spans the active range and returns immediately for any valid k."},
+    {"case": "Repeated values around the requested rank", "handling": "Equal values occupy distinct ranks, and the equal range correctly contains all those ranks."}
+  ]
+}

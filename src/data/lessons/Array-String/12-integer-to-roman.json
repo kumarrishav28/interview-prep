@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 12,
+    "title": "Integer to Roman",
+    "url": "https://leetcode.com/problems/integer-to-roman/",
+    "difficulty": "Medium",
+    "category": "Array / String"
+  },
+  "problem_summary": {
+    "summary": "Convert an integer from 1 through 3999 to its standard Roman numeral representation.",
+    "input_output": "Input: an integer num. Return its Roman numeral string.",
+    "constraints": ["1 <= num <= 3999", "Use the standard subtractive forms IV, IX, XL, XC, CD, and CM"]
+  },
+  "brute_force": {
+    "explanation": "Maintain values and symbols from largest to smallest, including subtractive forms. Repeatedly append the largest token that does not exceed the remaining number, then subtract its value.",
+    "correctness_idea": "At each step, the largest usable Roman token greedily accounts for the highest remaining place value. Repetition handles thousands, hundreds, tens, and ones; subtractive tokens cover the four and nine cases.",
+    "language": "java",
+    "code": "class Solution {\n    public String intToRoman(int num) {\n        int[] values = {1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1};\n        String[] symbols = {\"M\", \"CM\", \"D\", \"CD\", \"C\", \"XC\", \"L\", \"XL\", \"X\", \"IX\", \"V\", \"IV\", \"I\"};\n        StringBuilder result = new StringBuilder();\n        for (int index = 0; index < values.length; index++) {\n            while (num >= values[index]) {\n                result.append(symbols[index]);\n                num -= values[index];\n            }\n        }\n        return result.toString();\n    }\n}",
+    "time_complexity": "O(k + L) — k is the fixed number of Roman tokens and L is the output length; with num <= 3999, both are bounded.",
+    "space_complexity": "O(L) for the returned string builder and result."
+  },
+  "optimized": {
+    "explanation": "Split the number into thousands, hundreds, tens, and ones. Use a direct lookup table for each decimal digit and concatenate the four corresponding Roman fragments.",
+    "correctness_idea": "Roman notation is formed by converting decimal place values from largest to smallest. Each digit table encodes its place's canonical symbols, including its subtractive form, so concatenation yields the correct numeral.",
+    "language": "java",
+    "code": "class Solution {\n    public String intToRoman(int num) {\n        String[] thousands = {\"\", \"M\", \"MM\", \"MMM\"};\n        String[] hundreds = {\"\", \"C\", \"CC\", \"CCC\", \"CD\", \"D\", \"DC\", \"DCC\", \"DCCC\", \"CM\"};\n        String[] tens = {\"\", \"X\", \"XX\", \"XXX\", \"XL\", \"L\", \"LX\", \"LXX\", \"LXXX\", \"XC\"};\n        String[] ones = {\"\", \"I\", \"II\", \"III\", \"IV\", \"V\", \"VI\", \"VII\", \"VIII\", \"IX\"};\n        return thousands[num / 1000]\n                + hundreds[(num % 1000) / 100]\n                + tens[(num % 100) / 10]\n                + ones[num % 10];\n    }\n}",
+    "time_complexity": "O(1) table lookups plus O(L) to construct the output, where L <= 15 for the allowed inputs.",
+    "space_complexity": "O(L) for the returned string."
+  },
+  "dry_run": {
+    "sample_input": {"num": 2468},
+    "sample_output": "MMCDLXVIII",
+    "steps": [
+      {"sequence": 1, "event": "Extract thousands digit.", "variables": {"num": 2468, "digit": 2}, "condition": "num / 1000 is 2.", "action": "Choose thousands[2] = MM.", "state_before": {"result": ""}, "state_after": {"result": "MM"}},
+      {"sequence": 2, "event": "Extract hundreds digit.", "variables": {"num": 2468, "digit": 4}, "condition": "(num % 1000) / 100 is 4.", "action": "Choose hundreds[4] = CD.", "state_before": {"result": "MM"}, "state_after": {"result": "MMCD"}},
+      {"sequence": 3, "event": "Extract tens digit.", "variables": {"num": 2468, "digit": 6}, "condition": "(num % 100) / 10 is 6.", "action": "Choose tens[6] = LX.", "state_before": {"result": "MMCD"}, "state_after": {"result": "MMCDLX"}},
+      {"sequence": 4, "event": "Extract ones digit.", "variables": {"num": 2468, "digit": 8}, "condition": "num % 10 is 8.", "action": "Choose ones[8] = VIII and concatenate all fragments.", "state_before": {"result": "MMCDLX"}, "state_after": {"result": "MMCDLXVIII"}}
+    ],
+    "final_result": "MMCDLXVIII"
+  },
+  "edge_cases": [
+    {"case": "A digit is zero", "handling": "Its lookup entry is the empty string, so that place contributes no symbols."},
+    {"case": "Digit is four or nine", "handling": "The relevant table entry or greedy token uses the canonical subtractive form."},
+    {"case": "Maximum input 3999", "handling": "The thousands table includes MMM and all place tables cover digits through nine."}
+  ]
+}

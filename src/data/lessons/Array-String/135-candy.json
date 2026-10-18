@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "problem_number": 135,
+    "title": "Candy",
+    "url": "https://leetcode.com/problems/candy/",
+    "difficulty": "Hard",
+    "category": "Array / String"
+  },
+  "problem_summary": {
+    "summary": "Give each child at least one candy while ensuring every child with a higher rating than an adjacent child receives more; minimize the total.",
+    "input_output": "Input: ratings, one rating per child in line. Return the minimum candy count.",
+    "constraints": ["1 <= ratings.length <= 5 * 10^4", "0 <= ratings[i] <= 5 * 10^4"]
+  },
+  "brute_force": {
+    "explanation": "For each child, scan left across the consecutive strictly rising rating slope and right across the consecutive strictly falling slope. That child needs one more candy than the longer of those two slopes. Sum the resulting counts.",
+    "correctness_idea": "A child's necessary count is constrained by increasing-rating chains extending from either side. The longer chain gives the strongest lower bound; assigning that many satisfies both adjacent comparisons for that child. Rechecking each slope independently can revisit indices, yielding a quadratic baseline.",
+    "language": "java",
+    "code": "class Solution {\n    public int candy(int[] ratings) {\n        int total = 0;\n        for (int index = 0; index < ratings.length; index++) {\n            int risingFromLeft = 0;\n            for (int cursor = index; cursor > 0 && ratings[cursor] > ratings[cursor - 1]; cursor--) {\n                risingFromLeft++;\n            }\n            int risingFromRight = 0;\n            for (int cursor = index; cursor + 1 < ratings.length && ratings[cursor] > ratings[cursor + 1]; cursor++) {\n                risingFromRight++;\n            }\n            total += Math.max(risingFromLeft, risingFromRight) + 1;\n        }\n        return total;\n    }\n}",
+    "time_complexity": "O(n^2) worst case — long monotonic slopes may be rescanned for many children.",
+    "space_complexity": "O(1) auxiliary space."
+  },
+  "optimized": {
+    "explanation": "Give everyone one candy. Scan left to right to satisfy each rising edge from the left. Scan right to left and raise a child when its rating exceeds the right neighbor, taking the larger of its existing count and the right neighbor's count plus one.",
+    "correctness_idea": "The first pass enforces every left-neighbor constraint. The reverse pass enforces every right-neighbor constraint while never reducing counts, so it preserves the first pass. Each count is the minimum satisfying both adjacent relationships.",
+    "language": "java",
+    "code": "class Solution {\n    public int candy(int[] ratings) {\n        int[] candies = new int[ratings.length];\n        java.util.Arrays.fill(candies, 1);\n        for (int index = 1; index < ratings.length; index++) {\n            if (ratings[index] > ratings[index - 1]) {\n                candies[index] = candies[index - 1] + 1;\n            }\n        }\n        for (int index = ratings.length - 2; index >= 0; index--) {\n            if (ratings[index] > ratings[index + 1]) {\n                candies[index] = Math.max(candies[index], candies[index + 1] + 1);\n            }\n        }\n        int total = 0;\n        for (int count : candies) total += count;\n        return total;\n    }\n}",
+    "time_complexity": "O(n) — three linear passes over the children.",
+    "space_complexity": "O(n) auxiliary space for the candy counts."
+  },
+  "dry_run": {
+    "sample_input": {"ratings": [1, 3, 2, 2, 1]},
+    "sample_output": 7,
+    "steps": [
+      {"sequence": 1, "event": "Initialize candy counts.", "variables": {"ratings": [1, 3, 2, 2, 1]}, "condition": "Every child must receive at least one candy.", "action": "Set every candy count to 1.", "state_before": {"candies": []}, "state_after": {"candies": [1, 1, 1, 1, 1]}},
+      {"sequence": 2, "event": "Left-to-right pass at index 1.", "variables": {"index": 1, "ratingsPair": [1, 3]}, "condition": "3 > 1.", "action": "Set candies[1] to candies[0] + 1 = 2.", "state_before": {"candies": [1, 1, 1, 1, 1]}, "state_after": {"candies": [1, 2, 1, 1, 1]}},
+      {"sequence": 3, "event": "Left-to-right pass completes indices 2 through 4.", "variables": {"ratings": [1, 3, 2, 2, 1]}, "condition": "No later rating is greater than its immediate left neighbor.", "action": "Keep the initialized counts at indices 2, 3, and 4.", "state_before": {"candies": [1, 2, 1, 1, 1]}, "state_after": {"candies": [1, 2, 1, 1, 1]}},
+      {"sequence": 4, "event": "Right-to-left pass at index 3.", "variables": {"index": 3, "ratingsPair": [2, 1]}, "condition": "2 > 1.", "action": "Set candies[3] to max(1, 1 + 1) = 2.", "state_before": {"candies": [1, 2, 1, 1, 1]}, "state_after": {"candies": [1, 2, 1, 2, 1]}},
+      {"sequence": 5, "event": "Right-to-left pass at index 2.", "variables": {"index": 2, "ratingsPair": [2, 2]}, "condition": "Ratings are equal.", "action": "No change.", "state_before": {"candies": [1, 2, 1, 2, 1]}, "state_after": {"candies": [1, 2, 1, 2, 1]}},
+      {"sequence": 6, "event": "Right-to-left pass at index 1.", "variables": {"index": 1, "ratingsPair": [3, 2]}, "condition": "3 > 2.", "action": "Set candies[1] to max(2, 1 + 1) = 2; it remains 2.", "state_before": {"candies": [1, 2, 1, 2, 1]}, "state_after": {"candies": [1, 2, 1, 2, 1]}},
+      {"sequence": 7, "event": "Right-to-left pass at index 0 and sum.", "variables": {"index": 0, "total": 7}, "condition": "1 is not greater than 3.", "action": "Keep candies[0] = 1; sum [1, 2, 1, 2, 1] and return 7.", "state_before": {"candies": [1, 2, 1, 2, 1], "total": 0}, "state_after": {"candies": [1, 2, 1, 2, 1], "total": 7}}
+    ],
+    "final_result": 7
+  },
+  "edge_cases": [
+    {"case": "One child", "handling": "The child receives one candy."},
+    {"case": "Equal adjacent ratings", "handling": "There is no strict higher-rating requirement between equal neighbors; each can keep one unless another neighbor requires more."},
+    {"case": "Strictly increasing or decreasing ratings", "handling": "The directional pass builds the required staircase of candy counts."}
+  ]
+}

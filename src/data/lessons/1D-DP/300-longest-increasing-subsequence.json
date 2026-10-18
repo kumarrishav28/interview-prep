@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "problem_number": 300,
+    "title": "Longest Increasing Subsequence",
+    "url": "https://leetcode.com/problems/longest-increasing-subsequence/",
+    "difficulty": "Medium",
+    "category": "1D DP"
+  },
+  "problem_summary": {
+    "summary": "Return the length of the longest strictly increasing subsequence of an integer array; selected elements need not be adjacent.",
+    "input_output": "Input: an integer array nums. Return the length of its longest strictly increasing subsequence.",
+    "constraints": ["1 <= nums.length <= 2500", "-10^4 <= nums[i] <= 10^4"]
+  },
+  "brute_force": {
+    "explanation": "At each index, recursively skip the value or include it when it is larger than the last included value. This enumerates candidate subsequences and is a direct baseline, but its exponential growth makes it unsuitable for the largest inputs.",
+    "correctness_idea": "Every subsequence makes one of two decisions for each array element: include it if strict increase remains valid, or exclude it. Exploring both choices visits every valid subsequence, so the maximum selected length is the answer.",
+    "language": "java",
+    "code": "class Solution {\n    public int lengthOfLIS(int[] nums) {\n        return search(nums, 0, -1);\n    }\n\n    private int search(int[] nums, int index, int previousIndex) {\n        if (index == nums.length) return 0;\n        int best = search(nums, index + 1, previousIndex);\n        if (previousIndex == -1 || nums[index] > nums[previousIndex]) {\n            best = Math.max(best, 1 + search(nums, index + 1, index));\n        }\n        return best;\n    }\n}",
+    "time_complexity": "O(2^n) — each element may be included or excluded.",
+    "space_complexity": "O(n) auxiliary — recursive depth is at most n."
+  },
+  "optimized": {
+    "explanation": "Maintain tails[k] as the smallest possible ending value for an increasing subsequence of length k + 1 found so far. For each value, binary-search for the first tail greater than or equal to it and replace that tail; append only when no such tail exists.",
+    "correctness_idea": "For equal-length increasing subsequences, a smaller ending value is at least as extendable as a larger one. Replacing the first tail >= value preserves the best achievable tail for that length, while extending the array increases the best subsequence length exactly when the value exceeds every recorded tail. The active tail count is therefore the longest strict increasing subsequence length.",
+    "language": "java",
+    "code": "class Solution {\n    public int lengthOfLIS(int[] nums) {\n        int[] tails = new int[nums.length];\n        int size = 0;\n        for (int value : nums) {\n            int left = 0;\n            int right = size;\n            while (left < right) {\n                int middle = left + (right - left) / 2;\n                if (tails[middle] < value) {\n                    left = middle + 1;\n                } else {\n                    right = middle;\n                }\n            }\n            tails[left] = value;\n            if (left == size) size++;\n        }\n        return size;\n    }\n}",
+    "time_complexity": "O(n log n) — each of n values uses binary search over at most n active tails.",
+    "space_complexity": "O(n) auxiliary — tails stores at most one value per subsequence length."
+  },
+  "dry_run": {
+    "sample_input": {"nums": [3, 1, 5, 2, 6, 4, 9]},
+    "sample_output": 4,
+    "steps": [
+      {"sequence": 1, "event": "Process value 3 at index 0.", "variables": {"value": 3, "insertionIndex": 0, "size": 1, "tails": [3]}, "condition": "The active tails prefix is empty, so the binary-search interval [0, 0) has no tail >= 3.", "action": "Place 3 at index 0 and extend size.", "state_before": {"size": 0, "tails": []}, "state_after": {"size": 1, "tails": [3]}},
+      {"sequence": 2, "event": "Process value 1 at index 1.", "variables": {"value": 1, "insertionIndex": 0, "size": 1, "tails": [1]}, "condition": "tails[0] = 3 is >= 1, so the first such position is 0.", "action": "Replace the tail 3 with the smaller tail 1.", "state_before": {"size": 1, "tails": [3]}, "state_after": {"size": 1, "tails": [1]}},
+      {"sequence": 3, "event": "Process value 5 at index 2.", "variables": {"value": 5, "insertionIndex": 1, "size": 2, "tails": [1, 5]}, "condition": "The existing tail 1 is < 5, so no tail is >= 5.", "action": "Place 5 after the active tail and extend size.", "state_before": {"size": 1, "tails": [1]}, "state_after": {"size": 2, "tails": [1, 5]}},
+      {"sequence": 4, "event": "Process value 2 at index 3.", "variables": {"value": 2, "insertionIndex": 1, "size": 2, "tails": [1, 2]}, "condition": "The first active tail >= 2 is 5 at index 1.", "action": "Replace 5 with 2 without changing size.", "state_before": {"size": 2, "tails": [1, 5]}, "state_after": {"size": 2, "tails": [1, 2]}},
+      {"sequence": 5, "event": "Process value 6 at index 4.", "variables": {"value": 6, "insertionIndex": 2, "size": 3, "tails": [1, 2, 6]}, "condition": "Both active tails are < 6, so the insertion position is 2.", "action": "Append 6 and extend size.", "state_before": {"size": 2, "tails": [1, 2]}, "state_after": {"size": 3, "tails": [1, 2, 6]}},
+      {"sequence": 6, "event": "Process value 4 at index 5.", "variables": {"value": 4, "insertionIndex": 2, "size": 3, "tails": [1, 2, 4]}, "condition": "The first active tail >= 4 is 6 at index 2.", "action": "Replace 6 with 4 without changing size.", "state_before": {"size": 3, "tails": [1, 2, 6]}, "state_after": {"size": 3, "tails": [1, 2, 4]}},
+      {"sequence": 7, "event": "Process value 9 at index 6.", "variables": {"value": 9, "insertionIndex": 3, "size": 4, "tails": [1, 2, 4, 9]}, "condition": "Every active tail is < 9, so the insertion position is 3.", "action": "Append 9, making the active tail count 4.", "state_before": {"size": 3, "tails": [1, 2, 4]}, "state_after": {"size": 4, "tails": [1, 2, 4, 9]}}
+    ],
+    "final_result": 4
+  },
+  "edge_cases": [
+    {"case": "One-element array", "handling": "The first value is placed at tails[0], so the returned length is 1."},
+    {"case": "All values are equal", "handling": "Each value replaces tails[0] because the search finds the first tail >= it; size stays 1, enforcing strict increase."},
+    {"case": "Values arrive in decreasing order", "handling": "Each new value replaces tails[0], and no additional tail is appended, so the result is 1."}
+  ]
+}

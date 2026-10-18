@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "problem_number": 322,
+    "title": "Coin Change",
+    "url": "https://leetcode.com/problems/coin-change/",
+    "difficulty": "Medium",
+    "category": "1D DP"
+  },
+  "problem_summary": {
+    "summary": "Find the fewest coins needed to make an amount when each denomination can be used without limit.",
+    "input_output": "Input: positive coin denominations coins and a non-negative amount. Return the minimum number of coins, or -1 if the amount cannot be formed.",
+    "constraints": ["1 <= coins.length <= 12", "1 <= coins[i] <= 2^31 - 1", "0 <= amount <= 10^4"]
+  },
+  "brute_force": {
+    "explanation": "For a remaining amount, recursively try taking each denomination and keep the smallest valid result. This directly expresses the choices but explores many repeated states and coin orders.",
+    "correctness_idea": "An optimal non-empty solution ends with some denomination c. Removing that final coin leaves the subproblem amount - c. Trying every denomination and minimizing one plus each feasible subproblem includes an optimal final coin choice.",
+    "language": "java",
+    "code": "class Solution {\n    public int coinChange(int[] coins, int amount) {\n        int result = fewestCoins(coins, amount);\n        return result == Integer.MAX_VALUE ? -1 : result;\n    }\n\n    private int fewestCoins(int[] coins, int remaining) {\n        if (remaining == 0) return 0;\n        if (remaining < 0) return Integer.MAX_VALUE;\n        int best = Integer.MAX_VALUE;\n        for (int coin : coins) {\n            int subproblem = fewestCoins(coins, remaining - coin);\n            if (subproblem != Integer.MAX_VALUE) {\n                best = Math.min(best, subproblem + 1);\n            }\n        }\n        return best;\n    }\n}",
+    "time_complexity": "O(C^A) upper bound — with C denominations, the recursion can branch C ways for up to A levels when a denomination of 1 exists; repeated states and orderings are recomputed. Here A is amount.",
+    "space_complexity": "O(A) auxiliary — recursion depth is at most A when all coins are positive integers."
+  },
+  "optimized": {
+    "explanation": "Build a one-dimensional table where dp[value] is the minimum coins needed to make value. For every value, consider each denomination that does not exceed it and extend the solution for value - coin.",
+    "correctness_idea": "Any nonzero amount formed by coins has a final coin c. Removing it leaves amount - c, whose optimal count is already computed because values are processed in increasing order. Taking the minimum over all possible final denominations therefore gives the optimal count; unreachable states keep the sentinel.",
+    "language": "java",
+    "code": "import java.util.Arrays;\n\nclass Solution {\n    public int coinChange(int[] coins, int amount) {\n        int unreachable = amount + 1;\n        int[] dp = new int[amount + 1];\n        Arrays.fill(dp, unreachable);\n        dp[0] = 0;\n        for (int value = 1; value <= amount; value++) {\n            for (int coin : coins) {\n                if (coin <= value) {\n                    dp[value] = Math.min(dp[value], dp[value - coin] + 1);\n                }\n            }\n        }\n        return dp[amount] == unreachable ? -1 : dp[amount];\n    }\n}",
+    "time_complexity": "O(A * C) — each of the A positive values checks all C denominations.",
+    "space_complexity": "O(A) auxiliary — the table stores one minimum for each value from 0 through amount."
+  },
+  "dry_run": {
+    "sample_input": {"coins": [1, 3, 4], "amount": 6},
+    "sample_output": 2,
+    "steps": [
+      {"sequence": 1, "event": "Initialize the table for amount 6 with unreachable = 7.", "variables": {"value": 0, "unreachable": 7, "dp": [0, 7, 7, 7, 7, 7, 7]}, "condition": "Zero needs no coins; all positive values begin unreachable.", "action": "Set dp[0] = 0.", "state_before": {"dp": [7, 7, 7, 7, 7, 7, 7]}, "state_after": {"dp": [0, 7, 7, 7, 7, 7, 7]}},
+      {"sequence": 2, "event": "Compute dp[1].", "variables": {"value": 1, "candidates": {"1": 1}, "dpValue": 1}, "condition": "Only coin 1 fits; dp[0] + 1 = 1.", "action": "Set dp[1] to 1.", "state_before": {"dp": [0, 7, 7, 7, 7, 7, 7]}, "state_after": {"dp": [0, 1, 7, 7, 7, 7, 7]}},
+      {"sequence": 3, "event": "Compute dp[2].", "variables": {"value": 2, "candidates": {"1": 2}, "dpValue": 2}, "condition": "Only coin 1 fits; dp[1] + 1 = 2.", "action": "Set dp[2] to 2.", "state_before": {"dp": [0, 1, 7, 7, 7, 7, 7]}, "state_after": {"dp": [0, 1, 2, 7, 7, 7, 7]}},
+      {"sequence": 4, "event": "Compute dp[3].", "variables": {"value": 3, "candidates": {"1": 3, "3": 1}, "dpValue": 1}, "condition": "The candidates are dp[2] + 1 = 3 and dp[0] + 1 = 1.", "action": "Keep the minimum, 1.", "state_before": {"dp": [0, 1, 2, 7, 7, 7, 7]}, "state_after": {"dp": [0, 1, 2, 1, 7, 7, 7]}},
+      {"sequence": 5, "event": "Compute dp[4].", "variables": {"value": 4, "candidates": {"1": 2, "3": 2, "4": 1}, "dpValue": 1}, "condition": "The candidates are dp[3] + 1 = 2, dp[1] + 1 = 2, and dp[0] + 1 = 1.", "action": "Keep the minimum, 1.", "state_before": {"dp": [0, 1, 2, 1, 7, 7, 7]}, "state_after": {"dp": [0, 1, 2, 1, 1, 7, 7]}},
+      {"sequence": 6, "event": "Compute dp[5].", "variables": {"value": 5, "candidates": {"1": 2, "3": 3, "4": 2}, "dpValue": 2}, "condition": "The candidates are dp[4] + 1 = 2, dp[2] + 1 = 3, and dp[1] + 1 = 2.", "action": "Keep the minimum, 2.", "state_before": {"dp": [0, 1, 2, 1, 1, 7, 7]}, "state_after": {"dp": [0, 1, 2, 1, 1, 2, 7]}},
+      {"sequence": 7, "event": "Compute dp[6].", "variables": {"value": 6, "candidates": {"1": 3, "3": 2, "4": 3}, "dpValue": 2}, "condition": "The candidates are dp[5] + 1 = 3, dp[3] + 1 = 2, and dp[2] + 1 = 3.", "action": "Keep the minimum, 2, and return dp[6].", "state_before": {"dp": [0, 1, 2, 1, 1, 2, 7]}, "state_after": {"dp": [0, 1, 2, 1, 1, 2, 2]}}
+    ],
+    "final_result": 2
+  },
+  "edge_cases": [
+    {"case": "amount = 0", "handling": "dp[0] is initialized to zero, so no coins are needed."},
+    {"case": "No combination forms the amount", "handling": "The final table value remains the unreachable sentinel and the method returns -1."},
+    {"case": "A coin denomination exceeds the current value", "handling": "That denomination is skipped until it can fit; integer comparison handles large positive denominations."}
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "problem_number": 103,
+    "title": "Binary Tree Zigzag Level Order Traversal",
+    "url": "https://leetcode.com/problems/binary-tree-zigzag-level-order-traversal/",
+    "difficulty": "Medium",
+    "category": "Binary Tree BFS"
+  },
+  "problem_summary": {
+    "summary": "Return each tree level's values, alternating between left-to-right and right-to-left order starting at the root.",
+    "input_output": "Input: the root of a binary tree. Return one integer list per level; an empty tree returns an empty list.",
+    "constraints": ["0 <= number of nodes <= 2000", "-100 <= Node.val <= 100"]
+  },
+  "brute_force": {
+    "explanation": "Perform ordinary left-to-right BFS, collect each level, and reverse every other level after it is complete.",
+    "correctness_idea": "BFS separates nodes into exact levels and visits each level left to right. Reversing precisely the odd-indexed levels changes their order to right to left while leaving the even-indexed levels unchanged.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.ArrayList;\nimport java.util.Collections;\nimport java.util.List;\nimport java.util.Queue;\n\nclass Solution {\n    public List<List<Integer>> zigzagLevelOrder(TreeNode root) {\n        List<List<Integer>> levels = new ArrayList<>();\n        if (root == null) return levels;\n        Queue<TreeNode> queue = new ArrayDeque<>();\n        queue.offer(root);\n        while (!queue.isEmpty()) {\n            int levelSize = queue.size();\n            List<Integer> level = new ArrayList<>(levelSize);\n            for (int index = 0; index < levelSize; index++) {\n                TreeNode node = queue.poll();\n                level.add(node.val);\n                if (node.left != null) queue.offer(node.left);\n                if (node.right != null) queue.offer(node.right);\n            }\n            if (levels.size() % 2 == 1) Collections.reverse(level);\n            levels.add(level);\n        }\n        return levels;\n    }\n}",
+    "time_complexity": "O(n) — each node is processed once, and all level reversals together move O(n) values.",
+    "space_complexity": "O(w) auxiliary for the queue, where w is the maximum level width; output storage is O(n)."
+  },
+  "optimized": {
+    "explanation": "Process levels with BFS while placing each value directly at the correct end of a deque: append on left-to-right levels and prepend on right-to-left levels.",
+    "correctness_idea": "The queue still discovers nodes left to right so children are enqueued in the correct structural order. Within each result level, adding to the selected end directly produces the required alternating order without a separate reversal pass.",
+    "language": "java",
+    "code": "import java.util.ArrayDeque;\nimport java.util.ArrayList;\nimport java.util.Deque;\nimport java.util.List;\nimport java.util.Queue;\n\nclass Solution {\n    public List<List<Integer>> zigzagLevelOrder(TreeNode root) {\n        List<List<Integer>> levels = new ArrayList<>();\n        if (root == null) return levels;\n        Queue<TreeNode> queue = new ArrayDeque<>();\n        queue.offer(root);\n        boolean leftToRight = true;\n        while (!queue.isEmpty()) {\n            int levelSize = queue.size();\n            Deque<Integer> level = new ArrayDeque<>();\n            for (int index = 0; index < levelSize; index++) {\n                TreeNode node = queue.poll();\n                if (leftToRight) level.addLast(node.val);\n                else level.addFirst(node.val);\n                if (node.left != null) queue.offer(node.left);\n                if (node.right != null) queue.offer(node.right);\n            }\n            levels.add(new ArrayList<>(level));\n            leftToRight = !leftToRight;\n        }\n        return levels;\n    }\n}",
+    "time_complexity": "O(n) — each node is processed once and deque insertion is constant time.",
+    "space_complexity": "O(w) auxiliary for the queue and current level deque, where w is the maximum level width; output storage is O(n)."
+  },
+  "dry_run": {
+    "sample_input": {"root": [8, 4, 12, 2, 6, 10, 14]},
+    "sample_output": [[8], [12, 4], [2, 6, 10, 14]],
+    "steps": [
+      {"sequence": 1, "event": "Process level 0 from left to right.", "variables": {"leftToRight": true, "levelSize": 1, "processedValues": [8], "levelResult": [8], "queueAfterLevel": [4, 12]}, "condition": "This is the first level, so values retain their BFS order.", "action": "Append 8 to the level deque and enqueue children left to right.", "state_before": {"queue": [8], "levels": []}, "state_after": {"queue": [4, 12], "levels": [[8]], "nextDirection": "right-to-left"}},
+      {"sequence": 2, "event": "Process level 1 from right to left.", "variables": {"leftToRight": false, "processedValues": [4, 12], "dequeAfterFirst": [4], "dequeAfterSecond": [12, 4], "levelSize": 2, "queueAfterLevel": [2, 6, 10, 14]}, "condition": "BFS processes 4 before 12 while output order is reversed.", "action": "Prepend both values to produce [12, 4].", "state_before": {"queue": [4, 12], "levels": [[8]]}, "state_after": {"queue": [2, 6, 10, 14], "levels": [[8], [12, 4]], "nextDirection": "left-to-right"}},
+      {"sequence": 3, "event": "Process level 2 from left to right.", "variables": {"leftToRight": true, "processedValues": [2, 6, 10, 14], "levelResult": [2, 6, 10, 14], "queueAfterLevel": []}, "condition": "Direction alternates back to left-to-right.", "action": "Append values in BFS order and finish.", "state_before": {"queue": [2, 6, 10, 14], "levels": [[8], [12, 4]]}, "state_after": {"queue": [], "levels": [[8], [12, 4], [2, 6, 10, 14]]}}
+    ],
+    "final_result": [[8], [12, 4], [2, 6, 10, 14]]
+  },
+  "edge_cases": [
+    {"case": "Empty tree", "handling": "Return an empty list without creating a queue entry."},
+    {"case": "Single-node tree", "handling": "Return one level containing the root value; reversing direction has no effect on one value."},
+    {"case": "A level contains missing children", "handling": "Only existing nodes enter the next BFS level; the alternating order applies to those nodes only."}
+  ]
+}

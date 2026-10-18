@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 23,
+    "title": "Merge k Sorted Lists",
+    "url": "https://leetcode.com/problems/merge-k-sorted-lists/",
+    "difficulty": "Hard",
+    "category": "Divide & Conquer"
+  },
+  "problem_summary": {
+    "summary": "Merge k ascending singly linked lists into one ascending linked list.",
+    "input_output": "Input: ListNode[] lists whose non-null heads begin sorted linked lists. Return the merged head; ListNode is provided by the judge.",
+    "constraints": ["0 <= k <= 10^4", "0 <= lists[i].length <= 500", "The total number of nodes is at most 10^4", "-10^4 <= lists[i][j] <= 10^4"]
+  },
+  "brute_force": {
+    "explanation": "Collect every value from every input list, sort all values, and build a fresh output list. This simple baseline is useful when node reuse is undesirable, but it ignores the input lists' existing order.",
+    "correctness_idea": "The collected values contain exactly the union of all list elements, including duplicates. Sorting puts them in ascending order, and building one node per value preserves that complete multiset.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.Collections;\nimport java.util.List;\n\nclass Solution {\n    public ListNode mergeKLists(ListNode[] lists) {\n        List<Integer> values = new ArrayList<>();\n        for (ListNode head : lists) {\n            for (ListNode node = head; node != null; node = node.next) {\n                values.add(node.val);\n            }\n        }\n        Collections.sort(values);\n        ListNode dummy = new ListNode(0);\n        ListNode tail = dummy;\n        for (int value : values) {\n            tail.next = new ListNode(value);\n            tail = tail.next;\n        }\n        return dummy.next;\n    }\n}",
+    "time_complexity": "O(k + N log N), where k is the number of list heads and N is the total number of nodes; scanning empty heads costs O(k).",
+    "space_complexity": "O(N) auxiliary values plus O(N) newly allocated output nodes."
+  },
+  "optimized": {
+    "explanation": "Recursively divide the array of list heads into halves, merge each half, and combine the two sorted results with a standard two-list pointer merge. Existing nodes are reused.",
+    "correctness_idea": "The base case is one already sorted list. Each recursive result contains all nodes from its input subrange in sorted order; merging two sorted results preserves order and retains every node. Induction over the range splits proves the final result is sorted and complete.",
+    "language": "java",
+    "code": "class Solution {\n    public ListNode mergeKLists(ListNode[] lists) {\n        return mergeRange(lists, 0, lists.length - 1);\n    }\n\n    private ListNode mergeRange(ListNode[] lists, int left, int right) {\n        if (left > right) {\n            return null;\n        }\n        if (left == right) {\n            return lists[left];\n        }\n        int middle = left + (right - left) / 2;\n        ListNode first = mergeRange(lists, left, middle);\n        ListNode second = mergeRange(lists, middle + 1, right);\n        return mergeTwo(first, second);\n    }\n\n    private ListNode mergeTwo(ListNode first, ListNode second) {\n        ListNode dummy = new ListNode(0);\n        ListNode tail = dummy;\n        while (first != null && second != null) {\n            if (first.val <= second.val) {\n                tail.next = first;\n                first = first.next;\n            } else {\n                tail.next = second;\n                second = second.next;\n            }\n            tail = tail.next;\n        }\n        tail.next = first != null ? first : second;\n        return dummy.next;\n    }\n}",
+    "time_complexity": "O(1) for k <= 1; for k >= 2, O(k + N log k), where k is the number of list heads and N is the total number of nodes. Each recursion-tree level merges each node at most once.",
+    "space_complexity": "O(log k) recursion stack for k > 0, plus O(1) merge pointers; the input list nodes are reused."
+  },
+  "dry_run": {
+    "sample_input": {"lists": [[1, 5], [2, 4], [3, 6]]},
+    "sample_output": [1, 2, 3, 4, 5, 6],
+    "steps": [
+      {"sequence": 1, "event": "Divide list-head range [0,2].", "variables": {"left": 0, "middle": 1, "right": 2}, "condition": "The range has more than one head.", "action": "Recursively merge [0,1] and [2,2].", "state_before": {"range": [0, 2], "result": "pending"}, "state_after": {"left_result": "pending", "right_result": [3, 6]}},
+      {"sequence": 2, "event": "Merge the first two lists.", "variables": {"firstHead": 1, "secondHead": 2}, "condition": "Compare current heads and select the smaller each time.", "action": "Link 1, then 2, then 4, then append the remaining 5.", "state_before": {"first": [1, 5], "second": [2, 4], "merged": []}, "state_after": {"first": [], "second": [], "merged": [1, 2, 4, 5]}},
+      {"sequence": 3, "event": "Merge both sorted halves.", "variables": {"firstHead": 1, "secondHead": 3}, "condition": "The first half is [1,2,4,5] and the second is [3,6].", "action": "Link 1, 2, 3, 4, 5 in order, then append 6.", "state_before": {"first": [1, 2, 4, 5], "second": [3, 6], "merged": []}, "state_after": {"merged": [1, 2, 3, 4, 5, 6]}}
+    ],
+    "final_result": [1, 2, 3, 4, 5, 6]
+  },
+  "edge_cases": [
+    {"case": "No lists", "handling": "The range is empty and null is returned."},
+    {"case": "All lists empty", "handling": "Recursive base results and two-list merges remain null, so the final result is null."},
+    {"case": "One non-empty list", "handling": "It is returned unchanged by the single-list base case."},
+    {"case": "Equal values across lists", "handling": "The <= branch chooses from the first run; all duplicate nodes are still linked into the result."}
+  ]
+}

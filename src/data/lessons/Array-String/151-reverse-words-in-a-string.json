@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "problem_number": 151,
+    "title": "Reverse Words in a String",
+    "url": "https://leetcode.com/problems/reverse-words-in-a-string/",
+    "difficulty": "Medium",
+    "category": "Array / String"
+  },
+  "problem_summary": {
+    "summary": "Reverse the order of non-space words and normalize separators to exactly one space, with no leading or trailing spaces.",
+    "input_output": "Input: a string containing letters, digits, and spaces, with at least one word. Return the normalized reversed-word string.",
+    "constraints": ["1 <= s.length <= 10^4", "s contains English letters, digits, and spaces", "At least one word is present"]
+  },
+  "brute_force": {
+    "explanation": "Split on one or more spaces, walk the resulting words backward, and join them with a single space. This is concise but allocates a token array and intermediate strings.",
+    "correctness_idea": "Splitting removes the spacing separators, and appending tokens in reverse index order reverses the word sequence. Adding separators only between tokens normalizes whitespace.",
+    "language": "java",
+    "code": "class Solution {\n    public String reverseWords(String s) {\n        String[] words = s.trim().split(\" +\");\n        StringBuilder result = new StringBuilder();\n        for (int index = words.length - 1; index >= 0; index--) {\n            if (result.length() > 0) result.append(' ');\n            result.append(words[index]);\n        }\n        return result.toString();\n    }\n}",
+    "time_complexity": "O(n) — splitting and rebuilding scan a total of O(n) characters.",
+    "space_complexity": "O(n) for the word array and returned string."
+  },
+  "optimized": {
+    "explanation": "Scan the original string from right to left. Skip spaces, identify each contiguous word, and append its characters to a result builder with one separator between words. This avoids a separate array of tokens.",
+    "correctness_idea": "The backward scan encounters words in reverse order. It skips all separator runs and copies only non-space spans, placing one separator between successive spans, which produces exactly the required output.",
+    "language": "java",
+    "code": "class Solution {\n    public String reverseWords(String s) {\n        StringBuilder result = new StringBuilder();\n        int index = s.length() - 1;\n        while (index >= 0) {\n            while (index >= 0 && s.charAt(index) == ' ') index--;\n            if (index < 0) break;\n            int end = index;\n            while (index >= 0 && s.charAt(index) != ' ') index--;\n            if (result.length() > 0) result.append(' ');\n            result.append(s, index + 1, end + 1);\n        }\n        return result.toString();\n    }\n}",
+    "time_complexity": "O(n) — each input character is examined at most a constant number of times.",
+    "space_complexity": "O(n) for the returned string; O(1) extra working space apart from its builder."
+  },
+  "dry_run": {
+    "sample_input": {"s": "  red   blue "},
+    "sample_output": "blue red",
+    "steps": [
+      {"sequence": 1, "event": "Skip trailing spaces.", "variables": {"index": 12, "result": ""}, "condition": "s[12] is a space.", "action": "Move left to the final character of blue at index 11.", "state_before": {"index": 12, "result": ""}, "state_after": {"index": 11, "result": ""}},
+      {"sequence": 2, "event": "Extract the rightmost word.", "variables": {"start": 8, "endExclusive": 12, "word": "blue"}, "condition": "Indices 8 through 11 are non-space characters.", "action": "Append blue; continue scanning from index 7.", "state_before": {"index": 11, "result": ""}, "state_after": {"index": 7, "result": "blue"}},
+      {"sequence": 3, "event": "Skip the spaces between words.", "variables": {"index": 7, "result": "blue"}, "condition": "Indices 7, 6, and 5 are spaces.", "action": "Move left to index 4.", "state_before": {"index": 7, "result": "blue"}, "state_after": {"index": 4, "result": "blue"}},
+      {"sequence": 4, "event": "Extract the next word.", "variables": {"start": 2, "endExclusive": 5, "word": "red"}, "condition": "Indices 2 through 4 are non-space characters.", "action": "Append one space, then red.", "state_before": {"index": 4, "result": "blue"}, "state_after": {"index": 1, "result": "blue red"}},
+      {"sequence": 5, "event": "Finish after leading spaces.", "variables": {"index": -1, "result": "blue red"}, "condition": "The remaining leading spaces at indices 1 and 0 are skipped and the index becomes negative.", "action": "Return the normalized result.", "state_before": {"index": 1, "result": "blue red"}, "state_after": {"index": -1, "result": "blue red"}}
+    ],
+    "final_result": "blue red"
+  },
+  "edge_cases": [
+    {"case": "Leading or trailing spaces", "handling": "The scan skips them without appending separators."},
+    {"case": "Multiple spaces between words", "handling": "Each run is skipped and replaced by one output space."},
+    {"case": "A single word", "handling": "The word is appended once with no extra separator."}
+  ]
+}

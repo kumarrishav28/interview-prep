@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 502,
+    "title": "IPO",
+    "url": "https://leetcode.com/problems/ipo/",
+    "difficulty": "Hard",
+    "category": "Heap"
+  },
+  "problem_summary": {
+    "summary": "Choose at most k distinct projects, each requiring no more than current capital, to maximize final capital after adding each selected project's profit.",
+    "input_output": "Inputs: k, initial capital w, and equal-length profits and capital arrays. Return the greatest achievable final capital.",
+    "constraints": ["1 <= k <= 10^5", "0 <= w <= 10^9", "1 <= n == profits.length == capital.length <= 10^5", "0 <= profits[i] <= 10^4", "0 <= capital[i] <= 10^9", "The answer fits in a 32-bit signed integer"]
+  },
+  "brute_force": {
+    "explanation": "For each of at most k rounds, scan every unselected project, find the most profitable one affordable with current capital, and select it. Stop when no project is affordable. This directly models each decision but repeats a full scan.",
+    "correctness_idea": "At a given capital, every feasible next choice is considered and the one with greatest profit is selected. Since project profits are nonnegative and selecting a project cannot reduce capital or make another project unavailable, choosing the greatest currently feasible profit is optimal for that round and for subsequent opportunities.",
+    "language": "java",
+    "code": "class Solution {\n    public int findMaximizedCapital(int k, int w, int[] profits, int[] capital) {\n        boolean[] selected = new boolean[profits.length];\n        for (int round = 0; round < k; round++) {\n            int bestProject = -1;\n            for (int project = 0; project < profits.length; project++) {\n                if (!selected[project] && capital[project] <= w\n                        && (bestProject == -1 || profits[project] > profits[bestProject])) {\n                    bestProject = project;\n                }\n            }\n            if (bestProject == -1) break;\n            selected[bestProject] = true;\n            w += profits[bestProject];\n        }\n        return w;\n    }\n}",
+    "time_complexity": "O(k n) worst case, where n is the number of projects; each round scans all projects.",
+    "space_complexity": "O(n) auxiliary for selected-project markers."
+  },
+  "optimized": {
+    "explanation": "Sort project indices by required capital. As capital grows, move every newly affordable project's profit into a max-heap. For each round, take the largest available profit and add it to current capital; stop if no project is available.",
+    "correctness_idea": "The index pointer and sorted order ensure the heap contains exactly the unselected projects affordable at the current capital. Among feasible next projects, the largest profit leaves at least as much capital as any alternative, so it cannot reduce future choices and is an optimal greedy selection.",
+    "language": "java",
+    "code": "import java.util.Arrays;\nimport java.util.PriorityQueue;\n\nclass Solution {\n    public int findMaximizedCapital(int k, int w, int[] profits, int[] capital) {\n        Integer[] order = new Integer[profits.length];\n        for (int project = 0; project < order.length; project++) order[project] = project;\n        Arrays.sort(order, (first, second) -> Integer.compare(capital[first], capital[second]));\n\n        PriorityQueue<Integer> availableProfits = new PriorityQueue<>((first, second) -> Integer.compare(second, first));\n        int nextProject = 0;\n        for (int round = 0; round < k; round++) {\n            while (nextProject < order.length && capital[order[nextProject]] <= w) {\n                availableProfits.offer(profits[order[nextProject]]);\n                nextProject++;\n            }\n            if (availableProfits.isEmpty()) break;\n            w += availableProfits.poll();\n        }\n        return w;\n    }\n}",
+    "time_complexity": "O(n log n + k log n) — sort project indices once, then insert and remove at most n profits from the heap.",
+    "space_complexity": "O(n) auxiliary for sorted indices and the available-profit heap."
+  },
+  "dry_run": {
+    "sample_input": {"k": 3, "w": 1, "profits": [2, 5, 4, 7], "capital": [0, 3, 2, 5]},
+    "sample_output": 15,
+    "steps": [
+      {"sequence": 1, "event": "Add projects affordable with capital 1.", "variables": {"round": 1, "w": 1, "nextProject": 1, "availableMaxFirst": [2]}, "condition": "After sorting by required capital, only project 0 has capital requirement at most 1.", "action": "Insert its profit 2 into the max-heap, select and remove it; capital becomes 3.", "state_before": {"capital": 1, "nextProject": 0, "availableProfits": []}, "state_after": {"capital": 3, "nextProject": 1, "availableProfits": []}},
+      {"sequence": 2, "event": "Unlock projects with capital requirement at most 3.", "variables": {"round": 2, "w": 3, "newlyAffordable": [{"project": 2, "profit": 4}, {"project": 1, "profit": 5}], "availableMaxFirst": [5, 4]}, "condition": "Projects 2 and 1 become affordable; project 3 still requires capital 5.", "action": "Select and remove profit 5 from the heap; capital becomes 8.", "state_before": {"capital": 3, "nextProject": 1, "availableProfits": []}, "state_after": {"capital": 8, "nextProject": 3, "availableProfits": [4]}},
+      {"sequence": 3, "event": "Unlock project 3 and select the best available profit.", "variables": {"round": 3, "w": 8, "newlyAffordable": [{"project": 3, "profit": 7}], "availableMaxFirst": [7, 4]}, "condition": "All remaining projects are affordable; 7 is the maximum profit.", "action": "Select profit 7 and finish the third round with capital 15.", "state_before": {"capital": 8, "nextProject": 3, "availableProfits": [4]}, "state_after": {"capital": 15, "nextProject": 4, "availableProfits": [4]}}
+    ],
+    "final_result": 15
+  },
+  "edge_cases": [
+    {"case": "No project is affordable initially", "handling": "The heap stays empty and the method returns the initial capital."},
+    {"case": "Fewer than k projects can be completed", "handling": "The loop stops when the affordable-project heap is empty."},
+    {"case": "Zero-profit projects", "handling": "They do not increase capital; selecting or skipping them cannot improve the final capital, and the result remains valid."},
+    {"case": "Several projects share a capital requirement", "handling": "All projects with requirement at most current capital are inserted before choosing the round's best profit."}
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "problem_number": 149,
+    "title": "Max Points on a Line",
+    "url": "https://leetcode.com/problems/max-points-on-a-line/",
+    "difficulty": "Hard",
+    "category": "Math"
+  },
+  "problem_summary": {
+    "summary": "Find the largest number of input points that lie on one straight line.",
+    "input_output": "Input: unique integer coordinate pairs in a two-dimensional plane. Return the maximum collinear point count.",
+    "constraints": ["1 <= points.length <= 300", "points[i].length == 2", "-10^4 <= x_i, y_i <= 10^4", "All points are unique"]
+  },
+  "brute_force": {
+    "explanation": "For every pair of points, treat their line as a candidate and count every point on it using an integer cross-product test. Unique coordinates ensure each pair defines one line.",
+    "correctness_idea": "If a set of at least two points is collinear, any pair from it defines the same line and that pair's full count is measured. Cross-product equality tests collinearity exactly without floating-point slope errors.",
+    "language": "java",
+    "code": "class Solution {\n    public int maxPoints(int[][] points) {\n        int length = points.length;\n        if (length <= 2) {\n            return length;\n        }\n        int best = 2;\n        for (int first = 0; first < length; first++) {\n            for (int second = first + 1; second < length; second++) {\n                int count = 0;\n                long dx = (long) points[second][0] - points[first][0];\n                long dy = (long) points[second][1] - points[first][1];\n                for (int candidate = 0; candidate < length; candidate++) {\n                    long candidateX = (long) points[candidate][0] - points[first][0];\n                    long candidateY = (long) points[candidate][1] - points[first][1];\n                    if (dx * candidateY == dy * candidateX) {\n                        count++;\n                    }\n                }\n                best = Math.max(best, count);\n            }\n        }\n        return best;\n    }\n}",
+    "time_complexity": "O(n^3) — each of O(n^2) point pairs is checked against all n points.",
+    "space_complexity": "O(1) auxiliary."
+  },
+  "optimized": {
+    "explanation": "For each anchor point, count the directions to all later points in a hash map. Reduce each (dy, dx) by their greatest common divisor and normalize the sign, so equal directions share one exact key. The most frequent direction plus the anchor gives the line's point count.",
+    "correctness_idea": "For a fixed anchor, every other point on a particular line has the same reduced, sign-normalized direction. Each map bucket therefore represents exactly one line through that anchor. Considering each anchor ensures the globally best line is counted, without floating-point rounding.",
+    "language": "java",
+    "code": "import java.util.HashMap;\nimport java.util.Map;\n\nclass Solution {\n    public int maxPoints(int[][] points) {\n        int length = points.length;\n        int best = Math.min(length, 2);\n        for (int anchor = 0; anchor < length; anchor++) {\n            Map<String, Integer> directions = new HashMap<>();\n            int duplicates = 1;\n            int localBest = 0;\n            for (int other = anchor + 1; other < length; other++) {\n                int dx = points[other][0] - points[anchor][0];\n                int dy = points[other][1] - points[anchor][1];\n                if (dx == 0 && dy == 0) {\n                    duplicates++;\n                    continue;\n                }\n                int divisor = gcd(Math.abs(dx), Math.abs(dy));\n                dx /= divisor;\n                dy /= divisor;\n                if (dx < 0 || (dx == 0 && dy < 0)) {\n                    dx = -dx;\n                    dy = -dy;\n                }\n                String direction = dy + \"/\" + dx;\n                int count = directions.getOrDefault(direction, 0) + 1;\n                directions.put(direction, count);\n                localBest = Math.max(localBest, count);\n            }\n            best = Math.max(best, localBest + duplicates);\n        }\n        return best;\n    }\n\n    private int gcd(int first, int second) {\n        while (second != 0) {\n            int remainder = first % second;\n            first = second;\n            second = remainder;\n        }\n        return first;\n    }\n}",
+    "time_complexity": "O(n^2 log C) expected, where C bounds coordinate differences; for each anchor, each other point is normalized with Euclid's algorithm and counted with expected O(1) map operations.",
+    "space_complexity": "O(n) auxiliary for one anchor's direction counts."
+  },
+  "dry_run": {
+    "sample_input": {"points": [[0, 0], [1, 1], [2, 2], [0, 2], [2, 0]]},
+    "sample_output": 3,
+    "steps": [
+      {"sequence": 1, "event": "Use point [0,0] as the anchor and inspect [1,1].", "variables": {"anchor": [0, 0], "other": [1, 1], "dx": 1, "dy": 1, "direction": "1/1", "count": 1}, "condition": "The coordinate differences have gcd 1 and dx is positive.", "action": "Record one point in direction 1/1.", "state_before": {"directions": {}, "duplicates": 1, "localBest": 0}, "state_after": {"directions": {"1/1": 1}, "duplicates": 1, "localBest": 1}},
+      {"sequence": 2, "event": "Inspect [2,2] from the same anchor.", "variables": {"anchor": [0, 0], "other": [2, 2], "dx": 2, "dy": 2, "gcd": 2, "direction": "1/1", "count": 2}, "condition": "Reducing (dy, dx) by gcd 2 gives the direction key 1/1 again.", "action": "Increment that direction bucket; localBest becomes 2.", "state_before": {"directions": {"1/1": 1}, "duplicates": 1, "localBest": 1}, "state_after": {"directions": {"1/1": 2}, "duplicates": 1, "localBest": 2}},
+      {"sequence": 3, "event": "Inspect [0,2] and [2,0].", "variables": {"directionsAdded": ["1/0", "-1/1"], "localBest": 2}, "condition": "The vertical and negative-slope points normalize to distinct keys.", "action": "Keep the largest direction count at 2.", "state_before": {"directions": {"1/1": 2}, "localBest": 2}, "state_after": {"directions": {"1/1": 2, "1/0": 1, "-1/1": 1}, "localBest": 2}},
+      {"sequence": 4, "event": "Finish this anchor and update the global maximum.", "variables": {"localBest": 2, "duplicates": 1, "lineCount": 3, "best": 3}, "condition": "The two points in direction 1/1 plus the anchor lie on one line.", "action": "Set best to 3; later anchors cannot lower it.", "state_before": {"best": 2}, "state_after": {"best": 3}}
+    ],
+    "final_result": 3
+  },
+  "edge_cases": [
+    {"case": "One or two points", "handling": "The answer is the number of points because any two points define a line."},
+    {"case": "Vertical line", "handling": "A zero dx normalizes to the unique vertical direction key."},
+    {"case": "Horizontal line", "handling": "A zero dy reduces to the unique horizontal direction key."},
+    {"case": "Negative slopes and reversed point order", "handling": "Sign normalization ensures the same geometric direction receives the same key."},
+    {"case": "Nearby slopes that floating point might conflate", "handling": "Integer gcd normalization and cross-product comparison avoid floating-point arithmetic."}
+  ]
+}

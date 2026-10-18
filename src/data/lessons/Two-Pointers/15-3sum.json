@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "problem_number": 15,
+    "title": "3Sum",
+    "url": "https://leetcode.com/problems/3sum/",
+    "difficulty": "Medium",
+    "category": "Two Pointers"
+  },
+  "problem_summary": {
+    "summary": "Return every distinct value-triplet whose three distinct array positions sum to zero.",
+    "input_output": "Input: integer array nums. Return a list of unique triplets; output order is unrestricted, and triplets are identified by values rather than index choices.",
+    "constraints": ["3 <= nums.length <= 3000", "-10^5 <= nums[i] <= 10^5"]
+  },
+  "brute_force": {
+    "explanation": "Try every three-index combination. When its values sum to zero, sort those three values and add the canonical triplet to a set to remove duplicates.",
+    "correctness_idea": "Every legal selection of three distinct positions is enumerated. Sorting each successful triple gives a value-based canonical representation, so the set contains exactly the distinct zero-sum triplets.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.Arrays;\nimport java.util.HashSet;\nimport java.util.List;\nimport java.util.Set;\n\nclass Solution {\n    public List<List<Integer>> threeSum(int[] nums) {\n        Set<List<Integer>> unique = new HashSet<>();\n        for (int first = 0; first < nums.length; first++) {\n            for (int second = first + 1; second < nums.length; second++) {\n                for (int third = second + 1; third < nums.length; third++) {\n                    if ((long) nums[first] + nums[second] + nums[third] == 0) {\n                        int[] values = {nums[first], nums[second], nums[third]};\n                        Arrays.sort(values);\n                        unique.add(Arrays.asList(values[0], values[1], values[2]));\n                    }\n                }\n            }\n        }\n        return new ArrayList<>(unique);\n    }\n}",
+    "time_complexity": "O(n^3) expected — all triples are tested and each fixed-size canonical triplet is hashed in constant time.",
+    "space_complexity": "O(u) auxiliary/output storage — the set holds u distinct triplets."
+  },
+  "optimized": {
+    "explanation": "Sort the array, choose each distinct value as an anchor, then use two pointers to find pairs summing to its negation. Skip repeated values so each triplet is emitted once.",
+    "correctness_idea": "For a fixed anchor in a sorted array, the two-pointer sum changes monotonically: moving left rightward increases it and moving right leftward decreases it. Thus no pair for that anchor is skipped. Skipping duplicate anchors and duplicate matched values removes repeated value-triplets without removing distinct solutions.",
+    "language": "java",
+    "code": "import java.util.ArrayList;\nimport java.util.Arrays;\nimport java.util.List;\n\nclass Solution {\n    public List<List<Integer>> threeSum(int[] nums) {\n        Arrays.sort(nums);\n        List<List<Integer>> result = new ArrayList<>();\n        for (int anchor = 0; anchor < nums.length - 2; anchor++) {\n            if (anchor > 0 && nums[anchor] == nums[anchor - 1]) continue;\n            if (nums[anchor] > 0) break;\n            int left = anchor + 1;\n            int right = nums.length - 1;\n            while (left < right) {\n                long sum = (long) nums[anchor] + nums[left] + nums[right];\n                if (sum == 0) {\n                    result.add(Arrays.asList(nums[anchor], nums[left], nums[right]));\n                    int leftValue = nums[left];\n                    int rightValue = nums[right];\n                    while (left < right && nums[left] == leftValue) left++;\n                    while (left < right && nums[right] == rightValue) right--;\n                } else if (sum < 0) {\n                    left++;\n                } else {\n                    right--;\n                }\n            }\n        }\n        return result;\n    }\n}",
+    "time_complexity": "O(n^2) — sorting takes O(n log n), followed by a two-pointer scan for each anchor.",
+    "space_complexity": "O(log n) auxiliary for typical in-place sorting, excluding the returned triplets; output storage is O(u)."
+  },
+  "dry_run": {
+    "sample_input": {"nums": [-2, 0, 1, 1, 2]},
+    "sample_output": [[-2, 0, 2], [-2, 1, 1]],
+    "steps": [
+      {"sequence": 1, "event": "Sort values and anchor index 0 at -2.", "variables": {"anchor": 0, "left": 1, "right": 4, "values": [-2, 0, 2], "sum": 0}, "condition": "The three values sum to zero.", "action": "Record [-2, 0, 2], then skip duplicate pointer values.", "state_before": {"left": 1, "right": 4, "result": []}, "state_after": {"left": 2, "right": 3, "result": [[-2, 0, 2]]}, "focus": {"array": "nums", "indices": [0, 1, 4]}},
+      {"sequence": 2, "event": "Check the remaining pair for anchor -2.", "variables": {"anchor": 0, "left": 2, "right": 3, "values": [-2, 1, 1], "sum": 0}, "condition": "The values sum to zero; the equal 1s occupy distinct positions.", "action": "Record [-2, 1, 1] and move both pointers past the matched values.", "state_before": {"left": 2, "right": 3, "result": [[-2, 0, 2]]}, "state_after": {"left": 3, "right": 2, "result": [[-2, 0, 2], [-2, 1, 1]]}, "focus": {"array": "nums", "indices": [0, 2, 3]}},
+      {"sequence": 3, "event": "Advance to anchor value 0.", "variables": {"anchor": 1, "anchorValue": 0, "result": [[-2, 0, 2], [-2, 1, 1]]}, "condition": "The sorted anchor is greater than zero.", "action": "Stop because no later pair can sum with it to zero.", "state_before": {"anchor": 1}, "state_after": {"result": [[-2, 0, 2], [-2, 1, 1]]}, "focus": {"array": "nums", "indices": [1]}}
+    ],
+    "final_result": [[-2, 0, 2], [-2, 1, 1]]
+  },
+  "edge_cases": [
+    {"case": "Fewer than three elements", "handling": "The outer loop has no anchor with two later positions, so the result is empty."},
+    {"case": "All values are zero", "handling": "One [0, 0, 0] triplet is emitted; duplicates are skipped afterward."},
+    {"case": "Many repeated values", "handling": "Duplicate anchors and matched pointer values are skipped to avoid repeated triplets."},
+    {"case": "All values are positive", "handling": "The first positive anchor triggers the sorted early stop and returns an empty result."}
+  ]
+}
