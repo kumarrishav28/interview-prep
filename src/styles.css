@@ -77,6 +77,12 @@ kbd { font-family: var(--mono); font-size: 10px; color: #858a81; border: 1px sol
 
 .main-area { min-width: 0; flex: 1; display: flex; flex-direction: column; background: var(--paper); }
 .topbar { height: 58px; flex: 0 0 58px; display: flex; align-items: center; justify-content: space-between; padding: 0 42px; border-bottom: 1px solid #eceee8; }
+.category-row { display: flex; align-items: center; gap: 2px; }
+.category-row .category-item { flex: 1; min-width: 0; width: auto; }
+.theory-link { flex: 0 0 28px; height: 28px; display: grid; place-items: center; border-radius: 5px; color: #9aa196; transition: color .16s, background .16s; }
+.theory-link:hover { color: #254a35; background: rgba(255,255,255,.7); }
+.category-theory-link { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; }
+.category-theory-link:hover { color: #497052; text-decoration: underline; }
 .app-track-nav { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .app-track-nav button { min-height: 34px; flex: 0 0 auto; padding: 0 11px; border: 0; border-radius: 4px; background: transparent; color: #747e72; font-size: 11px; cursor: pointer; }
 .app-track-nav button:hover { color: #294731; background: #f0f4eb; }

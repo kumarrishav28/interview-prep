@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import './system-design.css';
 
-type Track = 'study-plan' | 'data-structures' | 'system-design';
+type Track = 'study-plan' | 'data-structures' | 'system-design' | 'theory';
 
 type Chapter = {
   id: string;
@@ -302,6 +302,7 @@ export function StudyPlanHome({
         <nav className="sd-track-nav" aria-label="Study tracks">
           <button className="is-current" onClick={() => onNavigate('study-plan')}>Study plan</button>
           <button onClick={() => onNavigate('data-structures')}>Data structures & algorithms</button>
+          <button onClick={() => onNavigate('theory')}>Theory</button>
           <button onClick={() => onNavigate('system-design')}>System design</button>
         </nav>
       </header>
@@ -375,6 +376,7 @@ export function SystemDesignGuide({ onNavigate }: { onNavigate: (track: Track) =
         <nav className="sd-track-nav" aria-label="Study tracks">
           <button onClick={() => onNavigate('study-plan')}>Study plan</button>
           <button onClick={() => onNavigate('data-structures')}>Data structures & algorithms</button>
+          <button onClick={() => onNavigate('theory')}>Theory</button>
           <button className="is-current" onClick={() => onNavigate('system-design')}>System design</button>
         </nav>
         <div className="sd-progress"><span>{reviewed.length} / {chapters.length} REVIEWED</span><div><i style={{ width: `${reviewed.length / chapters.length * 100}%` }} /></div></div>

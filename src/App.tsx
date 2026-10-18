@@ -1,5 +1,4 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -18,19 +17,32 @@ import {
   Search,
   X,
 } from 'lucide-react';
-import Prism from 'prismjs';
-import 'prismjs/components/prism-java';
+import { CodeBlock } from './CodeBlock';
+import { categorySlug } from './theorySlug';
 
+const TheoryPage = lazy(() => import('./TheoryPage').then((module) => ({ default: module.TheoryPage })));
 const StudyPlanHome = lazy(() => import('./SystemDesignGuide').then((module) => ({ default: module.StudyPlanHome })));
 const SystemDesignGuide = lazy(() => import('./SystemDesignGuide').then((module) => ({ default: module.SystemDesignGuide })));
 const reviewedDesignStorageKey = 'algo-notes-system-design-reviewed';
 
-type StudyTrack = 'study-plan' | 'data-structures' | 'system-design';
+type StudyTrack = 'study-plan' | 'data-structures' | 'system-design' | 'theory';
 
 function getTrackFromHash(): StudyTrack {
-  if (window.location.hash === '#data-structures') return 'data-structures';
-  if (window.location.hash === '#system-design') return 'system-design';
+  const hash = window.location.hash;
+  if (hash === '#data-structures' || hash.startsWith('#data-structures/')) return 'data-structures';
+  if (hash === '#system-design') return 'system-design';
+  if (hash === '#theory' || hash.startsWith('#theory/')) return 'theory';
   return 'study-plan';
+}
+
+function getTheorySlugFromHash(): string {
+  const match = /^#theory\/([^/?]+)/.exec(window.location.hash);
+  return match ? decodeURIComponent(match[1]) : '';
+}
+
+function getProblemFromHash(): number | null {
+  const match = /^#data-structures\/(\d+)$/.exec(window.location.hash);
+  return match ? Number(match[1]) : null;
 }
 
 function loadReviewedDesignCount(): number {
@@ -86,8 +98,6 @@ type DryRunStep = {
   focus?: { array: string; indices: number[] };
 };
 
-type TokenPart = string | Prism.Token;
-
 const completedProblemsKey = 'algo-notes-completed-problems';
 
 const lessonFiles = import.meta.glob<Lesson>('./data/lessons/**/*.json', {
@@ -129,29 +139,6 @@ const categories = [
   ...categoryOrder.filter((category) => availableCategories.has(category)),
   ...[...availableCategories].filter((category) => !categoryOrder.includes(category)),
 ];
-
-function renderToken(part: TokenPart, key: number): ReactNode {
-  if (typeof part === 'string') return part;
-  const contents = Array.isArray(part.content) ? part.content : [String(part.content)];
-  return (
-    <span className={`token ${part.type}`} key={key}>
-      {contents.map((item, index) => renderToken(item as TokenPart, index))}
-    </span>
-  );
-}
-
-function CodeBlock({ code, label }: { code: string; label: string }) {
-  const tokens = Prism.tokenize(code, Prism.languages.java ?? Prism.languages.clike);
-  return (
-    <div className="code-shell">
-      <div className="code-toolbar">
-        <span><span className="code-dot" /> {label}</span>
-        <span className="code-language">JAVA</span>
-      </div>
-      <pre className="code-block"><code>{tokens.map((token, index) => renderToken(token, index))}</code></pre>
-    </div>
-  );
-}
 
 function displayValue(value: unknown): string {
   return typeof value === 'string' ? value : JSON.stringify(value);
@@ -259,6 +246,7 @@ function DryRunDialog({ lesson, onClose }: { lesson: Lesson; onClose: () => void
 
 function App() {
   const [activeTrack, setActiveTrack] = useState<StudyTrack>(getTrackFromHash);
+  const [theorySlug, setTheorySlug] = useState(getTheorySlugFromHash);
   const [activeCategory, setActiveCategory] = useState('All topics');
   const [search, setSearch] = useState('');
   const [selectedNumber, setSelectedNumber] = useState(
@@ -271,9 +259,21 @@ function App() {
   const [reviewedDesignCount, setReviewedDesignCount] = useState(loadReviewedDesignCount);
 
   useEffect(() => {
-    const syncTrackFromHash = () => setActiveTrack(getTrackFromHash());
-    window.addEventListener('hashchange', syncTrackFromHash);
-    return () => window.removeEventListener('hashchange', syncTrackFromHash);
+    const syncFromHash = () => {
+      setActiveTrack(getTrackFromHash());
+      setTheorySlug(getTheorySlugFromHash());
+      const problemNumber = getProblemFromHash();
+      const target = problemNumber === null ? undefined : lessons.find((item) => item.metadata.problem_number === problemNumber);
+      if (target) {
+        setSelectedNumber(target.metadata.problem_number);
+        setActiveCategory(target.metadata.category);
+        setSearch('');
+        setActiveApproach('optimized');
+      }
+    };
+    syncFromHash();
+    window.addEventListener('hashchange', syncFromHash);
+    return () => window.removeEventListener('hashchange', syncFromHash);
   }, []);
 
   useEffect(() => {
@@ -311,6 +311,16 @@ function App() {
     return <Suspense fallback={<div className="track-loading">Loading study plan...</div>}><StudyPlanHome onNavigate={navigateTrack} completedDsa={completedCount} reviewedDesign={reviewedDesignCount} /></Suspense>;
   }
 
+  if (activeTrack === 'theory') {
+    const problems = lessons.map((item) => ({
+      number: item.metadata.problem_number,
+      title: item.metadata.title,
+      difficulty: item.metadata.difficulty,
+      category: item.metadata.category,
+    }));
+    return <Suspense fallback={<div className="track-loading">Loading theory...</div>}><TheoryPage slug={theorySlug} problems={problems} completed={completedProblems} onNavigate={navigateTrack} /></Suspense>;
+  }
+
   if (activeTrack === 'system-design') {
     return <Suspense fallback={<div className="track-loading">Loading System Design guide...</div>}><SystemDesignGuide onNavigate={navigateTrack} /></Suspense>;
   }
@@ -335,10 +345,13 @@ function App() {
           {categories.map((category, index) => {
             const count = category === 'All topics' ? lessons.length : lessons.filter((item) => item.metadata.category === category).length;
             return (
-              <button className={`category-item ${activeCategory === category ? 'category-active' : ''}`} key={category} aria-pressed={activeCategory === category} onClick={() => setActiveCategory(category)}>
-                {index === 0 ? <LayersIcon /> : <CircleDot size={15} strokeWidth={1.7} />}
-                <span>{category}</span><small>{String(count).padStart(2, '0')}</small>
-              </button>
+              <div className="category-row" key={category}>
+                <button className={`category-item ${activeCategory === category ? 'category-active' : ''}`} aria-pressed={activeCategory === category} onClick={() => setActiveCategory(category)}>
+                  {index === 0 ? <LayersIcon /> : <CircleDot size={15} strokeWidth={1.7} />}
+                  <span>{category}</span><small>{String(count).padStart(2, '0')}</small>
+                </button>
+                {index > 0 && <a className="theory-link" href={`#theory/${categorySlug(category)}`} aria-label={`Read ${category} theory`} title={`Read ${category} theory`}><BookOpen size={13} /></a>}
+              </div>
             );
           })}
         </nav>
@@ -375,6 +388,7 @@ function App() {
           <nav className="app-track-nav" aria-label="Study tracks">
             <button onClick={() => navigateTrack('study-plan')}>Study plan</button>
             <button className="is-current" onClick={() => navigateTrack('data-structures')}>DSA library</button>
+            <button onClick={() => navigateTrack('theory')}>Theory</button>
             <button onClick={() => navigateTrack('system-design')}>System design</button>
           </nav>
           <div className="topbar-right"><span className="sync-dot" /> LOCAL LIBRARY <span className="topbar-divider" /> <kbd><Command size={11} /> K</kbd></div>
@@ -386,7 +400,7 @@ function App() {
               <div className="lesson-meta-row">
                 <span className="problem-number">PROBLEM {String(lesson.metadata.problem_number).padStart(3, '0')}</span>
                 <span className="meta-slash">/</span>
-                <span className="category-label">{lesson.metadata.category}</span>
+                <a className="category-label category-theory-link" href={`#theory/${categorySlug(lesson.metadata.category)}`} title={`Read ${lesson.metadata.category} theory`}>{lesson.metadata.category} <BookOpen size={10} /> theory</a>
                 <span className={`difficulty difficulty-${lesson.metadata.difficulty.toLowerCase()}`}><i />{lesson.metadata.difficulty}</span>
               </div>
               <div className="lesson-title-row">
